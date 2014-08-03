@@ -1,52 +1,21 @@
-ONScripter
+ONScripter-Jh
 
-0. ¤Ï¤¸¤á¤Ë
+ONScripteræ˜¯ä¸€ä¸ªå¼€æºçš„NScripterè„šæœ¬è§£é‡Šå·¥å…·ï¼Œä¸»è¦ç”±Ogapeeå¼€å‘ç»´æŠ¤
+åŽŸç‰ˆçš„Readmeè¯·æŸ¥çœ‹Readme.oldã€‚
 
-	¹â¶¶Ä¾¼ù»áºî¤Î NScripter ÍÑ¤ËºîÀ®¤µ¤ì¤¿¥¹¥¯¥ê¥×¥È¤òÆÈ¼«¤Ë²ò¼á¤·¤Æ¼Â¹Ô¤·¤Þ¤¹¡£
+è¿™æ˜¯ä¸€ä¸ªä¿®æ”¹ç‰ˆçš„ONScripteræºç ï¼Œåœ¨GPLv2åè®®ä¸‹å‘å¸ƒï¼Œä½¿ç”¨æ—¶è¯·éµå®ˆã€‚
 
+ä¿®æ”¹ç›®æ ‡ï¼š
+	æä¾›æ¯”åŽŸç‰ˆONScripteræ›´å¥½çš„æ€§èƒ½ï¼Œé€‚å½“å¢žåŠ ä¸€äº›åŠŸèƒ½
+	æ·»åŠ ä¸­æ–‡æ”¯æŒ
+	å°½å¯èƒ½çš„å…¼å®¹åŽŸç‰ˆONSè„šæœ¬
+	
+è¿›åº¦
 
-1. Æ°ºî´Ä¶­
+	ç›®å‰æœ‰ä¸¤æ¡åˆ†æ”¯ï¼Œdefaultåˆ†æ”¯ä»…ä¿®æ”¹äº†ä¸­æ–‡æ”¯æŒï¼ŒSDL2åˆ†æ”¯æä¾›å„ç§æ”¹è¿›å¹¶å¯åœ¨SDL2çŽ¯å¢ƒç¼–è¯‘ï¼Œæ­£åœ¨å®Œå–„ä¹‹ä¸­
+	ä»¥ä¸‹è¯´æ˜Žå‡ä¸ºSDL2åˆ†æ”¯ï¼š
+		åœ¨Windowså¹³å°ä¸‹ä½¿ç”¨Visual C++ 2013ç¼–è¯‘é€šè¿‡å®žæµ‹å¯ç”¨
+		Androidå¹³å°ç¼–è¯‘é€šè¿‡ï¼Œå›¾åƒè‰²å½©ä¸æ­£å¸¸ï¼Œå…¶ä½™å‡æ­£å¸¸
+		å…¶ä½™å¹³å°æœªæµ‹è¯•
 
-	libjpeg 6b, bzip2-1.0.5, SDL-1.2.14, SDL_image-1.2.10, SDL_mixer-1.2.8, SDL_ttf-2.0.9, µÚ¤Ó SMPEG-0.4.5 ¤¬Æ°ºî¤¹¤ë´Ä¶­¤Ç¤¹¡£
-	Linux 2.6.32 + Xvnc4 + g++ (gcc 4.4.4) ¤Ç³«È¯¤·¤Æ¤¤¤Þ¤¹¡£
-	Linux, Windows Vista (Visual Studio 2008 C++), Android (HTC Desire), iPad2 ¾å¤ÇÆ°ºî³ÎÇ§¤ò¤·¤Æ¤¤¤Þ¤¹¡£
-	¤½¤ÎÂ¾¡¢MacOS X, MacOS 9, Android(Nexus One, Emulator), iPhone, iPad, PSP, FreeBSD, Solaris(on SPARC), Tru64 UNIX, OS/Warp, iPod, PocketPC, Playstation3, Wii, GP2X, NetWalker, Dreamcast ¾å¤Ç¤ÎÆ°ºîÊó¹ð¤ò¤¤¤¿¤À¤¤¤Æ¤¤¤Þ¤¹¡£
-
-
-2. ¥³¥ó¥Ñ¥¤¥ë¡¦µ¯Æ°ÊýË¡
-
-	¥³¥ó¥Ñ¥¤¥ë¡¦µ¯Æ°ÊýË¡¤Ï°Ê²¼¤ÎÄÌ¤ê¤Ç¤¹¡£
-	¤¿¤À¤·¡¢onscripter ¤ò¼Â¹Ô¤¹¤ë¾ì½ê¤Ë default.ttf, ¥¹¥¯¥ê¥×¥È, ¥¢¡¼¥«¥¤¥Ö¤¬¤Ê¤±¤ì¤Ð¤¤¤±¤Þ¤»¤ó¡£
-	¾Ü¤·¤¯¤ÏÆ±º­¤Î www/onscripter.html ¤ò»²¾È¤·¤Æ¤¯¤À¤µ¤¤¡£
-
-	Linux ¤â¤·¤¯¤Ï FreeBSD, Solaris ¤Î¾ì¹ç
-	$ make -f Makefile.Linux
-	$ onscripter
-
-	Windows ¤Î¾ì¹ç (DOS ¥×¥í¥ó¥×¥È¤Ç)
-	$ libjpeg 6b, bzip2, SDL ¤È SMPEG ¤Î¥¤¥ó¥¹¥È¡¼¥ë¾ì½ê¤Ë¹ç¤ï¤»¤Æ Makefile.Win ¤ò½¤Àµ
-	$ nmake -f Makefile.Win
-	$ onscripter.exe
-
-	MacOS X ¤Î¾ì¹ç
-	$ make -f Makefile.MacOSX
-	$ onscripter
-
-	Zaurus (SL-5500, SL-A300, SL-B500, SL-C700) ¤Î¾ì¹ç
-	ÊÌ¤Î¥Þ¥·¥ó(Linux Åù)¾å¤Ç¥¯¥í¥¹¥³¥ó¥Ñ¥¤¥ë
-	$ make -f Makefile.ARMLinux
-	Zaurus ¤Î Qtopia ¾å¤«¤é¼Â¹Ô
-	$ onscripter
-
-	¤½¤ì°Ê³°¤Î¥×¥é¥Ã¥È¥Õ¥©¡¼¥à¤Ç¤Ï¡¢Makefile.Linux ¤ò¿÷·Á¤Ë¤·¤Æ Makefile.### ¤òºî¤Ã¤Æ¤¯¤À¤µ¤¤¡£
-
-	ONScripter ¤Ï¡¢¥«¥ì¥ó¥È¥Ç¥£¥ì¥¯¥È¥ê¤Î 0.txt ¤â¤·¤¯¤Ï nscript.dat ¤ò¼«Æ°Åª¤ËÆÉ¤ß¹þ¤ß¡¢¤½¤ì¤Ë¤·¤¿¤¬¤Ã¤Æ¥«¥ì¥ó¥È¥Ç¥£¥ì¥¯¥È¥ê¤Î arc.sar ¤â¤·¤¯¤Ï arc.nsa ¤òÆÉ¤ß¹þ¤ß¤Þ¤¹¡£
-
-
-3. Ï¢ÍíÀè
-
-	ËÜ¥½¥Õ¥È¥¦¥§¥¢¤Ë´Ø¤¹¤ëÌä¤¤¹ç¤ï¤»¤Ï
-
-	ogapee@aqua.dti2.ne.jp
-
-	¤Þ¤ÇÅÅ»Ò¥á¡¼¥ë¤Ë¤Æ¤ª´ê¤¤¤·¤Þ¤¹¡£
+å®žæµ‹ç›®å‰SDL2åˆ†æ”¯åœ¨Windowså¹³å°å›¾å½¢æ€§èƒ½è¾ƒåŽŸç‰ˆæå‡çº¦70%
