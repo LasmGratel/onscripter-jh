@@ -3,6 +3,7 @@
  *  NsaReader.cpp - Reader from a NSA archive
  *
  *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -22,6 +23,7 @@
  */
 
 #include "NsaReader.h"
+#include "Utils.h"
 #include <string.h>
 #define NSA_ARCHIVE_NAME "arc"
 #define NSA_ARCHIVE_NAME2 "arc%d"
@@ -103,7 +105,7 @@ int NsaReader::openForConvert( char *nsa_name, int archive_type, unsigned int ns
 {
     sar_flag = false;
     if ( ( archive_info.file_handle = ::fopen( nsa_name, "rb" ) ) == NULL ){
-        fprintf( stderr, "can't open file %s\n", nsa_name );
+        utils::printError( "can't open file %s\n", nsa_name );
         return -1;
     }
 
@@ -225,7 +227,7 @@ NsaReader::FileInfo NsaReader::getFileByIndex( unsigned int index )
         if ( index < archive_info2[i].num_of_files ) return archive_info2[i].fi_list[index];
         index -= archive_info2[i].num_of_files;
     }
-    fprintf( stderr, "NsaReader::getFileByIndex  Index %d is out of range\n", index );
+    utils::printError("NsaReader::getFileByIndex  Index %d is out of range\n", index );
 
     return archive_info.fi_list[0];
 }

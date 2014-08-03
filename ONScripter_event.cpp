@@ -3,6 +3,7 @@
  *  ONScripter_event.cpp - Event handler of ONScripter
  *
  *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -22,6 +23,7 @@
  */
 
 #include "ONScripter.h"
+#include "Utils.h"
 #if defined(LINUX)
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -45,6 +47,12 @@
 static SDL_TimerID timer_id = NULL;
 SDL_TimerID timer_cdaudio_id = NULL;
 SDL_TimerID timer_bgmfade_id = NULL;
+
+#if SDL_VERSION_ATLEAST(2,0,0)
+typedef SDL_Keycode ONS_Key;
+#else
+typedef SDLKey ONS_Key;
+#endif
 
 bool ext_music_play_once_flag = false;
 
@@ -96,7 +104,7 @@ extern "C" Uint32 SDLCALL bgmfadeCallback( Uint32 interval, void *param )
  * OS Dependent Input Translation
  * **************************************** */
 
-SDLKey transKey(SDLKey key)
+ONS_Key transKey(ONS_Key key)
 {
 #if defined(IPODLINUX)
  	switch(key){
@@ -127,7 +135,7 @@ SDLKey transKey(SDLKey key)
     return key;
 }
 
-SDLKey transJoystickButton(Uint8 button)
+ONS_Key transJoystickButton(Uint8 button)
 {
 #if defined(PSP)    
     SDLKey button_map[] = { SDLK_ESCAPE, /* TRIANGLE */
@@ -201,7 +209,7 @@ SDL_KeyboardEvent transJoystickAxis(SDL_JoyAxisEvent &jaxis)
 
     SDL_KeyboardEvent event;
 
-    SDLKey axis_map[] = {SDLK_LEFT,  /* AL-LEFT  */
+    ONS_Key axis_map[] = {SDLK_LEFT,  /* AL-LEFT  */
                          SDLK_RIGHT, /* AL-RIGHT */
                          SDLK_UP,    /* AL-UP    */
                          SDLK_DOWN   /* AL-DOWN  */};
@@ -477,7 +485,16 @@ bool ONScripter::mousePressEvent( SDL_MouseButtonEvent *event )
         if ( event->type == SDL_MOUSEBUTTONDOWN )
             current_button_state.down_flag = true;
     }
-#if SDL_VERSION_ATLEAST(1, 2, 5)
+#if SDL_VERSION_ATLEAST(2,0,0)
+	//TODO: Wheel event
+	else if (event->type == SDL_MOUSEWHEEL &&
+		(bexec_flag ||
+		(event_mode & WAIT_TEXT_MODE) ||
+		(usewheel_flag && event_mode & WAIT_BUTTON_MODE) ||
+		system_menu_mode == SYSTEM_LOOKBACK)) {
+
+	}
+#elif SDL_VERSION_ATLEAST(1, 2, 5)
     else if (event->button == SDL_BUTTON_WHEELUP &&
              (bexec_flag ||
               (event_mode & WAIT_TEXT_MODE) ||
@@ -543,17 +560,34 @@ void ONScripter::variableEditMode( SDL_KeyboardEvent *event )
         variable_edit_mode = EDIT_VARIABLE_INDEX_MODE;
         variable_edit_num = 0;
         break;
-
-      case SDLK_9: case SDLK_KP9: variable_edit_num = variable_edit_num * 10 + 9; break;
-      case SDLK_8: case SDLK_KP8: variable_edit_num = variable_edit_num * 10 + 8; break;
-      case SDLK_7: case SDLK_KP7: variable_edit_num = variable_edit_num * 10 + 7; break;
-      case SDLK_6: case SDLK_KP6: variable_edit_num = variable_edit_num * 10 + 6; break;
-      case SDLK_5: case SDLK_KP5: variable_edit_num = variable_edit_num * 10 + 5; break;
-      case SDLK_4: case SDLK_KP4: variable_edit_num = variable_edit_num * 10 + 4; break;
-      case SDLK_3: case SDLK_KP3: variable_edit_num = variable_edit_num * 10 + 3; break;
-      case SDLK_2: case SDLK_KP2: variable_edit_num = variable_edit_num * 10 + 2; break;
-      case SDLK_1: case SDLK_KP1: variable_edit_num = variable_edit_num * 10 + 1; break;
-      case SDLK_0: case SDLK_KP0: variable_edit_num = variable_edit_num * 10 + 0; break;
+#if !SDL_VERSION_ATLEAST(2,0,0)
+#define SDLK_KP_ SDLK_KP
+#endif
+		enum {
+			ONS_KP_0 = SDLK_KP_0,
+			ONS_KP_1 = SDLK_KP_1,
+			ONS_KP_2 = SDLK_KP_2,
+			ONS_KP_3 = SDLK_KP_3,
+			ONS_KP_4 = SDLK_KP_4,
+			ONS_KP_5 = SDLK_KP_5,
+			ONS_KP_6 = SDLK_KP_6,
+			ONS_KP_7 = SDLK_KP_7,
+			ONS_KP_8 = SDLK_KP_8,
+			ONS_KP_9 = SDLK_KP_9
+		};
+#if !SDL_VERSION_ATLEAST(2,0,0)
+#undef SDLK_KP_
+#endif
+	  case SDLK_9: case ONS_KP_9: variable_edit_num = variable_edit_num * 10 + 9; break;
+	  case SDLK_8: case ONS_KP_8: variable_edit_num = variable_edit_num * 10 + 8; break;
+	  case SDLK_7: case ONS_KP_7: variable_edit_num = variable_edit_num * 10 + 7; break;
+	  case SDLK_6: case ONS_KP_6: variable_edit_num = variable_edit_num * 10 + 6; break;
+	  case SDLK_5: case ONS_KP_5: variable_edit_num = variable_edit_num * 10 + 5; break;
+	  case SDLK_4: case ONS_KP_4: variable_edit_num = variable_edit_num * 10 + 4; break;
+	  case SDLK_3: case ONS_KP_3: variable_edit_num = variable_edit_num * 10 + 3; break;
+	  case SDLK_2: case ONS_KP_2: variable_edit_num = variable_edit_num * 10 + 2; break;
+	  case SDLK_1: case ONS_KP_1: variable_edit_num = variable_edit_num * 10 + 1; break;
+	  case SDLK_0: case ONS_KP_0: variable_edit_num = variable_edit_num * 10 + 0; break;
 
       case SDLK_MINUS: case SDLK_KP_MINUS:
         if ( variable_edit_mode == EDIT_VARIABLE_NUM_MODE && variable_edit_num == 0 ) variable_edit_sign = -1;
@@ -612,9 +646,9 @@ void ONScripter::variableEditMode( SDL_KeyboardEvent *event )
       case SDLK_ESCAPE:
         if ( variable_edit_mode == EDIT_SELECT_MODE ){
             variable_edit_mode = NOT_EDIT_MODE;
-            SDL_WM_SetCaption( DEFAULT_WM_TITLE, DEFAULT_WM_ICON );
+            setCaption( DEFAULT_WM_TITLE, DEFAULT_WM_ICON );
             SDL_Delay( 100 );
-            SDL_WM_SetCaption( wm_title_string, wm_icon_string );
+            setCaption( wm_title_string, wm_icon_string );
             return;
         }
         variable_edit_mode = EDIT_SELECT_MODE;
@@ -654,7 +688,7 @@ void ONScripter::variableEditMode( SDL_KeyboardEvent *event )
                  EDIT_MODE_PREFIX, var_name, p, (variable_edit_sign==1)?"":"-", variable_edit_num );
     }
 
-    SDL_WM_SetCaption( wm_edit_string, wm_icon_string );
+    setCaption( wm_edit_string, wm_icon_string );
 }
 
 void ONScripter::shiftCursorOnButton( int diff )
@@ -682,7 +716,7 @@ void ONScripter::shiftCursorOnButton( int diff )
         x = x * screen_device_width / screen_width;
         y = y * screen_device_width / screen_width;
         shift_over_button = button->no;
-        SDL_WarpMouse(x, y);
+        warpMouse(x, y);
     }
 }
 
@@ -757,7 +791,7 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
             variable_edit_sign = 1;
             variable_edit_num = 0;
             sprintf( wm_edit_string, "%s%s", EDIT_MODE_PREFIX, EDIT_SELECT_STRING );
-            SDL_WM_SetCaption( wm_edit_string, wm_icon_string );
+            setCaption( wm_edit_string, wm_icon_string );
         }
     }
     
@@ -945,7 +979,7 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
     if ( event_mode & WAIT_INPUT_MODE ){
         if (event->keysym.sym == SDLK_s && !automode_flag ){
             skip_mode |= SKIP_NORMAL;
-            printf("toggle skip to true\n");
+            utils::printInfo("toggle skip to true\n");
             stopAnimation( clickstr_state );
 
             return true;
@@ -955,7 +989,7 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
                 skip_mode &= ~SKIP_TO_EOP;
             else
                 skip_mode |= SKIP_TO_EOP;
-            printf("toggle draw one page flag to %s\n", (skip_mode & SKIP_TO_EOP?"true":"false") );
+            utils::printInfo("toggle draw one page flag to %s\n", (skip_mode & SKIP_TO_EOP?"true":"false") );
             if ( skip_mode & SKIP_TO_EOP ){
                 stopAnimation( clickstr_state );
 
@@ -965,7 +999,7 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
         else if ( event->keysym.sym == SDLK_a && mode_ext_flag && !automode_flag ){
             automode_flag = true;
             skip_mode &= ~SKIP_NORMAL;
-            printf("change to automode\n");
+            utils::printInfo("change to automode\n");
             stopAnimation( clickstr_state );
 
             return true;
@@ -1053,7 +1087,66 @@ void ONScripter::runEventLoop()
         }
 
         switch (event.type) {
-#if defined(IOS) // || defined(ANDROID)
+#if defined(IOS) || defined(ANDROID)
+#if SDL_VERSION_ATLEAST(2,0,0)
+		case SDL_FINGERMOTION:
+		{
+			tmp_event.motion.x = screen_device_width * event.tfinger.x;
+			tmp_event.motion.y = screen_device_height * event.tfinger.y;
+			if (mouseMoveEvent( &tmp_event.motion )) return;
+			if (btndown_flag){
+				event.button.type = SDL_MOUSEBUTTONDOWN;
+				event.button.button = SDL_BUTTON_LEFT;
+				if (SDL_GetNumTouchFingers(event.tfinger.touchId) >= 2)
+					event.button.button = SDL_BUTTON_RIGHT;
+				event.button.x = tmp_event.motion.x;
+				event.button.y = tmp_event.motion.y;
+				ret = mousePressEvent( &event.button );
+				if (ret) return;
+			}
+		}
+			break;
+		case SDL_FINGERDOWN:
+		{
+			tmp_event.motion.x = screen_device_width * event.tfinger.x;
+			tmp_event.motion.y = screen_device_height * event.tfinger.y;
+			if (mouseMoveEvent( &tmp_event.motion )) return;
+		}
+			if ( btndown_flag ){
+				tmp_event.button.type = SDL_MOUSEBUTTONDOWN;
+				tmp_event.button.button = SDL_BUTTON_LEFT;
+				if (SDL_GetNumTouchFingers(event.tfinger.touchId) >= 2)
+					tmp_event.button.button = SDL_BUTTON_RIGHT;
+				tmp_event.button.x = screen_device_width * event.tfinger.x;
+				tmp_event.button.y = screen_device_height * event.tfinger.y;
+				ret = mousePressEvent( &tmp_event.button );
+			}
+			{
+                          num_fingers = SDL_GetNumTouchFingers(event.tfinger.touchId);
+				if (num_fingers >= 3){
+					tmp_event.key.keysym.sym = SDLK_LCTRL;
+					ret |= keyDownEvent( &tmp_event.key );
+				}
+			}
+			if (ret) return;
+			break;
+		case SDL_FINGERUP:
+			if (num_fingers == 0) break;
+			{
+				tmp_event.button.type = SDL_MOUSEBUTTONUP;
+				tmp_event.button.button = SDL_BUTTON_LEFT;
+				if (SDL_GetNumTouchFingers(event.tfinger.touchId) >= 1)
+					tmp_event.button.button = SDL_BUTTON_RIGHT;
+				tmp_event.button.x = screen_device_width * event.tfinger.x;
+				tmp_event.button.y = screen_device_height * event.tfinger.y;
+                                ret = mousePressEvent( &tmp_event.button );
+			}
+			tmp_event.key.keysym.sym = SDLK_LCTRL;
+			keyUpEvent( &tmp_event.key );
+			num_fingers = 0;
+			if (ret) return;
+			break;
+#else
           case SDL_FINGERMOTION:
             {
                 SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
@@ -1116,6 +1209,7 @@ void ONScripter::runEventLoop()
             num_fingers = 0;
             if (ret) return;
             break;
+#endif
 #else
           case SDL_MOUSEMOTION:
             if (mouseMoveEvent( &event.motion )) return;
@@ -1199,7 +1293,7 @@ void ONScripter::runEventLoop()
 
           case ONS_CHUNK_EVENT:
             flushEventSub( event );
-            //printf("ONS_CHUNK_EVENT %d: %x %d %x\n", event.user.code, wave_sample[0], automode_flag, event_mode);
+            //utils::printInfo("ONS_CHUNK_EVENT %d: %x %d %x\n", event.user.code, wave_sample[0], automode_flag, event_mode);
             if ( event.user.code != 0 ||
                  !(event_mode & WAIT_VOICE_MODE) ) break;
 
@@ -1231,7 +1325,16 @@ void ONScripter::runEventLoop()
             }
 
             return;
-            
+#if SDL_VERSION_ATLEAST(2,0,0)
+		  case SDL_WINDOWEVENT:
+			  if(event.window.event != SDL_WINDOWEVENT_FOCUS_GAINED) break;
+#ifdef USE_SDL_RENDERER
+            SDL_RenderPresent(renderer);
+#else
+            SDL_UpdateRect( screen_surface, 0, 0, screen_width, screen_height );
+#endif
+			  break;
+#else
           case SDL_ACTIVEEVENT:
             if ( !event.active.gain ) break;
 #ifdef ANDROID
@@ -1248,7 +1351,7 @@ void ONScripter::runEventLoop()
             SDL_UpdateRect( screen_surface, 0, 0, screen_width, screen_height );
 #endif
             break;
-
+#endif
           case SDL_QUIT:
             endCommand();
             break;

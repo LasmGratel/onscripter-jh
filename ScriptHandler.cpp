@@ -3,6 +3,7 @@
  *  ScriptHandler.cpp - Script manipulation class
  *
  *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -22,6 +23,7 @@
  */
 
 #include "ScriptHandler.h"
+#include "Utils.h"
 
 #define TMP_SCRIPT_BUF_LEN 4096
 #define STRING_BUFFER_LENGTH 2048
@@ -277,14 +279,14 @@ const char *ScriptHandler::readToken()
         markAsKidoku( buf++ );
     }
     else if (ch != '\0'){
-        fprintf(stderr, "readToken: skip unknown heading character %c (%x)\n", ch, ch);
+        utils::printError( "readToken: skip unknown heading character %c (%x)\n", ch, ch);
         buf++;
         goto readTokenTop;
     }
 
     next_script = checkComma(buf);
 
-    //printf("readToken [%s] len=%d [%c(%x)] %p\n", string_buffer, strlen(string_buffer), ch, ch, next_script);
+    //utils::printInfo("readToken [%s] len=%d [%c(%x)] %p\n", string_buffer, strlen(string_buffer), ch, ch, next_script);
 
     return string_buffer;
 }
@@ -558,7 +560,7 @@ void ScriptHandler::markAsKidoku( char *address )
 
     int offset = current_script - script_buffer;
     if ( address ) offset = address - script_buffer;
-    //printf("mark (%c)%x:%x = %d\n", *current_script, offset /8, offset%8, kidoku_buffer[ offset/8 ] & ((char)1 << (offset % 8)));
+    //utils::printInfo("mark (%c)%x:%x = %d\n", *current_script, offset /8, offset%8, kidoku_buffer[ offset/8 ] & ((char)1 << (offset % 8)));
     if ( kidoku_buffer[ offset/8 ] & ((char)1 << (offset % 8)) )
         skip_enabled = true;
     else
@@ -576,7 +578,7 @@ void ScriptHandler::saveKidokuData()
     FILE *fp;
 
     if ( ( fp = fopen( "kidoku.dat", "wb", true ) ) == NULL ){
-        fprintf( stderr, "can't write kidoku.dat\n" );
+		utils::printError("can't write kidoku.dat\n");
         return;
     }
 
@@ -896,7 +898,7 @@ void ScriptHandler::addStrAlias( const char *str1, const char *str2 )
 
 void ScriptHandler::errorAndExit( const char *str )
 {
-    fprintf( stderr, " **** Script error, %s [%s] ***\n", str, string_buffer );
+	utils::printError( " **** Script error, %s [%s] ***\n", str, string_buffer);
     exit(-1);
 }
 
@@ -961,7 +963,7 @@ int ScriptHandler::readScript( char *path )
     }
 
     if (fp == NULL){
-        fprintf( stderr, "can't open any of 0.txt, 00.txt, nscript.dat and nscript.___\n" );
+		utils::printError( "can't open any of 0.txt, 00.txt, nscript.dat and nscript.___\n");
         return -1;
     }
     
@@ -1352,7 +1354,7 @@ void ScriptHandler::parseStr( char **buf )
             p_str_alias = p_str_alias->next;
         }
         if ( !p_str_alias ){
-            printf("can't find str alias for %s...\n", alias_buf );
+            utils::printInfo("can't find str alias for %s...\n", alias_buf );
             exit(-1);
         }
         current_variable.type |= VAR_CONST;
@@ -1427,7 +1429,7 @@ int ScriptHandler::parseInt( char **buf )
                 p_num_alias = p_num_alias->next;
             }
             if ( !p_num_alias ){
-                //printf("can't find num alias for %s... assume 0.\n", alias_buf );
+                //utils::printInfo("can't find num alias for %s... assume 0.\n", alias_buf );
                 current_variable.type = VAR_NONE;
                 *buf = buf_start;
                 return 0;

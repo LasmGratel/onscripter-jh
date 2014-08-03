@@ -3,6 +3,7 @@
  *  ONScripter_file.cpp - FILE I/O of ONScripter
  *
  *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -22,6 +23,7 @@
  */
 
 #include "ONScripter.h"
+#include "Utils.h"
 
 #if defined(LINUX) || defined(MACOSX) || defined(IOS)
 #include <sys/types.h>
@@ -156,7 +158,7 @@ char *ONScripter::readSaveStrFromFile( int no )
     sprintf( filename, "save%d.dat", no );
     size_t len = loadFileIOBuf( filename );
     if (len == 0){
-        fprintf( stderr, "readSaveStrFromFile: can't open save file %s\n", filename );
+        utils::printError("readSaveStrFromFile: can't open save file %s\n", filename );
         return NULL;
     }
 
@@ -183,7 +185,7 @@ int ONScripter::loadSaveFile( int no )
     char filename[32];
     sprintf( filename, "save%d.dat", no );
     if (loadFileIOBuf( filename ) == 0){
-        fprintf( stderr, "can't open save file %s\n", filename );
+        utils::printError("can't open save file %s\n", filename );
         return -1;
     }
     
@@ -203,14 +205,14 @@ int ONScripter::loadSaveFile( int no )
     file_version += readChar();
     printf("Save file version is %d.%d\n", file_version/100, file_version%100 );
     if ( file_version > SAVEFILE_VERSION_MAJOR*100 + SAVEFILE_VERSION_MINOR ){
-        fprintf( stderr, "Save file is newer than %d.%d, please use the latest ONScripter.\n", SAVEFILE_VERSION_MAJOR, SAVEFILE_VERSION_MINOR );
+        utils::printError("Save file is newer than %d.%d, please use the latest ONScripter.\n", SAVEFILE_VERSION_MAJOR, SAVEFILE_VERSION_MINOR );
         return -1;
     }
 
     if ( file_version >= 200 )
         return loadSaveFile2( file_version );
     
-    fprintf( stderr, "Save file is too old.\n");
+    utils::printError("Save file is too old.\n");
 
     return -1;
 }
@@ -246,14 +248,14 @@ int ONScripter::saveSaveFile( bool write_to_disk, int no, const char *savestr )
         memcpy(file_io_buf, save_data_buf, save_data_len);
         file_io_buf_ptr = save_data_len;
         if (saveFileIOBuf( filename, 0, savestr )){
-            fprintf( stderr, "can't open save file %s for writing\n", filename );
+            utils::printError("can't open save file %s for writing\n", filename );
             return -1;
         }
 
         size_t magic_len = strlen(SAVEFILE_MAGIC_NUMBER)+2;
         sprintf( filename, RELATIVEPATH "sav%csave%d.dat", DELIMITER, no );
         if (saveFileIOBuf( filename, magic_len, savestr ))
-            fprintf( stderr, "can't open save file %s for writing (not an error)\n", filename );
+            utils::printError("can't open save file %s for writing (not an error)\n", filename );
     }
 
     return 0;

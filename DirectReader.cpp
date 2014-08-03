@@ -3,6 +3,7 @@
  *  DirectReader.cpp - Reader from independent files
  *
  *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -22,6 +23,8 @@
  */
 
 #include "DirectReader.h"
+#include "Utils.h"
+#include "coding2utf16.h"
 #include <bzlib.h>
 #if !defined(WIN32) && !defined(MACOS9) && !defined(PSP) && !defined(__OS2__)
 #include <dirent.h>
@@ -30,8 +33,7 @@
 #define IS_TWO_BYTE(x) \
         ( ((x) & 0xe0) == 0xe0 || ((x) & 0xe0) == 0x80 )
 
-extern unsigned short convSJIS2UTF16( unsigned short in );
-extern int convUTF16ToUTF8( unsigned char dst[4], unsigned short src );
+extern Coding2UTF16 *coding2utf16;
 
 #ifndef SEEK_END
 #define SEEK_END 2
@@ -280,12 +282,12 @@ int DirectReader::getRegisteredCompressionType( const char *file_name )
     return NO_COMPRESSION;
 }
     
-struct DirectReader::FileInfo DirectReader::getFileByIndex( unsigned int index )
+/*struct DirectReader::FileInfo DirectReader::getFileByIndex( unsigned int index )
 {
     DirectReader::FileInfo fi;
     
     return fi;
-}
+}*/
 
 FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type, size_t *length )
 {
@@ -403,8 +405,8 @@ void DirectReader::convertFromSJISToUTF8( char *dst_buf, const char *src_buf )
         if (IS_TWO_BYTE(*src_buf)){
             unsigned short index = *(unsigned char*)src_buf++;
             index = index << 8 | (*(unsigned char*)src_buf++);
-            unicode = convSJIS2UTF16( index );
-            c = convUTF16ToUTF8(utf8_buf, unicode);
+            unicode = coding2utf16->conv2UTF16( index );
+            c = coding2utf16->convUTF16ToUTF8(utf8_buf, unicode);
             for (i=0 ; i<c ; i++)
                 *dst_buf++ = utf8_buf[i];
         }
@@ -418,7 +420,7 @@ void DirectReader::convertFromSJISToUTF8( char *dst_buf, const char *src_buf )
 size_t DirectReader::decodeNBZ( FILE *fp, size_t offset, unsigned char *buf )
 {
     if (key_table_flag)
-        fprintf(stderr, "may not decode NBZ with key_table enabled.\n");
+        utils::printError("may not decode NBZ with key_table enabled.\n");
     
     unsigned int original_length, count;
 	BZFILE *bfp;

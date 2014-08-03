@@ -3,6 +3,7 @@
  *  ONScripter_animation.cpp - Methods to manipulate AnimationInfo
  *
  *  Copyright (c) 2001-2013 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -22,6 +23,7 @@
  */
 
 #include "ONScripter.h"
+#include "Utils.h"
 
 #define DEFAULT_CURSOR_WAIT    ":l/3,160,2;cursor0.bmp"
 #define DEFAULT_CURSOR_NEWPAGE ":l/3,160,2;cursor1.bmp"
@@ -48,7 +50,7 @@ int ONScripter::calcDurationToNextAnimation()
 
     if (!textgosub_label &&
          (clickstr_state == CLICK_WAIT || clickstr_state == CLICK_NEWPAGE)){
-        AnimationInfo *anim;
+        AnimationInfo *anim = nullptr;
         if      (clickstr_state == CLICK_WAIT)
             anim = &cursor_info[0];
         else if (clickstr_state == CLICK_NEWPAGE)
@@ -128,7 +130,7 @@ void ONScripter::proceedAnimation()
 
     if (!textgosub_label &&
         (clickstr_state == CLICK_WAIT || clickstr_state == CLICK_NEWPAGE)){
-        AnimationInfo *anim;
+        AnimationInfo *anim = nullptr;
         if (clickstr_state == CLICK_WAIT)
             anim = &cursor_info[0];
         else if (clickstr_state == CLICK_NEWPAGE)
@@ -356,7 +358,7 @@ void ONScripter::parseTaggedString( AnimationInfo *anim )
         anim->num_of_cells = getNumberFromBuffer( (const char**)&buffer );
         buffer++;
         if ( anim->num_of_cells == 0 ){
-            fprintf( stderr, "ONScripter::parseTaggedString  The number of cells is 0\n");
+            utils::printError("ONScripter::parseTaggedString  The number of cells is 0\n");
             return;
         }
 

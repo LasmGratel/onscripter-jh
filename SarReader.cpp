@@ -3,6 +3,7 @@
  *  SarReader.cpp - Reader from a SAR archive
  *
  *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -22,6 +23,7 @@
  */
 
 #include "SarReader.h"
+#include "Utils.h"
 #define WRITE_LENGTH 4096
 
 #if defined(PSP)
@@ -376,7 +378,7 @@ SarReader::FileInfo SarReader::getFileByIndex( unsigned int index )
         index -= info->num_of_files;
         info = info->next;
     }
-    fprintf( stderr, "SarReader::getFileByIndex  Index %d is out of range\n", index );
+    utils::printError("SarReader::getFileByIndex  Index %d is out of range\n", index );
 
     return archive_info.fi_list[index];
 }

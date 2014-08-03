@@ -3,6 +3,7 @@
  *  ONScripter_rmenu.cpp - Right click menu handler of ONScripter
  *
  *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -22,6 +23,7 @@
  */
 
 #include "ONScripter.h"
+#include "Utils.h"
 
 #define DIALOG_W 241
 #define DIALOG_H 167
@@ -87,13 +89,13 @@ void ONScripter::leaveSystemCall( bool restore_flag )
         if ( event_mode & WAIT_BUTTON_MODE ){
             int x = shelter_mouse_state.x * screen_device_width / screen_width;
             int y = shelter_mouse_state.y * screen_device_width / screen_width;
-            SDL_WarpMouse(x, y);
+            warpMouse(x, y);
         }
     }
     dirty_rect.fill( screen_width, screen_height );
     flush( refreshMode() );
 
-    //printf("leaveSystemCall %d %d\n",event_mode, clickstr_state);
+    //utils::printInfo("leaveSystemCall %d %d\n",event_mode, clickstr_state);
 
     refreshMouseOverButton();
 
@@ -215,7 +217,7 @@ void ONScripter::executeSystemAutomode()
 {
     automode_flag = true;
     skip_mode &= ~SKIP_NORMAL;
-    printf("systemcall_automode: change to automode\n");
+    utils::printInfo("systemcall_automode: change to automode\n");
     leaveSystemCall();
 }
 

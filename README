@@ -1,52 +1,21 @@
-ONScripter
+ONScripter-Jh
 
-0. はじめに
+ONScripter是一个开源的NScripter脚本解释工具，主要由Ogapee开发维护
+原版的Readme请查看Readme.old。
 
-	光抖木践会侯の NScripter 脱に侯喇されたスクリプトを迫极に豺坚して悸乖します。
+这是一个修改版的ONScripter源码，在GPLv2协议下发布，使用时请遵守。
 
+修改目标：
+	提供比原版ONScripter更好的性能，适当增加一些功能
+	添加中文支持
+	尽可能的兼容原版ONS脚本
+	
+进度
 
-1. 瓢侯茨董
+	目前有两条分支，default分支仅修改了中文支持，SDL2分支提供各种改进并可在SDL2环境编译，正在完善之中
+	以下说明均为SDL2分支：
+		在Windows平台下使用Visual C++ 2013编译通过实测可用
+		Android平台编译通过，图像色彩不正常，其余均正常
+		其余平台未测试
 
-	libjpeg 6b, bzip2-1.0.5, SDL-1.2.14, SDL_image-1.2.10, SDL_mixer-1.2.8, SDL_ttf-2.0.9, 第び SMPEG-0.4.5 が瓢侯する茨董です。
-	Linux 2.6.32 + Xvnc4 + g++ (gcc 4.4.4) で倡券しています。
-	Linux, Windows Vista (Visual Studio 2008 C++), Android (HTC Desire), iPad2 惧で瓢侯澄千をしています。
-	その戮、MacOS X, MacOS 9, Android(Nexus One, Emulator), iPhone, iPad, PSP, FreeBSD, Solaris(on SPARC), Tru64 UNIX, OS/Warp, iPod, PocketPC, Playstation3, Wii, GP2X, NetWalker, Dreamcast 惧での瓢侯鼠桂をいただいています。
-
-
-2. コンパイルˇ弹瓢数恕
-
-	コンパイルˇ弹瓢数恕は笆布の奶りです。
-	ただし、onscripter を悸乖する眷疥に default.ttf, スクリプト, ア〖カイブがなければいけません。
-	拒しくは票涵の www/onscripter.html を徊救してください。
-
-	Linux もしくは FreeBSD, Solaris の眷圭
-	$ make -f Makefile.Linux
-	$ onscripter
-
-	Windows の眷圭 (DOS プロンプトで)
-	$ libjpeg 6b, bzip2, SDL と SMPEG のインスト〖ル眷疥に圭わせて Makefile.Win を饯赖
-	$ nmake -f Makefile.Win
-	$ onscripter.exe
-
-	MacOS X の眷圭
-	$ make -f Makefile.MacOSX
-	$ onscripter
-
-	Zaurus (SL-5500, SL-A300, SL-B500, SL-C700) の眷圭
-	侍のマシン(Linux 霹)惧でクロスコンパイル
-	$ make -f Makefile.ARMLinux
-	Zaurus の Qtopia 惧から悸乖
-	$ onscripter
-
-	それ笆嘲のプラットフォ〖ムでは、Makefile.Linux を亏妨にして Makefile.### を侯ってください。
-
-	ONScripter は、カレントディレクトリの 0.txt もしくは nscript.dat を极瓢弄に粕み哈み、それにしたがってカレントディレクトリの arc.sar もしくは arc.nsa を粕み哈みます。
-
-
-3. 息晚黎
-
-	塑ソフトウェアに簇する啼い圭わせは
-
-	ogapee@aqua.dti2.ne.jp
-
-	まで排灰メ〖ルにてお搓いします。
+实测目前SDL2分支在Windows平台图形性能较原版提升约70%

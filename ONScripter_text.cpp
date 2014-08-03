@@ -3,6 +3,7 @@
  *  ONScripter_text.cpp - Text parser of ONScripter
  *
  *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -22,8 +23,10 @@
  */
 
 #include "ONScripter.h"
+#include "coding2utf16.h"
+#include "Utils.h"
 
-extern unsigned short convSJIS2UTF16( unsigned short in );
+extern Coding2UTF16 *coding2utf16;
 
 #define IS_ROTATION_REQUIRED(x)	\
     (!IS_TWO_BYTE(*(x)) ||                                              \
@@ -75,7 +78,7 @@ void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color 
     if (IS_TWO_BYTE(text[0])){
         unsigned index = ((unsigned char*)text)[0];
         index = index << 8 | ((unsigned char*)text)[1];
-        unicode = convSJIS2UTF16( index );
+        unicode = coding2utf16->conv2UTF16( index );
     }
     else{
         if ((text[0] & 0xe0) == 0xa0 || (text[0] & 0xe0) == 0xc0) unicode = ((unsigned char*)text)[0] - 0xa0 + 0xff60;
@@ -90,7 +93,7 @@ void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color 
 #endif    
     TTF_GlyphMetrics( (TTF_Font*)info->ttf_font[0], unicode,
                       &minx, &maxx, &miny, &maxy, &advanced );
-    //printf("min %d %d %d %d %d %d\n", minx, maxx, miny, maxy, advanced,TTF_FontAscent((TTF_Font*)info->ttf_font[0])  );
+    //utils::printInfo("min %d %d %d %d %d %d\n", minx, maxx, miny, maxy, advanced,TTF_FontAscent((TTF_Font*)info->ttf_font[0])  );
 
     static SDL_Color fcol={0xff, 0xff, 0xff}, bcol={0, 0, 0};
     SDL_Surface *tmp_surface = TTF_RenderGlyph_Shaded((TTF_Font*)info->ttf_font[0], unicode, fcol, bcol);
@@ -105,10 +108,15 @@ void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color 
     }
 
     bool rotate_flag = false;
-    if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_ROTATION_REQUIRED(text) ) rotate_flag = true;
+    if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_ROTATION_REQUIRED(text) ) rotate_flag = true;    
     
-    dst_rect.x = xy[0] + minx;
+#if TTF_MAJOR_VERSION < 2
+	dst_rect.x = xy[0] + minx;
     dst_rect.y = xy[1] + TTF_FontAscent((TTF_Font*)info->ttf_font[0]) - maxy;
+#else
+	dst_rect.x = xy[0];
+	dst_rect.y = xy[1];
+#endif
     dst_rect.y -= (TTF_FontHeight((TTF_Font*)info->ttf_font[0]) - info->font_size_xy[1]*screen_ratio1/screen_ratio2)/2;
 
     if ( rotate_flag ) dst_rect.x += miny - minx;
@@ -170,11 +178,11 @@ void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color 
 
 void ONScripter::drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info, SDL_Rect *clip )
 {
-    //printf("draw %x-%x[%s] %d, %d\n", text[0], text[1], text, info->xy[0], info->xy[1] );
+    //utils::printInfo("draw %x-%x[%s] %d, %d\n", text[0], text[1], text, info->xy[0], info->xy[1] );
     
     if ( info->ttf_font[0] == NULL ){
         if ( info->openFont( font_file, screen_ratio1, screen_ratio2 ) == NULL ){
-            fprintf( stderr, "can't open font file: %s\n", font_file );
+            utils::printError("can't open font file: %s\n", font_file );
             quit();
             exit(-1);
         }
@@ -659,8 +667,8 @@ int ONScripter::textCommand()
     if (buf[string_buffer_offset] == '[')
         string_buffer_offset++;
     else if (zenkakko_flag && 
-             buf[string_buffer_offset  ] == "Åy"[0] && 
-             buf[string_buffer_offset+1] == "Åy"[1])
+             buf[string_buffer_offset  ] == "°æ"[0] && 
+             buf[string_buffer_offset+1] == "°æ"[1])
         string_buffer_offset += 2;
     else
         tag_flag = false;
@@ -669,8 +677,8 @@ int ONScripter::textCommand()
     int end_offset = start_offset;
     while (tag_flag && buf[string_buffer_offset]){
         if (zenkakko_flag && 
-            buf[string_buffer_offset  ] == "Åz"[0] && 
-            buf[string_buffer_offset+1] == "Åz"[1]){
+            buf[string_buffer_offset  ] == "°ø"[0] && 
+            buf[string_buffer_offset+1] == "°ø"[1]){
             end_offset = string_buffer_offset;
             string_buffer_offset += 2;
             break;
@@ -771,10 +779,10 @@ void ONScripter::processEOT()
 
 bool ONScripter::processText()
 {
-    //printf("textCommand %c %d %d %d\n", script_h.getStringBuffer()[ string_buffer_offset ], string_buffer_offset, event_mode, line_enter_status);
+    //utils::printInfo("textCommand %c %d %d %d\n", script_h.getStringBuffer()[ string_buffer_offset ], string_buffer_offset, event_mode, line_enter_status);
     char out_text[3]= {'\0', '\0', '\0'};
 
-    //printf("*** textCommand %d (%d,%d)\n", string_buffer_offset, sentence_font.xy[0], sentence_font.xy[1]);
+    //utils::printInfo("*** textCommand %d (%d,%d)\n", string_buffer_offset, sentence_font.xy[0], sentence_font.xy[1]);
 
     while( (!(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR) &&
             script_h.getStringBuffer()[ string_buffer_offset ] == ' ') ||

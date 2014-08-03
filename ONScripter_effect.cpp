@@ -3,6 +3,7 @@
  *  ONScripter_effect.cpp - Effect executer of ONScripter
  *
  *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -22,6 +23,7 @@
  */
 
 #include "ONScripter.h"
+#include "Utils.h"
 
 #define EFFECT_STRIPE_WIDTH (16 * screen_ratio1 / screen_ratio2)
 #define EFFECT_STRIPE_CURTAIN_WIDTH (24 * screen_ratio1 / screen_ratio2)
@@ -66,7 +68,7 @@ bool ONScripter::setEffect( EffectLink *effect, bool generate_effect_dst, bool u
 
     if (effect_no == 99){ // dll-based
         if (effect->anim.image_name != NULL){
-            printf("dll effect: Got dll '%s'\n", effect->anim.image_name);
+            utils::printInfo("dll effect: Got dll '%s'\n", effect->anim.image_name);
             if (!strncmp(effect->anim.image_name, "breakup.dll", 11))
                 initBreakup(effect->anim.image_name);
             dirty_rect.fill( screen_width, screen_height );
@@ -95,7 +97,7 @@ bool ONScripter::doEffect( EffectLink *effect, bool clear_dirty_region )
 {
     effect_start_time = SDL_GetTicks();
     if ( effect_counter == 0 ) effect_start_time_old = effect_start_time - 1;
-    //printf("effect_counter %d timer between %d %d\n",effect_counter,effect_start_time,effect_start_time_old);
+    //utils::printInfo("effect_counter %d timer between %d %d\n",effect_counter,effect_start_time,effect_start_time_old);
     effect_timer_resolution = effect_start_time - effect_start_time_old;
     effect_start_time_old = effect_start_time;
     
@@ -111,7 +113,7 @@ bool ONScripter::doEffect( EffectLink *effect, bool clear_dirty_region )
 
     /* ---------------------------------------- */
     /* Execute effect */
-    //printf("Effect number %d %d\n", effect_no, effect_duration );
+    //utils::printInfo("Effect number %d %d\n", effect_no, effect_duration );
 
     bool not_implemented = false;
     switch ( effect_no ){
@@ -380,9 +382,9 @@ bool ONScripter::doEffect( EffectLink *effect, bool clear_dirty_region )
     }
 
     if (effect_counter == 0 && not_implemented)
-        printf("effect No. %d not implemented; substituting crossfade\n", effect_no);
+        utils::printInfo("effect No. %d not implemented; substituting crossfade\n", effect_no);
 
-    //printf("effect conut %d / dur %d\n", effect_counter, effect_duration);
+    //utils::printInfo("effect conut %d / dur %d\n", effect_counter, effect_duration);
     
     effect_counter += effect_timer_resolution;
 

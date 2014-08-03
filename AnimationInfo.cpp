@@ -3,6 +3,7 @@
  *  AnimationInfo.cpp - General image storage class of ONScripter
  *
  *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -692,13 +693,15 @@ SDL_Surface *AnimationInfo::allocSurface( int w, int h, Uint32 texture_format )
     SDL_Surface *surface;
     if (texture_format == SDL_PIXELFORMAT_RGB565)
         surface = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 16, 0xf800, 0x07e0, 0x001f, 0);
-    else if (texture_format == SDL_PIXELFORMAT_ABGR8888)
-        surface = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+	else if (texture_format == SDL_PIXELFORMAT_ABGR8888)
+		surface = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
     else // texture_format == SDL_PIXELFORMAT_ARGB8888
         surface = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
 
+#if !SDL_VERSION_ATLEAST(2,0,0)
     SDL_SetAlpha(surface, 0, SDL_ALPHA_OPAQUE);
-#if defined(USE_RENDERER) || defined(ANDROID)
+#endif
+#if defined(USE_RENDERER) || defined(ANDROID) || SDL_VERSION_ATLEAST(2,0,0)
     SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
 #endif
 

@@ -3,6 +3,7 @@
  *  DirtyRect.cpp - Invalid region on text_surface which should be updated
  *
  *  Copyright (c) 2001-2012 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -57,7 +58,7 @@ void DirtyRect::setDimension(int w, int h)
 
 void DirtyRect::add( SDL_Rect src )
 {
-    //printf("add %d %d %d %d\n", src.x, src.y, src.w, src.h );
+    //utils::printInfo("add %d %d %d %d\n", src.x, src.y, src.w, src.h );
     if ( src.w == 0 || src.h == 0 ) return;
 
     if (src.x < 0){

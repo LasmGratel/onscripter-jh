@@ -3,6 +3,7 @@
  *  FontInfo.cpp - Font information storage class of ONScripter
  *
  *  Copyright (c) 2001-2013 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -22,6 +23,7 @@
  */
 
 #include "FontInfo.h"
+#include "Utils.h"
 #include <stdio.h>
 #include <SDL_ttf.h>
 
@@ -110,6 +112,9 @@ void *FontInfo::openFont( char *font_file, int ratio1, int ratio2 )
         fc->next->font[0] = TTF_OpenFont( font_file, font_size * ratio1 / ratio2 );
 #if (SDL_TTF_MAJOR_VERSION>=2) && (SDL_TTF_MINOR_VERSION>=0) && (SDL_TTF_PATCHLEVEL>=10)
         fc->next->font[1] = TTF_OpenFont( font_file, font_size * ratio1 / ratio2 );
+		if (fc->next->font[1] == nullptr) {
+			utils::printError("Open font failed: %s\n", TTF_GetError());
+		}
         TTF_SetFontOutline(fc->next->font[1], 1);
 #endif
 #endif
