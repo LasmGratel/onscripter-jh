@@ -3,6 +3,7 @@
  *  ONScripter_text.cpp - Text parser of ONScripter
  *
  *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -659,8 +660,8 @@ int ONScripter::textCommand()
     if (buf[string_buffer_offset] == '[')
         string_buffer_offset++;
     else if (zenkakko_flag && 
-             buf[string_buffer_offset  ] == "Åy"[0] && 
-             buf[string_buffer_offset+1] == "Åy"[1])
+             buf[string_buffer_offset  ] == "°æ"[0] && 
+             buf[string_buffer_offset+1] == "°æ"[1])
         string_buffer_offset += 2;
     else
         tag_flag = false;
@@ -669,8 +670,8 @@ int ONScripter::textCommand()
     int end_offset = start_offset;
     while (tag_flag && buf[string_buffer_offset]){
         if (zenkakko_flag && 
-            buf[string_buffer_offset  ] == "Åz"[0] && 
-            buf[string_buffer_offset+1] == "Åz"[1]){
+            buf[string_buffer_offset  ] == "°ø"[0] && 
+            buf[string_buffer_offset+1] == "°ø"[1]){
             end_offset = string_buffer_offset;
             string_buffer_offset += 2;
             break;
