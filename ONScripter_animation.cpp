@@ -3,6 +3,7 @@
  *  ONScripter_animation.cpp - Methods to manipulate AnimationInfo
  *
  *  Copyright (c) 2001-2013 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -48,7 +49,7 @@ int ONScripter::calcDurationToNextAnimation()
 
     if (!textgosub_label &&
          (clickstr_state == CLICK_WAIT || clickstr_state == CLICK_NEWPAGE)){
-        AnimationInfo *anim;
+        AnimationInfo *anim = 0;
         if      (clickstr_state == CLICK_WAIT)
             anim = &cursor_info[0];
         else if (clickstr_state == CLICK_NEWPAGE)
@@ -128,7 +129,7 @@ void ONScripter::proceedAnimation()
 
     if (!textgosub_label &&
         (clickstr_state == CLICK_WAIT || clickstr_state == CLICK_NEWPAGE)){
-        AnimationInfo *anim;
+        AnimationInfo *anim = 0;
         if (clickstr_state == CLICK_WAIT)
             anim = &cursor_info[0];
         else if (clickstr_state == CLICK_NEWPAGE)
