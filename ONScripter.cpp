@@ -134,12 +134,12 @@ void ONScripter::initSDL()
 	screen_width = script_h.screen_width;
 	screen_height = script_h.screen_height;
 
-	//SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-	//SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-	//SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-	//SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-	//SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
-	//SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
+	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
 #ifdef _WIN32
