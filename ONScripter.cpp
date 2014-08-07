@@ -102,6 +102,15 @@ void ONScripter::initSDL()
 	screen_ratio1 = PDA_WIDTH;
 	screen_ratio2 = script_h.screen_width;
 	screen_width  = PDA_WIDTH;
+#elif SDL_VERSION_ATLEAST(2, 0, 0) && (defined(IOS) || defined(ANDROID))
+	SDL_DisplayMode mode;
+	SDL_GetDisplayMode(0,0,&mode);
+	int width;
+	if (mode.w * screen_height > mode.h * screen_width)
+		width = (mode.h*screen_width/screen_height) & (~0x01); // to be 2 bytes aligned
+	else
+		width = mode.w;
+	screen_width  = width;
 #elif defined(PDA_AUTOSIZE)
 	SDL_Rect **modes;
 	modes = SDL_ListModes(NULL, SDL_FULLSCREEN);

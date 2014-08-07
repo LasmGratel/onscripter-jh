@@ -485,16 +485,7 @@ bool ONScripter::mousePressEvent( SDL_MouseButtonEvent *event )
         if ( event->type == SDL_MOUSEBUTTONDOWN )
             current_button_state.down_flag = true;
     }
-#if SDL_VERSION_ATLEAST(2,0,0)
-	//TODO: Wheel event
-	else if (event->type == SDL_MOUSEWHEEL &&
-		(bexec_flag ||
-		(event_mode & WAIT_TEXT_MODE) ||
-		(usewheel_flag && event_mode & WAIT_BUTTON_MODE) ||
-		system_menu_mode == SYSTEM_LOOKBACK)) {
-
-	}
-#elif SDL_VERSION_ATLEAST(1, 2, 5)
+#if SDL_VERSION_ATLEAST(1, 2, 5) && !SDL_VERSION_ATLEAST(2, 0, 0)
     else if (event->button == SDL_BUTTON_WHEELUP &&
              (bexec_flag ||
               (event_mode & WAIT_TEXT_MODE) ||
@@ -529,6 +520,55 @@ bool ONScripter::mousePressEvent( SDL_MouseButtonEvent *event )
 
     return false;
 }
+
+#if SDL_VERSION_ATLEAST(2,0,0)
+bool ONScripter::mouseWheelEvent(SDL_MouseWheelEvent *event)
+{
+	if (variable_edit_mode) return false;
+
+	if (automode_flag) {
+		automode_flag = false;
+		return false;
+	}
+
+	current_button_state.x = event->x * screen_width / screen_device_width;
+	current_button_state.y = event->y * screen_width / screen_device_width;
+	current_button_state.down_flag = false;
+	skip_mode &= ~SKIP_NORMAL;
+
+	if (event->y > 0 &&
+		(bexec_flag ||
+		(event_mode & WAIT_TEXT_MODE) ||
+		(usewheel_flag && event_mode & WAIT_BUTTON_MODE) ||
+		system_menu_mode == SYSTEM_LOOKBACK)) {
+		current_button_state.button = -2;
+		sprintf(current_button_state.str, "WHEELUP");
+		if (event_mode & WAIT_TEXT_MODE) system_menu_mode = SYSTEM_LOOKBACK;
+	} else if (event->y < 0 &&
+		(bexec_flag ||
+		(enable_wheeldown_advance_flag && event_mode & WAIT_TEXT_MODE) ||
+		(usewheel_flag && event_mode & WAIT_BUTTON_MODE) ||
+		system_menu_mode == SYSTEM_LOOKBACK)) {
+		if (event_mode & WAIT_TEXT_MODE)
+			current_button_state.button = 0;
+		else
+			current_button_state.button = -3;
+		sprintf(current_button_state.str, "WHEELDOWN");
+	}
+	else return false;
+
+	if (event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE)) {
+		if (!(event_mode & (WAIT_TEXT_MODE)))
+			skip_mode |= SKIP_TO_EOL;
+		playClickVoice();
+		stopAnimation(clickstr_state);
+
+		return true;
+	}
+
+	return false;
+}
+#endif
 
 void ONScripter::variableEditMode( SDL_KeyboardEvent *event )
 {
@@ -1091,8 +1131,8 @@ void ONScripter::runEventLoop()
 #if SDL_VERSION_ATLEAST(2,0,0)
 		case SDL_FINGERMOTION:
 		{
-			tmp_event.motion.x = screen_device_width * event.tfinger.x;
-			tmp_event.motion.y = screen_device_height * event.tfinger.y;
+			tmp_event.motion.x = device_width *event.tfinger.x - (device_width -screen_device_width)/2;
+			tmp_event.motion.y = device_height*event.tfinger.y - (device_height-screen_device_height)/2;
 			if (mouseMoveEvent( &tmp_event.motion )) return;
 			if (btndown_flag){
 				event.button.type = SDL_MOUSEBUTTONDOWN;
@@ -1108,8 +1148,8 @@ void ONScripter::runEventLoop()
 			break;
 		case SDL_FINGERDOWN:
 		{
-			tmp_event.motion.x = screen_device_width * event.tfinger.x;
-			tmp_event.motion.y = screen_device_height * event.tfinger.y;
+			tmp_event.motion.x = device_width *event.tfinger.x - (device_width -screen_device_width)/2;
+			tmp_event.motion.y = device_height*event.tfinger.y - (device_height-screen_device_height)/2;
 			if (mouseMoveEvent( &tmp_event.motion )) return;
 		}
 			if ( btndown_flag ){
@@ -1117,8 +1157,8 @@ void ONScripter::runEventLoop()
 				tmp_event.button.button = SDL_BUTTON_LEFT;
 				if (SDL_GetNumTouchFingers(event.tfinger.touchId) >= 2)
 					tmp_event.button.button = SDL_BUTTON_RIGHT;
-				tmp_event.button.x = screen_device_width * event.tfinger.x;
-				tmp_event.button.y = screen_device_height * event.tfinger.y;
+				tmp_event.button.x = device_width *event.tfinger.x - (device_width -screen_device_width)/2;
+				tmp_event.button.y = device_height*event.tfinger.y - (device_height-screen_device_height)/2;
 				ret = mousePressEvent( &tmp_event.button );
 			}
 			{
@@ -1137,8 +1177,8 @@ void ONScripter::runEventLoop()
 				tmp_event.button.button = SDL_BUTTON_LEFT;
 				if (SDL_GetNumTouchFingers(event.tfinger.touchId) >= 1)
 					tmp_event.button.button = SDL_BUTTON_RIGHT;
-				tmp_event.button.x = screen_device_width * event.tfinger.x;
-				tmp_event.button.y = screen_device_height * event.tfinger.y;
+				tmp_event.button.x = device_width *event.tfinger.x - (device_width -screen_device_width)/2;
+				tmp_event.button.y = device_height*event.tfinger.y - (device_height-screen_device_height)/2;
                                 ret = mousePressEvent( &tmp_event.button );
 			}
 			tmp_event.key.keysym.sym = SDLK_LCTRL;
@@ -1235,6 +1275,10 @@ void ONScripter::runEventLoop()
             ret = mousePressEvent( &event.button );
             if (ret) return;
             break;
+		  case SDL_MOUSEWHEEL:
+			ret = mouseWheelEvent(&event.wheel);
+			if (ret) return;
+			break;
 #endif
           case SDL_JOYBUTTONDOWN:
             event.key.type = SDL_KEYDOWN;
