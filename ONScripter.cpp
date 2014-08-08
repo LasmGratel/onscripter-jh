@@ -843,6 +843,7 @@ void ONScripter::setFullScreen(bool fullscreen){
 	if (fullscreen != fullscreen_mode) {
 #if SDL_VERSION_ATLEAST(2,0,0)
 		SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+		flushDirect(screen_rect, refreshMode());
 		fullscreen_mode = fullscreen;
 #else
 #if !defined(PSP)

@@ -362,6 +362,44 @@ bool ONScripter::doEffect( EffectLink *effect, bool clear_dirty_region )
         drawEffect(&dst_rect, &src_rect, effect_dst_surface);
         break;
 
+	  /*case (MAX_EFFECT_NUM + 3) : // flushout
+        if (effect_counter > 0) {
+            width = 30 * effect_counter / effect_duration;
+		    height = 30 * (effect_counter + effect_timer_resolution) / effect_duration;
+		    if (height > width) {
+				int level = height;
+			    int i, j, ii, jj;
+#ifdef BPP16
+	            int total_width = accumulation_surface->pitch / 2;
+#else
+	            int total_width = accumulation_surface->pitch / 4;
+#endif
+				SDL_LockSurface(effect_src_surface);
+				SDL_LockSurface(accumulation_surface);
+				ONSBuf *src_buffer = (ONSBuf *)effect_src_surface->pixels;
+
+				ONSBuf *dst_buffer = (ONSBuf *)accumulation_surface->pixels;
+				const int factor = 32;
+				const int maxlevel = 30;
+				level += factor - maxlevel;
+				const int y_offset = screen_height*level / factor / 2;
+				const int x_offset = screen_width*level / factor / 2;
+				for (i = 0; i<screen_height; i++) {
+					ii = i*(factor - level) / factor + y_offset;
+					for (j = 0; j<screen_width; j++) {
+						jj = j*(factor - level) / factor + x_offset;
+						*dst_buffer++ = src_buffer[ii*total_width + jj];
+					}
+				}
+				SDL_UnlockSurface(accumulation_surface);
+				SDL_UnlockSurface(effect_src_surface);
+				alphaBlend(NULL, ALPHA_BLEND_CONST, 64, &dirty_rect.bounding_box);
+				alphaBlend(NULL, ALPHA_BLEND_CONST, effect_counter * 256 / effect_duration, &dirty_rect.bounding_box);
+		    }
+		}
+		break;
+		*/
+
       case 99: // dll-based
         if (effect->anim.image_name != NULL){
             if (!strncmp(effect->anim.image_name, "breakup.dll", 11)){

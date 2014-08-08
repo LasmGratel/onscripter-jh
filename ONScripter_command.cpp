@@ -2522,6 +2522,28 @@ int ONScripter::gameCommand()
     return RET_CONTINUE;
 }
 
+//TODO:flushoutCommand
+/*int ONScripter::flushoutCommand()
+{
+	//Mion: flushout special effect
+	// not quite the same as NScr's, but looks good
+	// does a "flushout" in 30 stages while fading to white
+	tmp_effect.duration = script_h.readInt();
+	tmp_effect.effect = MAX_EFFECT_NUM + 3;
+
+	dirty_rect.fill(screen_width, screen_height);
+
+	if (setEffect(&tmp_effect, false, false)) return RET_CONTINUE;
+
+	setStr(&bg_info.file_name, "white");
+	createBackground();
+	SDL_BlitSurface(bg_info.image_surface, NULL, effect_dst_surface, NULL);
+	SDL_BlitSurface(accumulation_surface, NULL, effect_src_surface, NULL);
+	while (doEffect(&tmp_effect));
+
+	return RET_CONTINUE;
+}*/
+
 int ONScripter::fileexistCommand()
 {
     script_h.readInt();

@@ -1186,6 +1186,12 @@ void ONScripter::runEventLoop()
 			num_fingers = 0;
 			if (ret) return;
 			break;
+		case SDL_APP_WILLENTERBACKGROUND:
+			Mix_PauseMusic();
+			break;
+		case SDL_APP_WILLENTERFOREGROUND:
+			Mix_ResumeMusic();
+			break;
 #else
           case SDL_FINGERMOTION:
             {
@@ -1371,12 +1377,17 @@ void ONScripter::runEventLoop()
             return;
 #if SDL_VERSION_ATLEAST(2,0,0)
 		  case SDL_WINDOWEVENT:
-			  if(event.window.event != SDL_WINDOWEVENT_FOCUS_GAINED) break;
-#ifdef USE_SDL_RENDERER
-            SDL_RenderPresent(renderer);
-#else
-            SDL_UpdateRect( screen_surface, 0, 0, screen_width, screen_height );
-#endif
+			  if (event.window.event != SDL_WINDOWEVENT_FOCUS_GAINED) {
+				  if (event.window.event == SDL_WINDOWEVENT_EXPOSED) SDL_RenderPresent(renderer);
+				  break;
+			  }
+#ifdef ANDROID
+			  else {
+				  repaintCommand();
+				  break;
+			  }
+#endif //ANDROID
+			  SDL_RenderPresent(renderer);
 			  break;
 #else
           case SDL_ACTIVEEVENT:
