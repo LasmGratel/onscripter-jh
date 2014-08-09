@@ -45,7 +45,7 @@
 #define MESSAGE_CANCEL "Cancel"
 #else
 #define MESSAGE_SAVE_EXIST "%s%s　%s月%s日%s时%s分"
-#define MESSAGE_SAVE_EMPTY "%s%s　—————————————"
+#define MESSAGE_SAVE_EMPTY "%s%s　————————————"
 #define MESSAGE_SAVE_CONFIRM "保存在%s%s？"
 #define MESSAGE_LOAD_CONFIRM "读取%s%s？"
 #define MESSAGE_RESET_CONFIRM "返回标题？"

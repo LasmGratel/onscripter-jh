@@ -30,7 +30,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
-#elif defined(WIN32)
+#elif defined(_WIN32)
 #include <windows.h>
 #elif defined(MACOS9)
 #include <DateTimeUtils.h>
@@ -66,7 +66,7 @@ void ONScripter::searchSaveFile( SaveFileInfo &save_file_info, int no )
     save_file_info.day    = tm->tm_mday;
     save_file_info.hour   = tm->tm_hour;
     save_file_info.minute = tm->tm_min;
-#elif defined(WIN32)
+#elif defined(_WIN32)
     sprintf( file_name, "%ssave%d.dat", save_dir?save_dir:archive_path, no );
     HANDLE  handle;
     FILETIME    tm, ltm;
