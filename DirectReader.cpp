@@ -306,11 +306,11 @@ FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type,
     }
 
 #if defined(UTF8_FILESYSTEM)
-    convertFromSJISToUTF8(capital_name_tmp, capital_name);
+    convertCodingToUTF8(capital_name_tmp, capital_name);
     strcpy(capital_name, capital_name_tmp);
     len = strlen(capital_name);
 #elif defined(LINUX)
-    convertFromSJISToEUC(capital_name);
+    convertCodingToEUC(capital_name);
 #endif    
 
     *length = 0;
@@ -365,7 +365,7 @@ size_t DirectReader::getFile( const char *file_name, unsigned char *buffer, int 
     return total;
 }
 
-void DirectReader::convertFromSJISToEUC( char *buf )
+void DirectReader::convertCodingToEUC( char *buf )
 {
     int i = 0;
     while ( buf[i] ) {
@@ -395,7 +395,7 @@ void DirectReader::convertFromSJISToEUC( char *buf )
     }
 }
 
-void DirectReader::convertFromSJISToUTF8( char *dst_buf, const char *src_buf )
+void DirectReader::convertCodingToUTF8( char *dst_buf, const char *src_buf )
 {
     int i, c;
     unsigned short unicode;

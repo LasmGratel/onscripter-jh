@@ -3124,14 +3124,14 @@ int ONScripter::captionCommand()
     size_t len = strlen(buf);
 
     char *buf2 = new char[len*3+1];
-#if defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208) /* convert sjis to utf-8 */
-    DirectReader::convertFromSJISToUTF8(buf2, buf);
+#if defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208)
+    DirectReader::convertCodingToUTF8(buf2, buf);
 #elif defined(LINUX) || (defined(WIN32) && defined(UTF8_CAPTION))
 #if defined(UTF8_CAPTION)
-    DirectReader::convertFromSJISToUTF8(buf2, buf);
+    DirectReader::convertCodingToUTF8(buf2, buf);
 #else
     strcpy(buf2, buf);
-    DirectReader::convertFromSJISToEUC(buf2);
+    DirectReader::convertCodingToEUC(buf2);
 #endif
 #else
     strcpy(buf2, buf);
