@@ -66,6 +66,23 @@ void ONScripter::searchSaveFile( SaveFileInfo &save_file_info, int no )
     save_file_info.day    = tm->tm_mday;
     save_file_info.hour   = tm->tm_hour;
     save_file_info.minute = tm->tm_min;
+#elif defined(__cplusplus_winrt)
+	sprintf(file_name, "%ssave%d.dat", save_dir ? save_dir : archive_path, no);
+	WCHAR file_nameW[256];
+	MultiByteToWideChar(CP_ACP, 0, file_name, -1, file_nameW, 256);
+	WIN32_FILE_ATTRIBUTE_DATA wfad;
+	if (!GetFileAttributesEx(file_nameW, GetFileExInfoStandard, &wfad)) {
+		save_file_info.valid = false;
+		return;
+	}
+
+	SYSTEMTIME stm;
+	FileTimeToSystemTime( &wfad.ftLastWriteTime, &stm);
+
+	save_file_info.month  = stm.wMonth;
+	save_file_info.day    = stm.wDay;
+	save_file_info.hour   = stm.wHour;
+	save_file_info.minute = stm.wMinute;
 #elif defined(_WIN32)
     sprintf( file_name, "%ssave%d.dat", save_dir?save_dir:archive_path, no );
     HANDLE  handle;
@@ -75,8 +92,8 @@ void ONScripter::searchSaveFile( SaveFileInfo &save_file_info, int no )
 #if defined(WINCE)
     WCHAR file_nameW[256];
     MultiByteToWideChar(CP_ACP, 0, file_name, -1, file_nameW, 256);
-    handle = CreateFile( file_nameW, GENERIC_READ, 0, NULL,
-                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+	handle = CreateFile( file_nameW, GENERIC_READ, 0, NULL,
+		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
 #else
     handle = CreateFile( file_name, GENERIC_READ, 0, NULL,
                          OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );

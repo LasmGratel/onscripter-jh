@@ -288,7 +288,7 @@ ONScripter::ONScripter()
 		sprite2_info[i].affine_flag = true;
 
 	// External Players
-#if defined(WINCE)
+#if defined(WINCE) || defined(__cplusplus_winrt)
 	midi_cmd  = NULL;
 #else
 	midi_cmd = getenv("MUSIC_CMD");
