@@ -3,6 +3,7 @@
  *  ONScripter_file.cpp - FILE I/O of ONScripter
  *
  *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -28,7 +29,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
-#elif defined(WIN32)
+#elif defined(_WIN32)
 #include <windows.h>
 #elif defined(MACOS9)
 #include <DateTimeUtils.h>

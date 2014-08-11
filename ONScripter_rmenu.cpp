@@ -3,6 +3,7 @@
  *  ONScripter_rmenu.cpp - Right click menu handler of ONScripter
  *
  *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -43,7 +44,7 @@
 #define MESSAGE_CANCEL "Cancel"
 #else
 #define MESSAGE_SAVE_EXIST "%s%s　%s月%s日%s时%s分"
-#define MESSAGE_SAVE_EMPTY "%s%s　————————————————————————"
+#define MESSAGE_SAVE_EMPTY "%s%s　————————————"
 #define MESSAGE_SAVE_CONFIRM "保存在%s%s？"
 #define MESSAGE_LOAD_CONFIRM "读取%s%s？"
 #define MESSAGE_RESET_CONFIRM "返回标题？"
