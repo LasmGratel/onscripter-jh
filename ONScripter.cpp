@@ -164,12 +164,22 @@ void ONScripter::initSDL()
 	window = SDL_CreateWindow(NULL, window_x, window_y, screen_device_width, screen_device_height, window_flag);
 	SDL_GetWindowSize(window, &device_width, &device_height);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+	SDL_RenderSetLogicalSize(renderer, script_h.screen_width, script_h.screen_height);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+#endif //SDL_VERSION_ATLEAST(2,0,0)
 	texture_format = SDL_PIXELFORMAT_ARGB8888;
 	SDL_RendererInfo info;
 	SDL_GetRendererInfo(renderer, &info);
 	if (info.texture_formats[0] == SDL_PIXELFORMAT_ABGR8888)
 		texture_format = SDL_PIXELFORMAT_ABGR8888;
 	SDL_RenderClear(renderer);
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+	for (int i = 0; i < 3; ++i) {
+		SDL_RenderPresent(renderer);
+		SDL_RenderClear(renderer);
+	}
+#endif //SDL_VERSION_ATLEAST(2,0,0)
 #else
 #if defined(ANDROID)
 	// use hardware scaling
@@ -279,6 +289,7 @@ ONScripter::ONScripter()
 	sprite_info = new AnimationInfo[MAX_SPRITE_NUM];
 	sprite2_info = new AnimationInfo[MAX_SPRITE2_NUM];
 	current_button_state.down_flag = false;
+	compatibilityMode = false;
 
 	int i;
 	for (i = 0; i < MAX_SPRITE2_NUM; i++)
@@ -349,6 +360,11 @@ void ONScripter::setFullscreenMode()
 void ONScripter::setWindowMode()
 {
 	window_mode = true;
+}
+
+void ONScripter::setCompatibilityMode()
+{
+	compatibilityMode = true;
 }
 
 void ONScripter::enableButtonShortCut()
@@ -698,16 +714,27 @@ void ONScripter::flushDirect(SDL_Rect &rect, int refresh_mode)
 
 #ifdef USE_SDL_RENDERER
 	SDL_Rect src_rect = { 0, 0, screen_width, screen_height };
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+	SDL_Rect &dst_rect = src_rect;
+#else
 	SDL_Rect dst_rect = { (device_width - screen_device_width) / 2,
 		(device_height - screen_device_height) / 2,
 		screen_device_width, screen_device_height };
+#endif
 	if (AnimationInfo::doClipping(&rect, &src_rect) || (dst_rect.w == 0 && dst_rect.h == 0)) return;
 	refreshSurface(accumulation_surface, &rect, refresh_mode);
 	SDL_LockSurface(accumulation_surface);
 	SDL_UpdateTexture(texture, &rect, (unsigned char*)accumulation_surface->pixels + accumulation_surface->pitch*rect.y + rect.x*sizeof(ONSBuf), accumulation_surface->pitch);
 	SDL_UnlockSurface(accumulation_surface);
-	SDL_RenderCopy(renderer, texture, &src_rect, &dst_rect);
-	SDL_RenderPresent(renderer);
+	
+	if (compatibilityMode) {
+		SDL_RenderClear(renderer);
+		SDL_RenderCopy(renderer, texture, NULL, NULL);
+		SDL_RenderPresent(renderer);
+	} else {
+		SDL_RenderCopy(renderer, texture, &src_rect, &dst_rect);
+		SDL_RenderPresent(renderer);
+	}
 #else
 	refreshSurface(accumulation_surface, &rect, refresh_mode);
 	SDL_Rect dst_rect = rect;

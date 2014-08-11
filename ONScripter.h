@@ -72,6 +72,7 @@ public:
 	void setSaveDir(const char *path);
 	void setFullscreenMode();
 	void setWindowMode();
+	void setCompatibilityMode();
 	void enableButtonShortCut();
 	void enableWheelDownAdvance();
 	void disableRescale();
@@ -310,6 +311,7 @@ private:
 	bool disable_rescale_flag;
 	bool edit_flag;
 	char *key_exe_file;
+	bool compatibilityMode;
 
 	// variables relevant to button
 	struct ButtonState {

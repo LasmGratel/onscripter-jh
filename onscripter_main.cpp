@@ -285,13 +285,19 @@ int main( int argc, char *argv[] )
                 argv++;
                 ons.setKeyEXE(argv[0]);
             }
-#if defined(ANDROID) && !SDL_VERSION_ATLEAST(2,0,0)
+#if defined(ANDROID) 
+#if SDL_VERSION_ATLEAST(2,0,0)
+            else if (!strcmp(argv[0] + 1, "-compatible")){
+				ons.setCompatibilityMode(); 
+            }
+#else
             else if ( !strcmp( argv[0]+1, "-open-only" ) ){
                 argc--;
                 argv++;
                 if (ons.openScript()) exit(-1);
                 return 0;
             }
+#endif //SDL_VERSION_ATLEAST(2,0,0)
 #endif
             else{
                 utils::printInfo(" unknown option %s\n", argv[0] );
