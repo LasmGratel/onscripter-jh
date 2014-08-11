@@ -25,6 +25,7 @@
 #include "ONScripter.h"
 #include "Utils.h"
 #include "gbk2utf16.h"
+#include "sjis2utf16.h"
 #include "version.h"
 
 ONScripter ons;
@@ -218,8 +219,6 @@ int main( int argc, char *argv[] )
 #endif
 #endif
 
-	coding2utf16 = new GBK2UTF16();
-
     // ----------------------------------------
     // Parse options
     argv++;
@@ -285,6 +284,9 @@ int main( int argc, char *argv[] )
                 argv++;
                 ons.setKeyEXE(argv[0]);
             }
+			else if (!strcmp(argv[0] + 1, "-enc:sjis")) {
+				if (coding2utf16 == nullptr) coding2utf16 = new SJIS2UTF16();
+			}
 #if defined(ANDROID) 
 #if SDL_VERSION_ATLEAST(2,0,0)
             else if (!strcmp(argv[0] + 1, "-compatible")){
@@ -309,6 +311,8 @@ int main( int argc, char *argv[] )
         argc--;
         argv++;
     }
+
+	if (coding2utf16 == nullptr) coding2utf16 = new GBK2UTF16();
     
     // ----------------------------------------
     // Run ONScripter

@@ -31,7 +31,7 @@
 #endif
 
 #define IS_TWO_BYTE(x) \
-        ( ((x) & 0xe0) == 0xe0 || ((x) & 0xe0) == 0x80 )
+        ( ((unsigned char)(x) > (unsigned char)0x80) && ((unsigned char)(x) !=(unsigned char) 0xff) )
 
 extern Coding2UTF16 *coding2utf16;
 
