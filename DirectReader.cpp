@@ -29,7 +29,7 @@
 #endif
 
 #define IS_TWO_BYTE(x) \
-        ( ((x) & 0xe0) == 0xe0 || ((x) & 0xe0) == 0x80 )
+        ( ((unsigned char)(x) > (unsigned char)0x80) && ((unsigned char)(x) !=(unsigned char) 0xff) )
 
 extern unsigned short convSJIS2UTF16( unsigned short in );
 extern int convUTF16ToUTF8( unsigned char dst[4], unsigned short src );
