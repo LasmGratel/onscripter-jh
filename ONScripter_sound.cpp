@@ -143,6 +143,9 @@ int ONScripter::playSound(const char *filename, int format, bool loop_flag, int 
 #else
 		music_info = Mix_LoadMUS_RW(SDL_RWFromMem(buffer, length));
 #endif
+		if (music_info == nullptr) {
+			utils::printError("can't load music \"%s\": %s\n", filename, Mix_GetError());
+		}
         Mix_VolumeMusic( music_volume );
         if ( Mix_PlayMusic( music_info, (music_play_loop_flag&&music_loopback_offset==0.0)?-1:0 ) == 0 ){
             music_buffer = buffer;
@@ -154,6 +157,9 @@ int ONScripter::playSound(const char *filename, int format, bool loop_flag, int 
     
     if (format & SOUND_CHUNK){
         Mix_Chunk *chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer, length), 1);
+		if (chunk == nullptr) {
+			utils::printError("can't load chunk \"%s\": %s\n", filename, Mix_GetError());
+		}
         if (playWave(chunk, format, loop_flag, channel) == 0){
             delete[] buffer;
             return SOUND_CHUNK;

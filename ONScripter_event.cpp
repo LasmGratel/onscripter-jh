@@ -1127,7 +1127,7 @@ void ONScripter::runEventLoop()
         }
 
         switch (event.type) {
-#if defined(IOS) || defined(ANDROID)
+#if defined(IOS) || defined(ANDROID) || defined(WINRT)
 #if SDL_VERSION_ATLEAST(2,0,0)
 		case SDL_FINGERMOTION:
 		{

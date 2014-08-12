@@ -66,7 +66,7 @@ void ONScripter::searchSaveFile( SaveFileInfo &save_file_info, int no )
     save_file_info.day    = tm->tm_mday;
     save_file_info.hour   = tm->tm_hour;
     save_file_info.minute = tm->tm_min;
-#elif defined(__cplusplus_winrt)
+#elif defined(WINRT)
 	sprintf(file_name, "%ssave%d.dat", save_dir ? save_dir : archive_path, no);
 	WCHAR file_nameW[256];
 	MultiByteToWideChar(CP_ACP, 0, file_name, -1, file_nameW, 256);

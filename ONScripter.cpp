@@ -102,7 +102,7 @@ void ONScripter::initSDL()
 	screen_ratio1 = PDA_WIDTH;
 	screen_ratio2 = script_h.screen_width;
 	screen_width  = PDA_WIDTH;
-#elif SDL_VERSION_ATLEAST(2, 0, 0) && (defined(IOS) || defined(ANDROID))
+#elif SDL_VERSION_ATLEAST(2, 0, 0) && (defined(IOS) || defined(ANDROID) || defined(WINRT))
 	SDL_DisplayMode mode;
 	SDL_GetDisplayMode(0,0,&mode);
 	int width;
@@ -152,7 +152,7 @@ void ONScripter::initSDL()
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
 #ifdef _WIN32
-	int window_flag = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
+	int window_flag = SDL_WINDOW_SHOWN;
 #else
 	int window_flag = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS;
 #endif //_WIN32
@@ -162,6 +162,10 @@ void ONScripter::initSDL()
 	int window_x = 0,window_y = 0;
 #endif //SDL_VERSION_ATLEAST(2,0,0)
 	window = SDL_CreateWindow(NULL, window_x, window_y, screen_device_width, screen_device_height, window_flag);
+	if(window == nullptr){
+		utils::printError("Could not create window: %s\n", SDL_GetError());
+		exit(-1);
+	}
 	SDL_GetWindowSize(window, &device_width, &device_height);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 #if SDL_VERSION_ATLEAST(2, 0, 0)
@@ -296,7 +300,7 @@ ONScripter::ONScripter()
 		sprite2_info[i].affine_flag = true;
 
 	// External Players
-#if defined(WINCE) || defined(__cplusplus_winrt)
+#if defined(WINCE) || defined(WINRT)
 	midi_cmd  = NULL;
 #else
 	midi_cmd = getenv("MUSIC_CMD");

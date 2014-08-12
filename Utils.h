@@ -24,6 +24,20 @@
 
 #ifdef ANDROID
 #include <android/log.h>
+#elif defined(WINRT)
+#include "debugapi.h"
+#include "windows.h"
+static BOOL MByteToWChar(LPCSTR lpcszStr, LPWSTR lpwszStr, DWORD dwSize)
+{
+	DWORD dwMinSize;
+	dwMinSize = MultiByteToWideChar(CP_ACP, 0, lpcszStr, -1, NULL, 0);
+	if (dwSize < dwMinSize)
+	{
+		return FALSE;
+	}
+	MultiByteToWideChar(CP_ACP, 0, lpcszStr, -1, lpwszStr, dwMinSize);
+	return TRUE;
+}
 #endif
 #include <stdio.h>
 #include <stdarg.h>
@@ -34,6 +48,12 @@ namespace utils{
 		va_start(ap, format);
 #ifdef ANDROID
 		__android_log_vprint(ANDROID_LOG_VERBOSE, "Info", format, ap);
+#elif defined(WINRT)
+		char *buf = new char[256];
+		vsprintf(buf, format, ap);
+		LPWSTR wstr = new WCHAR[128];
+		MByteToWChar(buf, wstr, 256);
+		OutputDebugString(wstr);
 #else
 		vprintf(format, ap);
 #endif
@@ -45,6 +65,12 @@ namespace utils{
 		va_start(ap, format);
 #ifdef ANDROID
 		__android_log_vprint(ANDROID_LOG_ERROR, "ERR", format, ap);
+#elif defined(WINRT)
+		char *buf = new char[256];
+		vsprintf(buf,format,ap);
+		LPWSTR wstr = new WCHAR[128];
+		MByteToWChar(buf, wstr, 256);
+		OutputDebugString(wstr);
 #else
 		vfprintf(stderr, format, ap);
 #endif
