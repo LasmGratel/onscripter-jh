@@ -13,4 +13,4 @@ ONScripter是一个开源的NScripter脚本解释工具，主要由Ogapee开发维护
 进度
 
 	SDL2分支提供各种改进并可在SDL2环境编译
-	目前Windows、Android、iOS平台均编译通过实测可用，其余平台未测试
+	目前Windows、Android、iOS、Linux、Windows Phone平台均编译通过实测可用，其余平台未测试

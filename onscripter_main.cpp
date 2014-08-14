@@ -179,7 +179,7 @@ int main( int argc, char *argv[] )
     SetupCallbacks();
 #elif defined(WINRT)
 	char currentDir[256];
-	auto appInstallDirectory = Windows::ApplicationModel::Package::Current->InstalledLocation->Path + "\\Assets\\";
+	auto appInstallDirectory = Windows::Storage::ApplicationData::Current->LocalFolder->Path + "\\ons\\";
 	const wchar_t *wText = appInstallDirectory->Begin();
 	WCharToMByte(wText,currentDir,256);
 	char* cptr = currentDir;

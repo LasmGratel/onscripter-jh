@@ -28,6 +28,8 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include "NsaReader.h"
+#include "coding2utf16.h"
+#include "gbk2utf16.h"
 #ifdef _WIN32
 #include <direct.h>
 inline int mkdir(const char *pathname, int unused){
@@ -36,6 +38,7 @@ inline int mkdir(const char *pathname, int unused){
 #endif
 
 extern int errno;
+Coding2UTF16 *coding2utf16;
 
 int main( int argc, char **argv )
 {
@@ -51,7 +54,10 @@ int main( int argc, char **argv )
 
     if ( argc >= 2 ){
         while ( argc > 2 ){
-            if      ( !strcmp( argv[1], "-ns2" ) ) nsa_offset = 1;
+			if (!strcmp(argv[1], "-ns2")) {
+				archive_type = BaseReader::ARCHIVE_TYPE_NS2;
+				nsa_offset = 1;
+			}
             else if ( !strcmp( argv[1], "-ns3" ) ) nsa_offset = 2;
             argc--;
             argv++;
