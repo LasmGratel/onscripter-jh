@@ -47,12 +47,8 @@ static void SDL_Quit_Wrapper()
 }
 #endif
 
-void ONScripter::setCaption(const char *title, const char *iconstr){
-#if SDL_VERSION_ATLEAST(2,0,0)
+inline void ONScripter::setCaption(const char *title, const char *iconstr){
 	SDL_SetWindowTitle(window, title);
-#else
-	SDL_WM_SetCaption(title,iconstr);
-#endif
 }
 
 void ONScripter::initSDL()
@@ -98,11 +94,7 @@ void ONScripter::initSDL()
 	screen_bpp = 32;
 #endif
 
-#if defined(PDA_WIDTH)
-	screen_ratio1 = PDA_WIDTH;
-	screen_ratio2 = script_h.screen_width;
-	screen_width  = PDA_WIDTH;
-#elif SDL_VERSION_ATLEAST(2, 0, 0) && (defined(IOS) || defined(ANDROID) || defined(WINRT))
+#if (defined(IOS) || defined(ANDROID) || defined(WINRT))
 	SDL_DisplayMode mode;
 	SDL_GetDisplayMode(0,0,&mode);
 	int width;
@@ -111,26 +103,6 @@ void ONScripter::initSDL()
 	else
 		width = mode.w;
 	screen_width  = width;
-#elif defined(PDA_AUTOSIZE)
-	SDL_Rect **modes;
-	modes = SDL_ListModes(NULL, SDL_FULLSCREEN);
-	if (modes == (SDL_Rect **)0){
-		utils::printError("No Video mode available.\n");
-		exit(-1);
-	}
-	else if (modes == (SDL_Rect **)-1){
-		// no restriction
-	}
-	else{
-		int width;
-		if (modes[0]->w * screen_height > modes[0]->h * screen_width)
-			width = (modes[0]->h*screen_width/screen_height) & (~0x01); // to be 2 bytes aligned
-		else
-			width = modes[0]->w;
-		screen_ratio1 = width;
-		screen_ratio2 = script_h.screen_width;
-		screen_width  = width;
-	}
 #endif
 	screen_height = screen_width*script_h.screen_height / script_h.screen_width;
 
@@ -156,34 +128,26 @@ void ONScripter::initSDL()
 #else
 	int window_flag = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS;
 #endif //_WIN32
-#ifdef SDL_VERSION_ATLEAST(2,0,0)
 	int window_x = SDL_WINDOWPOS_UNDEFINED, window_y = SDL_WINDOWPOS_UNDEFINED;
-#else
-	int window_x = 0,window_y = 0;
-#endif //SDL_VERSION_ATLEAST(2,0,0)
 	window = SDL_CreateWindow(NULL, window_x, window_y, screen_device_width, screen_device_height, window_flag);
 	if(window == nullptr){
 		utils::printError("Could not create window: %s\n", SDL_GetError());
 		exit(-1);
 	}
 	SDL_GetWindowSize(window, &device_width, &device_height);
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-#if SDL_VERSION_ATLEAST(2, 0, 0)
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
 	SDL_RenderSetLogicalSize(renderer, script_h.screen_width, script_h.screen_height);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-#endif //SDL_VERSION_ATLEAST(2,0,0)
 	texture_format = SDL_PIXELFORMAT_ARGB8888;
 	SDL_RendererInfo info;
 	SDL_GetRendererInfo(renderer, &info);
 	if (info.texture_formats[0] == SDL_PIXELFORMAT_ABGR8888)
 		texture_format = SDL_PIXELFORMAT_ABGR8888;
 	SDL_RenderClear(renderer);
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	for (int i = 0; i < 3; ++i) {
 		SDL_RenderPresent(renderer);
 		SDL_RenderClear(renderer);
 	}
-#endif //SDL_VERSION_ATLEAST(2,0,0)
 #else
 #if defined(ANDROID)
 	// use hardware scaling
@@ -196,27 +160,10 @@ void ONScripter::initSDL()
 #ifdef BPP16
 	texture_format = SDL_PIXELFORMAT_RGB565;
 #else
-#if defined(ANDROID) && !SDL_VERSION_ATLEAST(2,0,0)
-	SDL_SetSurfaceBlendMode(screen_surface, SDL_BLENDMODE_NONE);
-	texture_format = SDL_PIXELFORMAT_ABGR8888;
-#else
 	texture_format = SDL_PIXELFORMAT_ARGB8888;
-#endif
 #endif //BPP16
 #endif //defined(USE_SDL_RENDERER)
 
-	/* ---------------------------------------- */
-	/* Check if VGA screen is available. */
-#if !defined(USE_SDL_RENDERER) && (PDA_WIDTH==640)
-	if ( screen_surface == NULL ){
-		screen_ratio1 /= 2;
-		screen_width  /= 2;
-		screen_height /= 2;
-		screen_device_width  = screen_width;
-		screen_device_height = screen_height;
-		screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
-	}
-#endif
 	underline_value = script_h.screen_height;
 
 #ifndef USE_SDL_RENDERER
@@ -443,7 +390,7 @@ int ONScripter::init()
 	screenshot_h = screen_height;
 
 #ifdef USE_SDL_RENDERER
-	texture = SDL_CreateTextureFromSurface(renderer, accumulation_surface);
+	texture = SDL_CreateTexture(renderer, texture_format, SDL_TEXTUREACCESS_STREAMING, accumulation_surface->w, accumulation_surface->h);
 #endif    
 
 	tmp_image_buf = NULL;
@@ -718,14 +665,8 @@ void ONScripter::flushDirect(SDL_Rect &rect, int refresh_mode)
 
 #ifdef USE_SDL_RENDERER
 	SDL_Rect src_rect = { 0, 0, screen_width, screen_height };
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	SDL_Rect &dst_rect = src_rect;
-#else
-	SDL_Rect dst_rect = { (device_width - screen_device_width) / 2,
-		(device_height - screen_device_height) / 2,
-		screen_device_width, screen_device_height };
-#endif
-	if (AnimationInfo::doClipping(&rect, &src_rect) || (dst_rect.w == 0 && dst_rect.h == 0)) return;
+//	if (AnimationInfo::doClipping(&rect, &src_rect) || (dst_rect.w == 0 && dst_rect.h == 0)) return;
 	refreshSurface(accumulation_surface, &rect, refresh_mode);
 	SDL_LockSurface(accumulation_surface);
 	SDL_UpdateTexture(texture, &rect, (unsigned char*)accumulation_surface->pixels + accumulation_surface->pitch*rect.y + rect.x*sizeof(ONSBuf), accumulation_surface->pitch);
@@ -858,31 +799,14 @@ void ONScripter::mouseOverCheck(int x, int y)
 }
 
 void ONScripter::warpMouse(int x, int y){
-#if SDL_VERSION_ATLEAST(2,0,0)
 	SDL_WarpMouseInWindow(nullptr, x, y);
-#else
-	SDL_WarpMouse(x, y);
-#endif
 }
 
 void ONScripter::setFullScreen(bool fullscreen){
 	if (fullscreen != fullscreen_mode) {
-#if SDL_VERSION_ATLEAST(2,0,0)
 		SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 		flushDirect(screen_rect, refreshMode());
 		fullscreen_mode = fullscreen;
-#else
-#if !defined(PSP)
-		if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
-			screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp,
-                                                           fullscreen ? DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN
-                                                           : DEFAULT_VIDEO_SURFACE_FLAG );
-			flushDirect( screen_rect, refreshMode() );
-		}
-#else
-		fullscreen_mode = fullscreen;
-#endif
-#endif
 	}
 }
 

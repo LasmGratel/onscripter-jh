@@ -279,6 +279,9 @@ public:
 	int allsphideCommand();
 	int amspCommand();
 
+	//Used by AnimationInfo_hw
+	inline SDL_Renderer* getRenderer(){ return renderer; };
+
 private:
 	// ----------------------------------------
 	// global variables and methods
@@ -492,9 +495,7 @@ private:
 	bool trapHandler();
 	bool mouseMoveEvent(SDL_MouseMotionEvent *event);
 	bool mousePressEvent(SDL_MouseButtonEvent *event);
-#if SDL_VERSION_ATLEAST(2,0,0)
 	bool mouseWheelEvent(SDL_MouseWheelEvent *event);
-#endif
 	void variableEditMode(SDL_KeyboardEvent *event);
 	void shiftCursorOnButton(int diff);
 	bool keyDownEvent(SDL_KeyboardEvent *event);

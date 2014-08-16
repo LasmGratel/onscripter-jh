@@ -113,32 +113,6 @@ void optionVersion()
     exit(0);
 }
 
-#ifdef ANDROID && !SDL_VERSION_ATLEAST(2,0,0)
-extern "C"
-{
-#include <jni.h>
-
-#ifndef SDL_JAVA_PACKAGE_PATH
-#error You have to define SDL_JAVA_PACKAGE_PATH to your package path with dots replaced with underscores, for example "com_example_SanAngeles"
-#endif
-#define JAVA_EXPORT_NAME2(name,package) Java_##package##_##name
-#define JAVA_EXPORT_NAME1(name,package) JAVA_EXPORT_NAME2(name,package)
-#define JAVA_EXPORT_NAME(name) JAVA_EXPORT_NAME1(name,SDL_JAVA_PACKAGE_PATH)
-
-JNIEXPORT jint JNICALL 
-JAVA_EXPORT_NAME(ONScripter_nativeGetWidth) ( JNIEnv*  env, jobject thiz )
-{
-	return ons.getWidth();
-}
-
-JNIEXPORT jint JNICALL 
-JAVA_EXPORT_NAME(ONScripter_nativeGetHeight) ( JNIEnv*  env, jobject thiz )
-{
-	return ons.getHeight();
-}
-}
-#endif
-
 #if defined(IOS)
 extern "C" void playVideoIOS(const char *filename, bool click_flag, bool loop_flag)
 {
@@ -163,9 +137,7 @@ BOOL WCharToMByte(LPCWSTR lpcwszStr, LPSTR lpszStr, DWORD dwSize)
 }
 #endif
 
-#if (defined(QWS) || defined(ANDROID)) && !SDL_VERSION_ATLEAST(2,0,0)
-int SDL_main( int argc, char **argv )
-#elif defined(PSP)
+#if defined(PSP)
 extern "C" int main( int argc, char **argv )
 #else
 int main( int argc, char *argv[] )
@@ -317,18 +289,9 @@ int main( int argc, char *argv[] )
 				if (coding2utf16 == nullptr) coding2utf16 = new SJIS2UTF16();
 			}
 #if defined(ANDROID) 
-#if SDL_VERSION_ATLEAST(2,0,0)
             else if (!strcmp(argv[0] + 1, "-compatible")){
 				ons.setCompatibilityMode(); 
             }
-#else
-            else if ( !strcmp( argv[0]+1, "-open-only" ) ){
-                argc--;
-                argv++;
-                if (ons.openScript()) exit(-1);
-                return 0;
-            }
-#endif //SDL_VERSION_ATLEAST(2,0,0)
 #endif
             else{
                 utils::printInfo(" unknown option %s\n", argv[0] );

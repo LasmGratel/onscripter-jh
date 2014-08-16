@@ -322,11 +322,7 @@ int ONScripter::loadSaveFile2( int file_version )
     if ( btndef_info.image_name && btndef_info.image_name[0] != '\0' ){
         parseTaggedString( &btndef_info );
         setupAnimationInfo( &btndef_info );
-#if SDL_VERSION_ATLEAST(2,0,0)
 		SDL_SetSurfaceBlendMode(btndef_info.image_surface, SDL_BLENDMODE_NONE);
-#else
-    SDL_SetAlpha( btndef_info.image_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-#endif
     }
 
     if ( file_version >= 202 )

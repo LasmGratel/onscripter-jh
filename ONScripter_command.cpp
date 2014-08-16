@@ -3124,18 +3124,7 @@ int ONScripter::captionCommand()
     size_t len = strlen(buf);
 
     char *buf2 = new char[len*3+1];
-#if defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208) || SDL_VERSION_ATLEAST(2,0,0)
     DirectReader::convertCodingToUTF8(buf2, buf);
-#elif defined(LINUX) || (defined(_WIN32) && defined(UTF8_CAPTION))
-#if defined(UTF8_CAPTION)
-    DirectReader::convertCodingToUTF8(buf2, buf);
-#else
-    strcpy(buf2, buf);
-    DirectReader::convertCodingToEUC(buf2);
-#endif
-#else
-    strcpy(buf2, buf);
-#endif
     
     setStr( &wm_title_string, buf2 );
     setStr( &wm_icon_string,  buf2 );
@@ -3344,11 +3333,7 @@ int ONScripter::btndefCommand()
             parseTaggedString( &btndef_info );
             btndef_info.trans_mode = AnimationInfo::TRANS_COPY;
             setupAnimationInfo( &btndef_info );
-#if SDL_VERSION_ATLEAST(2,0,0)
 			SDL_SetSurfaceBlendMode(btndef_info.image_surface, SDL_BLENDMODE_NONE);
-#else
-            SDL_SetAlpha( btndef_info.image_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-#endif
         }
     }
     

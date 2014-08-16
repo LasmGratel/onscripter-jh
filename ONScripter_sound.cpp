@@ -29,7 +29,7 @@
 #include <signal.h>
 #endif
 
-#ifdef ANDROID && !SDL_VERSION_ATLEAST(2,0,0)
+#ifdef ANDROID
 extern "C"
 {
 #include <jni.h>
@@ -37,17 +37,6 @@ extern "C"
 static JavaVM *jniVM = NULL;
 static jobject JavaONScripter = NULL;
 static jmethodID JavaPlayVideo = NULL;
-
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
-{
-    jniVM = vm;
-    return JNI_VERSION_1_2;
-};
-
-JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
-{
-    jniVM = vm;
-};
 
 #ifndef SDL_JAVA_PACKAGE_PATH
 #error You have to define SDL_JAVA_PACKAGE_PATH to your package path with dots replaced with underscores, for example "com_example_SanAngeles"
@@ -285,7 +274,7 @@ int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag)
 #if defined(USE_SMPEG) && !defined(USE_SDL_RENDERER)
     unsigned char *mpeg_buffer = new unsigned char[length];
     script_h.cBR->getFile( filename, mpeg_buffer );
-    SMPEG *mpeg_sample = SMPEG_new_rwops( SDL_RWFromMem( mpeg_buffer, length ), NULL, 0 );
+    SMPEG *mpeg_sample = SMPEG_new_rwops( SDL_RWFromMem( mpeg_buffer, length ), NULL, 0, 0);
 
     if ( !SMPEG_error( mpeg_sample ) ){
         SMPEG_enableaudio( mpeg_sample, 0 );
@@ -295,7 +284,18 @@ int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag)
             SMPEG_enableaudio( mpeg_sample, 1 );
         }
         SMPEG_enablevideo( mpeg_sample, 1 );
-        SMPEG_setdisplay( mpeg_sample, screen_surface, NULL, NULL );
+		typedef struct {
+			SMPEG_Frame *frame;
+			int frameCount = 0;
+			SDL_mutex *lock;
+		} update_context;
+		update_context context;
+		context.lock = SDL_CreateMutex();
+		SMPEG_setdisplay(mpeg_sample, [](void *data, SMPEG_Frame *frame) {
+			update_context *context = (update_context *)data;
+			context->frame = frame;
+			++context->frameCount; 
+		}, &context, context.lock);
         SMPEG_setvolume( mpeg_sample, music_volume );
         SMPEG_loop(mpeg_sample, loop_flag);
 
@@ -329,6 +329,7 @@ int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag)
         SMPEG_stop( mpeg_sample );
         Mix_HookMusic( NULL, NULL );
         SMPEG_delete( mpeg_sample );
+		SDL_DestroyMutex(context.lock);
 
     }
     delete[] mpeg_buffer;

@@ -139,6 +139,10 @@ public:
                          SDL_Rect &clip, int alpha=255 );
     void blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int dst_y,
                           SDL_Rect &clip, int alpha=255 );
+	void blendOnSurface_HW(SDL_Surface *dst_texture, int dst_x, int dst_y,
+		SDL_Rect &clip, int alpha = 255);
+	void blendOnSurface2_HW(SDL_Surface *dst_texture, int dst_x, int dst_y,
+		SDL_Rect &clip, int alpha = 255);
     void blendText( SDL_Surface *surface, int dst_x, int dst_y, 
                     SDL_Color &color, SDL_Rect *clip, bool rotate_flag );
     void calcAffineMatrix();
