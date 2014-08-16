@@ -516,6 +516,7 @@ int NSSp2GetPos(lua_State *state)
   lua_pushinteger(state, ai->scale_y);
   lua_pushinteger(state, ai->rot);
   lua_pushinteger(state, ai->trans);
+  lua_pushinteger(state, ai->blending_mode);
 
   return 3;
 }
@@ -551,24 +552,9 @@ int NSSp2Move(lua_State *state)
   int ope = luaL_checkint(state, 8);
 
   AnimationInfo *ai = lh->ons->getSpriteInfo(no);
+  ai->blending_mode = ope;
 
-  if(ope == 1){
-    cx += ai->orig_pos.x;
-    cy += ai->orig_pos.y;
-    xs += ai->scale_x;
-    ys += ai->scale_y;
-    rot += ai->rot;
-    alpha += ai->trans;
-  } else if (ope == 2){
-    cx -= ai->orig_pos.x;
-    cy -= ai->orig_pos.y;
-    xs -= ai->scale_x;
-    ys -= ai->scale_y;
-    rot -= ai->rot;
-    alpha -= ai->trans;
-  }
-
-  sprintf(cmd_buf, "msp2 %d, %d, %d, %d, %d, %d, %d", no, cx, cy, xs, ys, rot, alpha);
+  sprintf(cmd_buf, "amsp2 %d, %d, %d, %d, %d, %d, %d", no, cx, cy, xs, ys, rot, alpha);
   lh->sh->enterExternalScript(cmd_buf);
   lh->ons->runScript();
   lh->sh->leaveExternalScript();

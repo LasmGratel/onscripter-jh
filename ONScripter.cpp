@@ -443,8 +443,12 @@ int ONScripter::init()
 	screenshot_h = screen_height;
 
 #ifdef USE_SDL_RENDERER
+#if SDL_VERSION_ATLEAST(2,0,0)
+	texture = SDL_CreateTexture(renderer, texture_format, SDL_TEXTUREACCESS_STREAMING, accumulation_surface->w, accumulation_surface->h);
+#else
 	texture = SDL_CreateTextureFromSurface(renderer, accumulation_surface);
-#endif    
+#endif //SDL_VERSION_ATLEAST(2,0,0)
+#endif //USE_SDL_RENDERER  
 
 	tmp_image_buf = NULL;
 	tmp_image_buf_length = 0;
