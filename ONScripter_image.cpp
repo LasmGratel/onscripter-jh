@@ -26,6 +26,11 @@
 #include <new>
 #include "resize_image.h"
 #include "Utils.h"
+#ifdef USE_PARALLEL
+#include "Parallel.h"
+#elif defined(USE_OMP_PARALLEL)
+#include <omp.h>
+#endif
 
 SDL_Surface *ONScripter::loadImage(char *filename, bool *has_alpha, int *location)
 {
@@ -233,7 +238,6 @@ void ONScripter::alphaBlend(SDL_Surface *mask_surface,
 	int trans_mode, Uint32 mask_value, SDL_Rect *clip)
 {
 	SDL_Rect rect = screen_rect;
-	int i, j;
 
 	/* ---------------------------------------- */
 	/* clipping */
@@ -247,10 +251,6 @@ void ONScripter::alphaBlend(SDL_Surface *mask_surface,
 	SDL_LockSurface(effect_dst_surface);
 	SDL_LockSurface(accumulation_surface);
 	if (mask_surface) SDL_LockSurface(mask_surface);
-
-	ONSBuf *src1_buffer = (ONSBuf *)effect_src_surface->pixels + effect_src_surface->w * rect.y + rect.x;
-	ONSBuf *src2_buffer = (ONSBuf *)effect_dst_surface->pixels + effect_dst_surface->w * rect.y + rect.x;
-	ONSBuf *dst_buffer = (ONSBuf *)accumulation_surface->pixels + accumulation_surface->w * rect.y + rect.x;
 
 	SDL_PixelFormat *fmt = accumulation_surface->format;
 	Uint32 lowest_mask;
@@ -273,11 +273,57 @@ void ONScripter::alphaBlend(SDL_Surface *mask_surface,
 
 	if ((trans_mode == ALPHA_BLEND_FADE_MASK ||
 		trans_mode == ALPHA_BLEND_CROSSFADE_MASK) && mask_surface) {
-		for (i = 0; i < rect.h; i++) {
-			ONSBuf *mask_buffer = (ONSBuf *)mask_surface->pixels + mask_surface->w * ((rect.y + i) % mask_surface->h);
+#ifdef USE_PARALLEL
+		struct Data {
+			ONSBuf *const stsrc1_buffer, *const stsrc2_buffer, *const stdst_buffer;
+			int screen_width;
+			SDL_Surface *mask_surface;
+			SDL_Rect *rect;
+			Uint32 mask_value, lowest_mask, overflow_mask;
+		} data = { (ONSBuf *)effect_src_surface->pixels + effect_src_surface->w * rect.y + rect.x,
+			(ONSBuf *)effect_dst_surface->pixels + effect_dst_surface->w * rect.y + rect.x,
+			(ONSBuf *)accumulation_surface->pixels + accumulation_surface->w * rect.y + rect.x,
+			screen_width, mask_surface, &rect, mask_value, lowest_mask, overflow_mask};
+		parallel::For<Data> parafor;
+		parafor.run([](int i, const Data *data) {
+			const int &screen_width = data->screen_width;
+			const SDL_Surface *mask_surface = data->mask_surface;
+			const SDL_Rect &rect = *(data->rect);
+			ONSBuf *src1_buffer = data->stsrc1_buffer + screen_width * i;
+			ONSBuf *src2_buffer = data->stsrc2_buffer + screen_width * i;
+			ONSBuf *dst_buffer = data->stdst_buffer + screen_width * i;
+			const ONSBuf *mask_buffer = (ONSBuf *)mask_surface->pixels + mask_surface->w * ((rect.y + i) % mask_surface->h);
 
 			int j2 = rect.x;
-			for (j = 0; j < rect.w; j++) {
+			for (int j = 0; j < rect.w; j++) {
+				Uint32 mask2 = 0;
+				Uint32 mask = *(mask_buffer + j2) & data->lowest_mask;
+				if (data->mask_value > mask) {
+					mask2 = data->mask_value - mask;
+					if (mask2 & data->overflow_mask) mask2 = data->lowest_mask;
+				}
+				BLEND_PIXEL_MASK();
+				src1_buffer++; src2_buffer++; dst_buffer++;
+
+				if (j2 >= mask_surface->w) j2 = 0;
+				else                       j2++;
+			}
+			src1_buffer += screen_width - rect.w;
+			src2_buffer += screen_width - rect.w;
+			dst_buffer += screen_width - rect.w;
+		}, 0, rect.h, &data);
+#else
+#ifdef USE_OMP_PARALLEL
+#pragma omp parallel for
+#endif //USE_OMP_PARALLEL
+		for (int i = 0; i < rect.h; i++) {
+			ONSBuf *src1_buffer = (ONSBuf *)effect_src_surface->pixels + effect_src_surface->w * rect.y + rect.x + screen_width * i;
+			ONSBuf *src2_buffer = (ONSBuf *)effect_dst_surface->pixels + effect_dst_surface->w * rect.y + rect.x + screen_width * i;
+			ONSBuf *dst_buffer = (ONSBuf *)accumulation_surface->pixels + accumulation_surface->w * rect.y + rect.x + screen_width * i;
+			const ONSBuf *mask_buffer = (ONSBuf *)mask_surface->pixels + mask_surface->w * ((rect.y + i) % mask_surface->h);
+
+			int j2 = rect.x;
+			for (int j = 0; j < rect.w; j++) {
 				Uint32 mask2 = 0;
 				Uint32 mask = *(mask_buffer + j2) & lowest_mask;
 				if (mask_value > mask) {
@@ -294,11 +340,43 @@ void ONScripter::alphaBlend(SDL_Surface *mask_surface,
 			src2_buffer += screen_width - rect.w;
 			dst_buffer += screen_width - rect.w;
 		}
+#endif //USE_PARALLEL
 	} else { // ALPHA_BLEND_CONST
 		Uint32 mask2 = mask_value & lowest_mask;
-
-		for (i = 0; i < rect.h; i++) {
-			for (j = rect.w; j != 0; j--) {
+#ifdef USE_PARALLEL
+		struct Data {
+			ONSBuf *const stsrc1_buffer, *const stsrc2_buffer, *const stdst_buffer;
+			Uint32 mask2;
+			int screen_width, rect_w;
+		} data = { (ONSBuf *)effect_src_surface->pixels + effect_src_surface->w * rect.y + rect.x,
+			(ONSBuf *)effect_dst_surface->pixels + effect_dst_surface->w * rect.y + rect.x,
+			(ONSBuf *)accumulation_surface->pixels + accumulation_surface->w * rect.y + rect.x,
+			mask2,screen_width,rect.w};
+		parallel::For<Data> parafor;
+		parafor.run([](int i, const Data *data) {
+			const int &screen_width = data->screen_width;
+			const int &rect_w = data->rect_w;
+			ONSBuf *src1_buffer = data->stsrc1_buffer + screen_width * i;
+			ONSBuf *src2_buffer = data->stsrc2_buffer + screen_width * i;
+			ONSBuf *dst_buffer = data->stdst_buffer + screen_width * i;
+			const Uint32 &mask2 = data->mask2;
+			for (int j = rect_w; j != 0; j--) {
+				BLEND_PIXEL_MASK();
+				src1_buffer++; src2_buffer++; dst_buffer++;
+			}
+			src1_buffer += screen_width - rect_w;
+			src2_buffer += screen_width - rect_w;
+			dst_buffer += screen_width - rect_w;
+		}, 0, rect.h, &data);
+#else
+#ifdef USE_OMP_PARALLEL
+#pragma omp parallel for
+#endif //USE_OMP_PARALLEL
+		for (int i = 0; i < rect.h; i++) {
+			ONSBuf *src1_buffer = (ONSBuf *)effect_src_surface->pixels + effect_src_surface->w * rect.y + rect.x + screen_width * i;
+			ONSBuf *src2_buffer = (ONSBuf *)effect_dst_surface->pixels + effect_dst_surface->w * rect.y + rect.x + screen_width * i;
+			ONSBuf *dst_buffer = (ONSBuf *)accumulation_surface->pixels + accumulation_surface->w * rect.y + rect.x + screen_width * i;
+			for (int j = rect.w; j != 0; j--) {
 				BLEND_PIXEL_MASK();
 				src1_buffer++; src2_buffer++; dst_buffer++;
 			}
@@ -306,6 +384,7 @@ void ONScripter::alphaBlend(SDL_Surface *mask_surface,
 			src2_buffer += screen_width - rect.w;
 			dst_buffer += screen_width - rect.w;
 		}
+#endif //USE_PARALLEL
 	}
 
 	if (mask_surface) SDL_UnlockSurface(mask_surface);
