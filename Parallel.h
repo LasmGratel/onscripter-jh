@@ -25,21 +25,20 @@
 #include "SDL_cpuinfo.h"
 #include "SDL_thread.h"
 
-#ifdef ANDROID
-static const int MINSCALE = 256;
-#else
-static const int MINSCALE = 64;
-#endif
-
 namespace parallel{
   template<class T> class For {
+#ifdef ANDROID
+    static const int MINSCALE = 256;
+#else
+    static const int MINSCALE = 64;
+#endif
     struct ThreadData {
       int lr[2];
       void(*func)(int, const T*);
       const T *data;
     };
   public:
-    void run(void(*func)(int i, const T*), int start, int end, const T *data) {
+    void run(void(*func)(int i, const T*), int start, int end, const T *data, int scale = -1) {
       static int cpuCount = SDL_GetCPUCount();
       int nthread = cpuCount;
       int range = end - start;
@@ -73,6 +72,22 @@ namespace parallel{
 	  }
       delete[] thread;
       delete[] td;
+    }
+  };
+  template<class T> class Background {
+    struct ThreadData {
+      void(*func)(const T*);
+      const T *data;
+    };
+  public:
+    void run(void(*func)(const T*), const T *data) {
+      ThreadData td = {func, data};
+      SDL_Thread *thread = SDL_CreateThread([](void *ptr){
+          ThreadData *ptd = (ThreadData*) ptr;
+          ptd->func(ptd->data);
+          return 0;
+        },"ParrallelBackground",(void*)&td);
+      SDL_DetachThread(thread);
     }
   };
 }

@@ -56,7 +56,7 @@ int main( int argc, char **argv )
         while ( argc > 2 ){
 			if (!strcmp(argv[1], "-ns2")) {
 				archive_type = BaseReader::ARCHIVE_TYPE_NS2;
-				nsa_offset = 1;
+				//nsa_offset = 1;
 			}
             else if ( !strcmp( argv[1], "-ns3" ) ) nsa_offset = 2;
             argc--;
