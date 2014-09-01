@@ -24,7 +24,9 @@ GUI_OBJS = ONScripter$(OBJSUFFIX) \
 DECODER_OBJS = DirectReader$(OBJSUFFIX) \
 	SarReader$(OBJSUFFIX) \
 	NsaReader$(OBJSUFFIX) \
-	sjis2utf16$(OBJSUFFIX)
+	coding2utf16$(OBJSUFFIX) \
+	gbk2utf16$(OBJSUFFIX) \
+	sjis2utf16$(OBJSUFFIX) \
 
 SARDEC_OBJS  = sardec$(OBJSUFFIX) \
 	DirectReader$(OBJSUFFIX) \

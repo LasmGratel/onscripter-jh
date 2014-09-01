@@ -29,7 +29,7 @@
 #include <signal.h>
 #endif
 
-#ifdef ANDROID && !SDL_VERSION_ATLEAST(2,0,0)
+#ifdef ANDROID
 extern "C"
 {
 #include <jni.h>
