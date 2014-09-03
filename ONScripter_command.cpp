@@ -125,6 +125,10 @@ int ONScripter::waitCommand()
     return RET_CONTINUE;
 }
 
+inline bool checkLoaded(AnimationInfo &ai){
+	return SDL_AtomicGet(&ai.image_loaded);
+}
+
 int ONScripter::vspCommand()
 {
     leaveTextDisplayMode();
@@ -135,12 +139,20 @@ int ONScripter::vspCommand()
     int no = script_h.readInt();
     int v  = script_h.readInt();
 
+	bool visible = (v == 1) ? true : false;
+
     if (vsp2_flag){
-        sprite2_info[no].visible = (v==1)?true:false;
+        sprite2_info[no].visible = visible;
+#ifdef USE_PARALLEL
+		if (visible) while(!checkLoaded(sprite2_info[no])) SDL_Delay(1);
+#endif
         dirty_rect.add( sprite2_info[no].bounding_rect );
     }
     else{
-        sprite_info[no].visible = (v==1)?true:false;
+        sprite_info[no].visible = visible;
+#ifdef USE_PARALLEL
+		if (visible) while (!checkLoaded(sprite_info[no])) SDL_Delay(1);
+#endif
         dirty_rect.add( sprite_info[no].pos );
     }
     
@@ -1600,9 +1612,9 @@ int ONScripter::lsp2Command()
     else
         ai->trans = -1;
 
-    parseTaggedString( ai );
-    setupAnimationInfo( ai );
-    ai->calcAffineMatrix();
+		parseTaggedString(ai);
+		setupAnimationInfo(ai);
+		ai->calcAffineMatrix();
 
     if ( ai->visible )
         dirty_rect.add( ai->bounding_rect );
@@ -1636,8 +1648,8 @@ int ONScripter::lspCommand()
     else
         ai->trans = -1;
 
-    parseTaggedString( ai );
-    setupAnimationInfo( ai );
+		parseTaggedString( ai );
+		setupAnimationInfo( ai );
 
     if ( ai->visible ) dirty_rect.add( ai->pos );
 

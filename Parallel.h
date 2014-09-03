@@ -74,19 +74,22 @@ namespace parallel{
       delete[] td;
     }
   };
-  template<class T> class Background {
+  template<class T> class Spawn {
     struct ThreadData {
       void(*func)(const T*);
       const T *data;
     };
   public:
     void run(void(*func)(const T*), const T *data) {
-      ThreadData td = {func, data};
+      ThreadData *td = new ThreadData();
+      *td = { func, new T(*data) };
       SDL_Thread *thread = SDL_CreateThread([](void *ptr){
           ThreadData *ptd = (ThreadData*) ptr;
           ptd->func(ptd->data);
+          delete ptd->data;
+          delete ptd;
           return 0;
-        },"ParrallelBackground",(void*)&td);
+        },"ParrallelSpawn",(void*)td);
       SDL_DetachThread(thread);
     }
   };

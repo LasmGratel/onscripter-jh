@@ -60,6 +60,7 @@ AnimationInfo::AnimationInfo()
     mask_surface_name = NULL;
     image_surface = NULL;
     alpha_buf = NULL;
+	SDL_AtomicSet(&image_loaded, 1);
 
     duration_list = NULL;
     color_list = NULL;

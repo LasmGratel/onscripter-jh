@@ -24,6 +24,9 @@
 
 #include "ONScripter.h"
 #include "Utils.h"
+#ifdef USE_PARALLEL
+#include "Parallel.h"
+#endif
 
 #define DEFAULT_CURSOR_WAIT    ":l/3,160,2;cursor0.bmp"
 #define DEFAULT_CURSOR_NEWPAGE ":l/3,160,2;cursor1.bmp"
@@ -228,36 +231,83 @@ void ONScripter::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
         }
     }
     else{
-        bool has_alpha;
-        int location;
-        SDL_Surface *surface = loadImage( anim->file_name, &has_alpha, &location );
+#ifdef USE_PARALLEL
+		if (anim->visible){
+#endif
+			bool has_alpha;
+			int location;
+			SDL_Surface *surface = loadImage( anim->file_name, &has_alpha, &location );
 
-        SDL_Surface *surface_m = NULL;
-        if (anim->trans_mode == AnimationInfo::TRANS_MASK)
-            surface_m = loadImage( anim->mask_file_name );
+			SDL_Surface *surface_m = NULL;
+			if (anim->trans_mode == AnimationInfo::TRANS_MASK)
+				surface_m = loadImage( anim->mask_file_name );
         
-        surface = anim->setupImageAlpha(surface, surface_m, has_alpha);
+			surface = anim->setupImageAlpha(surface, surface_m, has_alpha);
 
-        if (surface &&
-            screen_ratio2 != screen_ratio1 &&
-            (!disable_rescale_flag || location == BaseReader::ARCHIVE_TYPE_NONE))
-        {
-            SDL_Surface *src_s = surface;
+			if (surface &&
+				screen_ratio2 != screen_ratio1 &&
+				(!disable_rescale_flag || location == BaseReader::ARCHIVE_TYPE_NONE))
+			{
+				SDL_Surface *src_s = surface;
 
-            int w, h;
-            if ( (w = src_s->w * screen_ratio1 / screen_ratio2) == 0 ) w = 1;
-            if ( (h = src_s->h * screen_ratio1 / screen_ratio2) == 0 ) h = 1;
-            SDL_PixelFormat *fmt = image_surface->format;
-            surface = SDL_CreateRGBSurface( SDL_SWSURFACE, w, h,
-                                            fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask );
+				int w, h;
+				if ( (w = src_s->w * screen_ratio1 / screen_ratio2) == 0 ) w = 1;
+				if ( (h = src_s->h * screen_ratio1 / screen_ratio2) == 0 ) h = 1;
+				SDL_PixelFormat *fmt = image_surface->format;
+				surface = SDL_CreateRGBSurface( SDL_SWSURFACE, w, h,
+												fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask );
         
-            resizeSurface(src_s, surface);
-            SDL_FreeSurface(src_s);
-        }
+				resizeSurface(src_s, surface);
+				SDL_FreeSurface(src_s);
+			}
 
-        anim->setImage( surface, texture_format );
+			anim->setImage( surface, texture_format );
 
-        if ( surface_m ) SDL_FreeSurface(surface_m);
+			if ( surface_m ) SDL_FreeSurface(surface_m);
+#ifdef USE_PARALLEL
+			SDL_AtomicSet(&anim->image_loaded, 1);
+		} else {
+			while (!SDL_AtomicGet(&anim->image_loaded)) SDL_Delay(1);
+			SDL_AtomicSet(&anim->image_loaded, 0);
+			struct Data {
+				ONScripter *thiz;
+				AnimationInfo *anim;
+			} data = { this, anim };
+			parallel::Spawn<Data> spawn;
+			spawn.run([](const Data *data) {
+				bool has_alpha;
+				int location;
+				SDL_Surface *surface = data->thiz->loadImage(data->anim->file_name, &has_alpha, &location);
+
+				SDL_Surface *surface_m = NULL;
+				if (data->anim->trans_mode == AnimationInfo::TRANS_MASK)
+					surface_m = data->thiz->loadImage(data->anim->mask_file_name);
+
+				surface = data->anim->setupImageAlpha(surface, surface_m, has_alpha);
+
+				if (surface &&
+					data->thiz->screen_ratio2 != data->thiz->screen_ratio1 &&
+					(!data->thiz->disable_rescale_flag || location == BaseReader::ARCHIVE_TYPE_NONE)) {
+					SDL_Surface *src_s = surface;
+
+					int w, h;
+					if ((w = src_s->w * data->thiz->screen_ratio1 / data->thiz->screen_ratio2) == 0) w = 1;
+					if ((h = src_s->h * data->thiz->screen_ratio1 / data->thiz->screen_ratio2) == 0) h = 1;
+					SDL_PixelFormat *fmt = data->thiz->image_surface->format;
+					surface = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h,
+						fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
+
+					data->thiz->resizeSurface(src_s, surface);
+					SDL_FreeSurface(src_s);
+				}
+
+				data->anim->setImage(surface, data->thiz->texture_format);
+
+				if (surface_m) SDL_FreeSurface(surface_m);
+				SDL_AtomicSet(&data->anim->image_loaded, 1);
+			}, &data);
+		}
+#endif
     }
 }
 
