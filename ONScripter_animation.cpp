@@ -508,7 +508,9 @@ void ONScripter::loadCursor(int no, const char *str, int x, int y, bool abs_flag
 
     parseTaggedString( ai );
     setupAnimationInfo( ai );
-
+#ifdef USE_PARALLEL
+	while (!SDL_AtomicGet(&ai->image_loaded)) SDL_Delay(1);
+#endif
     if ( filelog_flag )
         script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], ai->file_name, true ); // a trick for save file
     ai->abs_flag = abs_flag;
