@@ -24,75 +24,73 @@
 #define __PARALLEL_H__
 #include "SDL_cpuinfo.h"
 #include "SDL_thread.h"
+#include "Utils.h"
 
 namespace parallel{
-  template<class T> class For {
+  template<typename Body>
+  void For(const int first, const int last, const int step, const Body &body, const int scale = -1){
+    if (step <= 0 )
+      utils::printError("Parallel: non positive step.");
+    else if (last > first) {
+      // Above "else" avoids "potential divide by zero" warning on some platforms
+      int range = last - first;
 #ifdef ANDROID
-    static const int MINSCALE = 256;
+      static const int MINSCALE = 65536;
 #else
-    static const int MINSCALE = 64;
+      static const int MINSCALE = 4096;
 #endif
-    struct ThreadData {
-      int lr[2];
-      void(*func)(int, const T*);
-      const T *data;
-    };
-  public:
-    void run(void(*func)(int i, const T*), int start, int end, const T *data, int scale = -1) {
+      struct ThreadData {
+        int lr[2];
+        const Body *body;
+      };
       static int cpuCount = SDL_GetCPUCount();
       int nthread = cpuCount;
-      int range = end - start;
-      if (range < nthread * MINSCALE) {
-        nthread = range / MINSCALE + 1;
+      if(scale > 0){
+        nthread = scale / MINSCALE + 1;
+        if(nthread > cpuCount) nthread = cpuCount;
+      } else if (range < nthread) {
+        nthread = range;
       }
       SDL_Thread **thread = new SDL_Thread*[nthread - 1];
       ThreadData *td = new ThreadData[nthread];
       int ssize = range / nthread;
-      int lend = end;
+      int lend = last;
       int i = nthread;
       while (i > 1) {
         int lstart = lend - ssize;
-        td[i - 1] = { { lstart, lend }, func, data };
+        td[i - 1] = { { lstart, lend }, &body };
         thread[i - 2] = SDL_CreateThread([](void* ptr) {
             ThreadData &td = *((ThreadData*)ptr);
             for (int i = td.lr[0]; i < td.lr[1]; ++i) {
-              td.func(i, td.data);
+              (*td.body)(i);
             }
             return 0;
           }, "ParrallelFor", (void*)&td[i - 1]);
         lend = lstart;
         --i;
       }
-	  td[0] = { { start, lend }, func, data };
-	  for (int i = td[0].lr[0]; i < td[0].lr[1]; ++i) {
-		td[0].func(i, td[0].data);
-	  }
-	  for (int i = 0; i < nthread - 1; ++i) {
-	    SDL_WaitThread(thread[i], NULL);
-	  }
+      td[0] = { { first, lend }, &body };
+      for (int i = td[0].lr[0]; i < td[0].lr[1]; ++i) {
+        (*td[0].body)(i);
+      }
+      for (int i = 0; i < nthread - 1; ++i) {
+        SDL_WaitThread(thread[i], NULL);
+      }
       delete[] thread;
       delete[] td;
     }
-  };
-  template<class T> class Spawn {
-    struct ThreadData {
-      void(*func)(const T*);
-      const T *data;
-    };
-  public:
-    void run(void(*func)(const T*), const T *data) {
-      ThreadData *td = new ThreadData();
-      *td = { func, new T(*data) };
-      SDL_Thread *thread = SDL_CreateThread([](void *ptr){
-          ThreadData *ptd = (ThreadData*) ptr;
-          ptd->func(ptd->data);
-          delete ptd->data;
-          delete ptd;
-          return 0;
-        },"ParrallelSpawn",(void*)td);
-      SDL_DetachThread(thread);
-    }
-  };
+  }
+  template<typename Body>
+  void spawn(const Body &body){
+    Body *pb = new Body(body);
+    SDL_Thread *thread = SDL_CreateThread([](void *ptr){
+        Body *pb = (Body*) ptr;
+        (*pb)();
+        delete pb;
+        return 0;
+      },"ParrallelSpawn",(void*)pb);
+    SDL_DetachThread(thread);
+  }
 }
 
 #endif //__PARALLEL_H__

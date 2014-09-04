@@ -269,43 +269,44 @@ void ONScripter::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
 		} else {
 			while (!SDL_AtomicGet(&anim->image_loaded)) SDL_Delay(1);
 			SDL_AtomicSet(&anim->image_loaded, 0);
-			struct Data {
+			struct Loader {
 				ONScripter *thiz;
 				AnimationInfo *anim;
-			} data = { this, anim };
-			parallel::Spawn<Data> spawn;
-			spawn.run([](const Data *data) {
-				bool has_alpha;
-				int location;
-				SDL_Surface *surface = data->thiz->loadImage(data->anim->file_name, &has_alpha, &location);
 
-				SDL_Surface *surface_m = NULL;
-				if (data->anim->trans_mode == AnimationInfo::TRANS_MASK)
-					surface_m = data->thiz->loadImage(data->anim->mask_file_name);
+				void operator() (){
+					bool has_alpha;
+					int location;
+					SDL_Surface *surface = thiz->loadImage(anim->file_name, &has_alpha, &location);
 
-				surface = data->anim->setupImageAlpha(surface, surface_m, has_alpha);
+					SDL_Surface *surface_m = NULL;
+					if (anim->trans_mode == AnimationInfo::TRANS_MASK)
+						surface_m = thiz->loadImage(anim->mask_file_name);
 
-				if (surface &&
-					data->thiz->screen_ratio2 != data->thiz->screen_ratio1 &&
-					(!data->thiz->disable_rescale_flag || location == BaseReader::ARCHIVE_TYPE_NONE)) {
-					SDL_Surface *src_s = surface;
+					surface = anim->setupImageAlpha(surface, surface_m, has_alpha);
 
-					int w, h;
-					if ((w = src_s->w * data->thiz->screen_ratio1 / data->thiz->screen_ratio2) == 0) w = 1;
-					if ((h = src_s->h * data->thiz->screen_ratio1 / data->thiz->screen_ratio2) == 0) h = 1;
-					SDL_PixelFormat *fmt = data->thiz->image_surface->format;
-					surface = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h,
-						fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
+					if (surface &&
+						thiz->screen_ratio2 != thiz->screen_ratio1 &&
+						(!thiz->disable_rescale_flag || location == BaseReader::ARCHIVE_TYPE_NONE)) {
+						SDL_Surface *src_s = surface;
 
-					data->thiz->resizeSurface(src_s, surface);
-					SDL_FreeSurface(src_s);
+						int w, h;
+						if ((w = src_s->w * thiz->screen_ratio1 / thiz->screen_ratio2) == 0) w = 1;
+						if ((h = src_s->h * thiz->screen_ratio1 / thiz->screen_ratio2) == 0) h = 1;
+						SDL_PixelFormat *fmt = thiz->image_surface->format;
+						surface = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h,
+							fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
+
+						thiz->resizeSurface(src_s, surface);
+						SDL_FreeSurface(src_s);
+					}
+
+					anim->setImage(surface, thiz->texture_format);
+
+					if (surface_m) SDL_FreeSurface(surface_m);
+					SDL_AtomicSet(&anim->image_loaded, 1);
 				}
-
-				data->anim->setImage(surface, data->thiz->texture_format);
-
-				if (surface_m) SDL_FreeSurface(surface_m);
-				SDL_AtomicSet(&data->anim->image_loaded, 1);
-			}, &data);
+			} loader = { this, anim };
+			parallel::spawn(loader);
 		}
 #endif
     }

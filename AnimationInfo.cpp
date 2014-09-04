@@ -388,30 +388,30 @@ void AnimationInfo::blendOnSurface( SDL_Surface *dst_surface, int dst_x, int dst
     int pitch = image_surface->pitch / sizeof(ONSBuf);
 
 #ifdef USE_PARALLEL
-	struct Data {
+	struct Blender {
 		ONSBuf *const stsrc_buffer, *const stdst_buffer;
 		const int alpha, dst_rect_w, dst_rect_h, pitch, dst_surface_w;
-	} data = { (ONSBuf *)image_surface->pixels + pitch * src_rect.y + image_surface->w * current_cell / num_of_cells + src_rect.x,
-		(ONSBuf *)dst_surface->pixels + dst_surface->w * dst_rect.y + dst_rect.x,
-		alpha,dst_rect.w,dst_rect.h,pitch,dst_surface->w };
-	parallel::For<Data> parafor;
-	parafor.run([](int i,const Data *data){
-		const int &alpha = data->alpha, &pitch = data->pitch;
-		ONSBuf *src_buffer = data->stsrc_buffer + (pitch)* i;
-		ONSBuf *dst_buffer = data->stdst_buffer + (data->dst_surface_w) * i;
+
+		void operator()(const int i) const {
+			ONSBuf *src_buffer = stsrc_buffer + (pitch)* i;
+			ONSBuf *dst_buffer = stdst_buffer + (dst_surface_w) * i;
 #if defined(BPP16)    
-        unsigned char *alphap = alpha_buf + image_surface->w * src_rect.y + image_surface->w*current_cell / num_of_cells + src_rect.x + image_surface->w;
+			unsigned char *alphap = alpha_buf + image_surface->w * src_rect.y + image_surface->w*current_cell / num_of_cells + src_rect.x + image_surface->w;
 #else
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
-		unsigned char *alphap = (unsigned char *)src_buffer + 3;
+			unsigned char *alphap = (unsigned char *)src_buffer + 3;
 #else
-		unsigned char *alphap = (unsigned char *)src_buffer;
+			unsigned char *alphap = (unsigned char *)src_buffer;
 #endif //SDL_BYTEORDER == SDL_LIL_ENDIAN
 #endif //defined(BPP16)  
-		for (int j = data->dst_rect_w; j != 0; j--, src_buffer++, dst_buffer++) {
-			BLEND_PIXEL();
+			for (int j = dst_rect_w; j != 0; j--, src_buffer++, dst_buffer++) {
+				BLEND_PIXEL();
+			}
 		}
-	},0,dst_rect.h,&data);
+	} blender = { (ONSBuf *)image_surface->pixels + pitch * src_rect.y + image_surface->w * current_cell / num_of_cells + src_rect.x,
+		(ONSBuf *)dst_surface->pixels + dst_surface->w * dst_rect.y + dst_rect.x,
+		alpha,dst_rect.w,dst_rect.h,pitch,dst_surface->w };
+	parallel::For(0, dst_rect.h, 1, blender, dst_rect.h * dst_rect.w);
 #else
 #if defined (USE_OMP_PARALLEL)
 #pragma omp parallel for
@@ -469,51 +469,42 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
     int pitch = image_surface->pitch / sizeof(ONSBuf);
     // set pixel by inverse-projection with raster scan
 #ifdef USE_PARALLEL
-	struct Data {
+	struct Blender {
 		int (*corner_xy)[2], *min_xy, *max_xy;
 		int (*inv_mat)[2];
 		AnimationInfo *thiz;
 		SDL_Surface *dst_surface;
 		int alpha, pitch, dst_x, dst_y;
-	} data = { corner_xy,min_xy,max_xy,inv_mat,this,dst_surface,alpha,pitch,dst_x,dst_y };
-	parallel::For<Data> parafor;
-	parafor.run([](int i,const Data* data) {
-		int &y = i;
-		const int &alpha = data->alpha;
-		AnimationInfo &thiz = *(data->thiz);
-		// calculate the start and end point for each raster scan
-		int raster_min = data->min_xy[0], raster_max = data->max_xy[0];
-			for (int i=0 ; i<4 ; i++){
-				int i2 = (i+1)&3; // = (i+1)%4
-				int(*corner_xy)[2] = data->corner_xy;
+		void operator()(const int y) const {
+			// calculate the start and end point for each raster scan
+			int raster_min = min_xy[0], raster_max = max_xy[0];
+			for (int i = 0; i<4; i++) {
+				int i2 = (i + 1) & 3; // = (i+1)%4
 				if (corner_xy[i][1] == corner_xy[i2][1]) continue;
-				int x = (corner_xy[i2][0] - corner_xy[i][0])*(y-corner_xy[i][1])/(corner_xy[i2][1] - corner_xy[i][1]) + corner_xy[i][0];
-				if (corner_xy[i2][1] - corner_xy[i][1] > 0){
+				int x = (corner_xy[i2][0] - corner_xy[i][0])*(y - corner_xy[i][1]) / (corner_xy[i2][1] - corner_xy[i][1]) + corner_xy[i][0];
+				if (corner_xy[i2][1] - corner_xy[i][1] > 0) {
 					if (raster_min < x) raster_min = x;
-				}
-				else{
+				} else {
 					if (raster_max > x) raster_max = x;
 				}
 			}
 
 			if (raster_min < 0)               raster_min = 0;
-			SDL_Surface *dst_surface = data->dst_surface;
 			if (raster_max >= dst_surface->w) raster_max = dst_surface->w - 1;
 
 			ONSBuf *dst_buffer = (ONSBuf *)dst_surface->pixels + dst_surface->w * y + raster_min;
 
 			// inverse-projection
-			int(*inv_mat)[2] = data->inv_mat;
-			int x_offset2 = (inv_mat[0][1] * (y - data->dst_y) >> 9) + thiz.pos.w;
-			int y_offset2 = (inv_mat[1][1] * (y - data->dst_y) >> 9) + thiz.pos.h;
-			for (int x = raster_min - data->dst_x; x <= raster_max - data->dst_x; x++, dst_buffer++) {
+			int x_offset2 = (inv_mat[0][1] * (y - dst_y) >> 9) + thiz->pos.w;
+			int y_offset2 = (inv_mat[1][1] * (y - dst_y) >> 9) + thiz->pos.h;
+			for (int x = raster_min - dst_x; x <= raster_max - dst_x; x++, dst_buffer++) {
 				int x2 = ((inv_mat[0][0] * x >> 9) + x_offset2) >> 1;
 				int y2 = ((inv_mat[1][0] * x >> 9) + y_offset2) >> 1;
 
-				if (x2 < 0 || x2 >= thiz.pos.w ||
-					y2 < 0 || y2 >= thiz.pos.h) continue;
+				if (x2 < 0 || x2 >= thiz->pos.w ||
+					y2 < 0 || y2 >= thiz->pos.h) continue;
 
-				ONSBuf *src_buffer = (ONSBuf *)thiz.image_surface->pixels + data->pitch * y2 + x2 + thiz.pos.w*thiz.current_cell;
+				ONSBuf *src_buffer = (ONSBuf *)thiz->image_surface->pixels + pitch * y2 + x2 + thiz->pos.w*thiz->current_cell;
 #if defined(BPP16)    
 				unsigned char *alphap = alpha_buf + image_surface->w * y2 + x2 + pos.w*current_cell;
 #else
@@ -523,14 +514,16 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
 				unsigned char *alphap = (unsigned char *)src_buffer;
 #endif
 #endif
-				if (thiz.blending_mode == BLEND_NORMAL)
+				if (thiz->blending_mode == BLEND_NORMAL)
 					BLEND_PIXEL()
-				else if (thiz.blending_mode == BLEND_ADD)
-					ADDBLEND_PIXEL()
+				else if (thiz->blending_mode == BLEND_ADD)
+				ADDBLEND_PIXEL()
 				else
-					SUBBLEND_PIXEL();
+				SUBBLEND_PIXEL();
 			}
-	}, min_xy[1], max_xy[1] + 1, &data);
+		}
+	} blender = { corner_xy, min_xy, max_xy, inv_mat, this, dst_surface, alpha, pitch, dst_x, dst_y };
+	parallel::For(min_xy[1], max_xy[1] + 1, 1, blender, (max_xy[1] - min_xy[1] + 1) * (max_xy[0] + 1 - min_xy[0]));
 #else
 #ifdef USE_OMP_PARALLEL
 #pragma omp parallel for

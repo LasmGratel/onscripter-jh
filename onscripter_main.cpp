@@ -171,7 +171,7 @@ extern "C" int main( int argc, char **argv )
 int main( int argc, char *argv[] )
 #endif
 {
-    utils::printInfo("ONScripter version %s(%d.%02d)\n", ONS_VERSION, NSC_VERSION/100, NSC_VERSION%100 );
+    utils::printInfo("ONScripter-Jh version %s(%d.%02d)\n", ONS_VERSION, NSC_VERSION/100, NSC_VERSION%100 );
 
 #if defined(PSP)
     ons.disableRescale();

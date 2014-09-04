@@ -125,7 +125,7 @@ int ONScripter::waitCommand()
     return RET_CONTINUE;
 }
 
-inline bool checkLoaded(AnimationInfo &ai){
+inline static bool checkLoaded(AnimationInfo &ai){
 	return SDL_AtomicGet(&ai.image_loaded);
 }
 
@@ -1612,9 +1612,9 @@ int ONScripter::lsp2Command()
     else
         ai->trans = -1;
 
-		parseTaggedString(ai);
-		setupAnimationInfo(ai);
-		ai->calcAffineMatrix();
+	parseTaggedString(ai);
+	setupAnimationInfo(ai);
+	ai->calcAffineMatrix();
 
     if ( ai->visible )
         dirty_rect.add( ai->bounding_rect );
@@ -1648,8 +1648,8 @@ int ONScripter::lspCommand()
     else
         ai->trans = -1;
 
-		parseTaggedString( ai );
-		setupAnimationInfo( ai );
+	parseTaggedString( ai );
+	setupAnimationInfo( ai );
 
     if ( ai->visible ) dirty_rect.add( ai->pos );
 
@@ -2793,7 +2793,9 @@ int ONScripter::drawsp3Command()
         ai->inv_mat[1][0] = -ai->mat[1][0] * 1000 / denom;
         ai->inv_mat[1][1] =  ai->mat[0][0] * 1000 / denom;
     }
-
+#ifdef USE_PARALLEL
+	while (!checkLoaded(*ai)) SDL_Delay(1);
+#endif
     ai->blendOnSurface2( accumulation_surface, x, y, screen_rect, alpha );
     ai->setCell(old_cell_no);
 
@@ -2815,7 +2817,9 @@ int ONScripter::drawsp2Command()
     ai->rot     = script_h.readInt();
     ai->calcAffineMatrix();
     ai->setCell(cell_no);
-
+#ifdef USE_PARALLEL
+	while (!checkLoaded(*ai)) SDL_Delay(1);
+#endif
     ai->blendOnSurface2( accumulation_surface, ai->pos.x, ai->pos.y, screen_rect, alpha );
 
     return RET_CONTINUE;
@@ -2836,6 +2840,9 @@ int ONScripter::drawspCommand()
     clip.x = clip.y = 0;
     clip.w = accumulation_surface->w;
     clip.h = accumulation_surface->h;
+#ifdef USE_PARALLEL
+	while (!checkLoaded(*ai)) SDL_Delay(1);
+#endif
     ai->blendOnSurface( accumulation_surface, x, y, clip, alpha );
     ai->setCell(old_cell_no);
 
