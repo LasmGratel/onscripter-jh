@@ -125,10 +125,6 @@ int ONScripter::waitCommand()
     return RET_CONTINUE;
 }
 
-inline static bool checkLoaded(AnimationInfo &ai){
-	return SDL_AtomicGet(&ai.image_loaded);
-}
-
 int ONScripter::vspCommand()
 {
     leaveTextDisplayMode();
@@ -144,14 +140,14 @@ int ONScripter::vspCommand()
     if (vsp2_flag){
         sprite2_info[no].visible = visible;
 #ifdef USE_PARALLEL
-		if (visible) while(!checkLoaded(sprite2_info[no])) SDL_Delay(1);
+		if (sprite2_info[no].bg_load && visible) while (!SDL_AtomicGet(&sprite2_info[no].image_loaded)) SDL_Delay(1);
 #endif
         dirty_rect.add( sprite2_info[no].bounding_rect );
     }
     else{
         sprite_info[no].visible = visible;
 #ifdef USE_PARALLEL
-		if (visible) while (!checkLoaded(sprite_info[no])) SDL_Delay(1);
+		if (sprite_info[no].bg_load && visible) while (!SDL_AtomicGet(&sprite_info[no].image_loaded)) SDL_Delay(1);
 #endif
         dirty_rect.add( sprite_info[no].pos );
     }
@@ -1595,6 +1591,7 @@ int ONScripter::lsp2Command()
     if (ai->image_surface && ai->visible)
         dirty_rect.add( ai->bounding_rect );
     ai->visible = v;
+	ai->bg_load = !v;
     ai->blending_mode = blend_mode;
     
     const char *buf = script_h.readStr();
@@ -2794,7 +2791,7 @@ int ONScripter::drawsp3Command()
         ai->inv_mat[1][1] =  ai->mat[0][0] * 1000 / denom;
     }
 #ifdef USE_PARALLEL
-	while (!checkLoaded(*ai)) SDL_Delay(1);
+	if(ai->bg_load) while (!SDL_AtomicGet(&ai->image_loaded)) SDL_Delay(1);
 #endif
     ai->blendOnSurface2( accumulation_surface, x, y, screen_rect, alpha );
     ai->setCell(old_cell_no);
@@ -2818,7 +2815,7 @@ int ONScripter::drawsp2Command()
     ai->calcAffineMatrix();
     ai->setCell(cell_no);
 #ifdef USE_PARALLEL
-	while (!checkLoaded(*ai)) SDL_Delay(1);
+	if (ai->bg_load) while (!SDL_AtomicGet(&ai->image_loaded)) SDL_Delay(1);
 #endif
     ai->blendOnSurface2( accumulation_surface, ai->pos.x, ai->pos.y, screen_rect, alpha );
 
@@ -2841,7 +2838,7 @@ int ONScripter::drawspCommand()
     clip.w = accumulation_surface->w;
     clip.h = accumulation_surface->h;
 #ifdef USE_PARALLEL
-	while (!checkLoaded(*ai)) SDL_Delay(1);
+	if (ai->bg_load) while (!SDL_AtomicGet(&ai->image_loaded)) SDL_Delay(1);
 #endif
     ai->blendOnSurface( accumulation_surface, x, y, clip, alpha );
     ai->setCell(old_cell_no);

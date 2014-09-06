@@ -554,6 +554,7 @@ private:
 	unsigned long tmp_image_buf_length;
 	unsigned long mean_size_of_loaded_images;
 	unsigned long num_loaded_images;
+	SDL_SpinLock loader_use;
 
 	unsigned char *resize_buffer;
 	size_t resize_buffer_size;

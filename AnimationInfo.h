@@ -86,6 +86,7 @@ public:
     char *mask_surface_name; // used to avoid reloading images
     SDL_Surface *image_surface;
 #ifdef USE_PARALLEL
+	bool bg_load;
 	SDL_atomic_t image_loaded;
 #endif
     unsigned char *alpha_buf;

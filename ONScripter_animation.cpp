@@ -232,7 +232,8 @@ void ONScripter::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
     }
     else{
 #ifdef USE_PARALLEL
-		if (anim->visible){
+		if (anim->visible || !anim->bg_load) {
+			while (SDL_AtomicTryLock(&loader_use) == SDL_FALSE) SDL_Delay(1);
 #endif
 			bool has_alpha;
 			int location;
@@ -265,15 +266,15 @@ void ONScripter::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
 
 			if ( surface_m ) SDL_FreeSurface(surface_m);
 #ifdef USE_PARALLEL
-			SDL_AtomicSet(&anim->image_loaded, 1);
+			SDL_AtomicUnlock(&loader_use);
 		} else {
-			while (!SDL_AtomicGet(&anim->image_loaded)) SDL_Delay(1);
 			SDL_AtomicSet(&anim->image_loaded, 0);
 			struct Loader {
 				ONScripter *thiz;
 				AnimationInfo *anim;
 
 				void operator() (){
+					while (SDL_AtomicTryLock(&thiz->loader_use) == SDL_FALSE) SDL_Delay(1);				
 					bool has_alpha;
 					int location;
 					SDL_Surface *surface = thiz->loadImage(anim->file_name, &has_alpha, &location);
@@ -304,6 +305,7 @@ void ONScripter::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
 
 					if (surface_m) SDL_FreeSurface(surface_m);
 					SDL_AtomicSet(&anim->image_loaded, 1);
+					SDL_AtomicUnlock(&thiz->loader_use);
 				}
 			} loader = { this, anim };
 			parallel::spawn(loader);
@@ -509,9 +511,6 @@ void ONScripter::loadCursor(int no, const char *str, int x, int y, bool abs_flag
 
     parseTaggedString( ai );
     setupAnimationInfo( ai );
-#ifdef USE_PARALLEL
-	while (!SDL_AtomicGet(&ai->image_loaded)) SDL_Delay(1);
-#endif
     if ( filelog_flag )
         script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], ai->file_name, true ); // a trick for save file
     ai->abs_flag = abs_flag;
