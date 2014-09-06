@@ -1591,7 +1591,9 @@ int ONScripter::lsp2Command()
     if (ai->image_surface && ai->visible)
         dirty_rect.add( ai->bounding_rect );
     ai->visible = v;
+#ifdef USE_PARALLEL
 	ai->bg_load = !v;
+#endif
     ai->blending_mode = blend_mode;
     
     const char *buf = script_h.readStr();
@@ -1632,6 +1634,9 @@ int ONScripter::lspCommand()
     if (ai->image_surface && ai->visible)
         dirty_rect.add( ai->pos );
     ai->visible = v;
+#ifdef USE_PARALLEL
+	ai->bg_load = !v;
+#endif
     
     const char *buf = script_h.readStr();
     ai->setImageName( buf );

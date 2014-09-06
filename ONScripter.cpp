@@ -728,7 +728,7 @@ void ONScripter::flushDirect(SDL_Rect &rect, int refresh_mode)
 	SDL_Rect dst_rect = { (device_width - screen_device_width) / 2,
 		(device_height - screen_device_height) / 2,
 		screen_device_width, screen_device_height };
-#endif
+#endif //SDL_VERSION_ATLEAST(2, 0, 0)
 	if (AnimationInfo::doClipping(&rect, &src_rect) || (dst_rect.w == 0 && dst_rect.h == 0)) return;
 	refreshSurface(accumulation_surface, &rect, refresh_mode);
 	SDL_LockSurface(accumulation_surface);
@@ -743,7 +743,7 @@ void ONScripter::flushDirect(SDL_Rect &rect, int refresh_mode)
 		SDL_RenderCopy(renderer, texture, &src_rect, &dst_rect);
 		SDL_RenderPresent(renderer);
 	}
-#else
+#else //USE_SDL_RENDERER
 	refreshSurface(accumulation_surface, &rect, refresh_mode);
 	SDL_Rect dst_rect = rect;
 	if (AnimationInfo::doClipping(&dst_rect, &screen_rect) || (dst_rect.w==0 && dst_rect.h==0)) return;

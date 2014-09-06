@@ -24,7 +24,9 @@
 #define __PARALLEL_H__
 #include "SDL_cpuinfo.h"
 #include "SDL_thread.h"
+#include "SDL_timer.h"
 #include "Utils.h"
+#include "Queue_ts.h"
 
 namespace parallel{
   template<typename Body>
@@ -81,16 +83,31 @@ namespace parallel{
     }
   }
   template<typename Body>
-  void spawn(const Body &body){
-    Body *pb = new Body(body);
-    SDL_Thread *thread = SDL_CreateThread([](void *ptr){
-        Body *pb = (Body*) ptr;
-        (*pb)();
-        delete pb;
-        return 0;
-      },"ParrallelSpawn",(void*)pb);
-    SDL_DetachThread(thread);
-  }
+  class LazySpawn{
+    utils::Queue<Body> queue;
+    SDL_Thread *thread = nullptr;
+    void startLazyThread(){
+      thread = SDL_CreateThread([](void *ptr){
+		  auto queue = (utils::Queue<Body>*)ptr;
+          for(;;){
+            Body *pb = queue->pop();
+            while(pb != nullptr){
+              (*pb)();
+              delete pb;
+              pb = queue->pop();
+            }
+            SDL_Delay(30);
+          }
+          return 0;
+        },"ParallelLazySpawn",(void*)&queue);
+      SDL_DetachThread(thread);
+    }
+  public:
+    void push(const Body &body){
+      queue.push(body);
+      if(thread == nullptr) startLazyThread();
+    }
+  };
 }
 
 #endif //__PARALLEL_H__
