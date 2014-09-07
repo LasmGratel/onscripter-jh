@@ -1,6 +1,6 @@
 #ifdef USE_PARALLEL
-#ifndef __QUEUE_TH_H__
-#define __QUEUE_TH_H__
+#ifndef __QUEUE_TS_H__
+#define __QUEUE_TS_H__
 #include "SDL_atomic.h"
 
 namespace utils{

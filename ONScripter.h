@@ -32,9 +32,6 @@
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
-#ifdef USE_PARALLEL
-#include "Parallel.h"
-#endif
 
 #define DEFAULT_VIDEO_SURFACE_FLAG (SDL_SWSURFACE)
 
@@ -557,15 +554,6 @@ private:
 	unsigned long tmp_image_buf_length;
 	unsigned long mean_size_of_loaded_images;
 	unsigned long num_loaded_images;
-#ifdef USE_PARALLEL
-	SDL_SpinLock loader_use;
-	struct Loader {
-		ONScripter *thiz;
-		AnimationInfo *anim;
-		void operator() ();
-	};
-	parallel::LazySpawn<Loader> loader_spawn;
-#endif
 
 	unsigned char *resize_buffer;
 	size_t resize_buffer_size;

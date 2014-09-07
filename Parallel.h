@@ -22,18 +22,17 @@
 #ifdef USE_PARALLEL
 #ifndef __PARALLEL_H__
 #define __PARALLEL_H__
+#include <assert.h>
 #include "SDL_cpuinfo.h"
 #include "SDL_thread.h"
 #include "SDL_timer.h"
-#include "Utils.h"
 #include "Queue_ts.h"
 
 namespace parallel{
   template<typename Body>
   void For(const int first, const int last, const int step, const Body &body, const int scale = -1){
-    if (step <= 0 )
-      utils::printError("Parallel: non positive step.");
-    else if (last > first) {
+    assert(step > 0);
+    if (last > first) {
       // Above "else" avoids "potential divide by zero" warning on some platforms
       int range = last - first;
 #ifdef ANDROID
@@ -88,7 +87,7 @@ namespace parallel{
     SDL_Thread *thread = nullptr;
     void startLazyThread(){
       thread = SDL_CreateThread([](void *ptr){
-		  auto queue = (utils::Queue<Body>*)ptr;
+          auto queue = (utils::Queue<Body>*)ptr;
           for(;;){
             Body *pb = queue->pop();
             while(pb != nullptr){

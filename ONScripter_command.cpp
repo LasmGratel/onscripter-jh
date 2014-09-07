@@ -135,20 +135,12 @@ int ONScripter::vspCommand()
     int no = script_h.readInt();
     int v  = script_h.readInt();
 
-	bool visible = (v == 1) ? true : false;
-
     if (vsp2_flag){
-        sprite2_info[no].visible = visible;
-#ifdef USE_PARALLEL
-		if (sprite2_info[no].bg_load && visible) while (!SDL_AtomicGet(&sprite2_info[no].image_loaded)) SDL_Delay(1);
-#endif
+        sprite2_info[no].visible = (v==1)?true:false;
         dirty_rect.add( sprite2_info[no].bounding_rect );
     }
     else{
-        sprite_info[no].visible = visible;
-#ifdef USE_PARALLEL
-		if (sprite_info[no].bg_load && visible) while (!SDL_AtomicGet(&sprite_info[no].image_loaded)) SDL_Delay(1);
-#endif
+        sprite_info[no].visible = (v==1)?true:false;
         dirty_rect.add( sprite_info[no].pos );
     }
     
@@ -1591,9 +1583,6 @@ int ONScripter::lsp2Command()
     if (ai->image_surface && ai->visible)
         dirty_rect.add( ai->bounding_rect );
     ai->visible = v;
-#ifdef USE_PARALLEL
-	ai->bg_load = !v;
-#endif
     ai->blending_mode = blend_mode;
     
     const char *buf = script_h.readStr();
@@ -1611,9 +1600,9 @@ int ONScripter::lsp2Command()
     else
         ai->trans = -1;
 
-	parseTaggedString(ai);
-	setupAnimationInfo(ai);
-	ai->calcAffineMatrix();
+    parseTaggedString( ai );
+    setupAnimationInfo( ai );
+    ai->calcAffineMatrix();
 
     if ( ai->visible )
         dirty_rect.add( ai->bounding_rect );
@@ -1634,9 +1623,6 @@ int ONScripter::lspCommand()
     if (ai->image_surface && ai->visible)
         dirty_rect.add( ai->pos );
     ai->visible = v;
-#ifdef USE_PARALLEL
-	ai->bg_load = !v;
-#endif
     
     const char *buf = script_h.readStr();
     ai->setImageName( buf );
@@ -1650,8 +1636,8 @@ int ONScripter::lspCommand()
     else
         ai->trans = -1;
 
-	parseTaggedString( ai );
-	setupAnimationInfo( ai );
+    parseTaggedString( ai );
+    setupAnimationInfo( ai );
 
     if ( ai->visible ) dirty_rect.add( ai->pos );
 
@@ -2795,9 +2781,7 @@ int ONScripter::drawsp3Command()
         ai->inv_mat[1][0] = -ai->mat[1][0] * 1000 / denom;
         ai->inv_mat[1][1] =  ai->mat[0][0] * 1000 / denom;
     }
-#ifdef USE_PARALLEL
-	if(ai->bg_load) while (!SDL_AtomicGet(&ai->image_loaded)) SDL_Delay(1);
-#endif
+
     ai->blendOnSurface2( accumulation_surface, x, y, screen_rect, alpha );
     ai->setCell(old_cell_no);
 
@@ -2819,9 +2803,7 @@ int ONScripter::drawsp2Command()
     ai->rot     = script_h.readInt();
     ai->calcAffineMatrix();
     ai->setCell(cell_no);
-#ifdef USE_PARALLEL
-	if (ai->bg_load) while (!SDL_AtomicGet(&ai->image_loaded)) SDL_Delay(1);
-#endif
+
     ai->blendOnSurface2( accumulation_surface, ai->pos.x, ai->pos.y, screen_rect, alpha );
 
     return RET_CONTINUE;
@@ -2842,9 +2824,6 @@ int ONScripter::drawspCommand()
     clip.x = clip.y = 0;
     clip.w = accumulation_surface->w;
     clip.h = accumulation_surface->h;
-#ifdef USE_PARALLEL
-	if (ai->bg_load) while (!SDL_AtomicGet(&ai->image_loaded)) SDL_Delay(1);
-#endif
     ai->blendOnSurface( accumulation_surface, x, y, clip, alpha );
     ai->setCell(old_cell_no);
 

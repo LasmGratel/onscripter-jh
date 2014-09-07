@@ -130,7 +130,7 @@ void ScriptHandler::reset()
 void ScriptHandler::setSaveDir(const char *path)
 {
     if (save_dir) delete[] save_dir;
-    save_dir = new char[ strlen(path) ];
+    save_dir = new char[ strlen(path) + 1 ];
     strcpy(save_dir, path);
 }
 
