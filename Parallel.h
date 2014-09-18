@@ -65,8 +65,7 @@ namespace parallel{
             for (int i = td.lr[0]; i < td.lr[1]; ++i) {
               (*td.body)(i);
             }
-            return 0;
-          }, "ParrallelFor", (void*)&td[i - 1]);
+            return 0;}, "ParrallelFor", (void*)&td[i - 1]);
         lend = lstart;
         --i;
       }
@@ -95,8 +94,7 @@ namespace parallel{
               delete pb;
               pb = queue->pop();
             }
-            SDL_Delay(30);
-          }
+            SDL_Delay(30);}
           return 0;
         },"ParallelLazySpawn",(void*)&queue);
       SDL_DetachThread(thread);

@@ -26,8 +26,8 @@
 
 class SJIS2UTF16 : public Coding2UTF16 {
 public:
-	void init() override;
-	uint16_t conv2UTF16(uint16_t) const override;
+	void init() final;
+	uint16_t conv2UTF16(uint16_t) const final;
 	~SJIS2UTF16();
 };
 
