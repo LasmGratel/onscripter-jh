@@ -233,7 +233,7 @@ int ONScripter::playWave(Mix_Chunk *chunk, int format, bool loop_flag, int chann
     else                                 Mix_Volume( channel, se_volume * MIX_MAX_VOLUME / 100 );
 
     if ( !(format & SOUND_PRELOAD) )
-        if(!(skip_mode & SKIP_NORMAL)) Mix_PlayChannel( channel, wave_sample[channel], loop_flag?-1:0 );
+        Mix_PlayChannel( channel, wave_sample[channel], loop_flag?-1:0 );
 
     return 0;
 }

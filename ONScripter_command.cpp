@@ -2723,7 +2723,7 @@ int ONScripter::dwaveCommand()
     else if (ch >= ONS_MIX_CHANNELS) ch = ONS_MIX_CHANNELS-1;
 
     if (play_mode == WAVE_PLAY_LOADED){
-        if(!(skip_mode & SKIP_NORMAL)) Mix_PlayChannel(ch, wave_sample[ch], loop_flag?-1:0);
+        Mix_PlayChannel(ch, wave_sample[ch], loop_flag?-1:0);
     }
     else{
         const char *buf = script_h.readStr();
@@ -2737,12 +2737,11 @@ int ONScripter::dwaveCommand()
 
 int ONScripter::dvCommand()
 {
-  if(!(skip_mode & SKIP_NORMAL)){
     char buf[256];
     
     sprintf(buf, RELATIVEPATH "voice%c%s.wav", DELIMITER, script_h.getStringBuffer()+2);
     playSound(buf, SOUND_CHUNK, false, 0);
-  }
+    
     return RET_CONTINUE;
 }
 
