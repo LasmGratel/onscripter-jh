@@ -120,6 +120,11 @@ int ONScripter::playSound(const char *filename, int format, bool loop_flag, int 
 
     long length = script_h.cBR->getFileLength( filename );
     if (length == 0) return SOUND_NONE;
+    if (!mode_wave_demo_flag &&
+		((skip_mode & SKIP_NORMAL) || ctrl_pressed_status) && (format & SOUND_CHUNK) &&
+		((channel < ONS_MIX_CHANNELS) || (channel == MIX_WAVE_CHANNEL))) {
+           return SOUND_NONE;
+	}
 
     unsigned char *buffer;
 

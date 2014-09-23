@@ -173,6 +173,7 @@ static ONScripter::FuncLUT func_lut[] = {
     {"mov10",			&ONScripter::movCommand},
     {"mov",				&ONScripter::movCommand},
     {"monocro",			&ONScripter::monocroCommand},
+    {"mode_wave_demo",	&ONScripter::mode_wave_demoCommand},
     {"mode_saya",		&ONScripter::mode_sayaCommand},
     {"mode_ext",		&ONScripter::mode_extCommand},
     {"mod",				&ONScripter::modCommand},

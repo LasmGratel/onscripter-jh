@@ -40,11 +40,7 @@
 
 ScriptParser::ScriptParser()
 {
-#ifdef _DEBUG
-    debug_level = 1;
-#else
 	debug_level = 0;
-#endif
     srand( time(NULL) );
     rand();
 
@@ -133,6 +129,7 @@ void ScriptParser::reset()
     windowback_flag = false;
     usewheel_flag = false;
     useescspc_flag = false;
+	mode_wave_demo_flag = false;
     mode_saya_flag = false;
     mode_ext_flag = false;
     sentence_font.rubyon_flag = false;
