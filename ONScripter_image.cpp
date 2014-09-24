@@ -228,6 +228,16 @@ int ONScripter::resizeSurface(SDL_Surface *src, SDL_Surface *dst)
 //                       (*src2_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff;
 //    Uint32 mask_g  = (((*src1_buffer & 0x00ff00) * mask1 +
 //                       (*src2_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00;
+
+inline static void alphaBlendConst32(Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *dst_buffer, Uint32 mask2, int length){
+	for (int i = 0; i < length; ++i, ++src1_buffer, ++src2_buffer, ++dst_buffer){
+		Uint32 temp = *src1_buffer & 0xff00ff;
+		Uint32 mask_rb = (((((*src2_buffer & 0xff00ff) - temp) * mask2) >> 8) + temp) & 0xff00ff;
+		temp = *src1_buffer & 0x00ff00;
+		Uint32 mask_g = (((((*src2_buffer & 0x00ff00) - temp) * mask2) >> 8) + temp) & 0x00ff00;
+		*dst_buffer = mask_rb | mask_g;
+	}
+}
 #endif
 
 // alphaBlend
@@ -273,7 +283,6 @@ void ONScripter::alphaBlend(SDL_Surface *mask_surface,
 
 	if ((trans_mode == ALPHA_BLEND_FADE_MASK ||
 		trans_mode == ALPHA_BLEND_CROSSFADE_MASK) && mask_surface) {
-#ifdef USE_PARALLEL
 		struct Blender {
 			ONSBuf *const stsrc1_buffer, *const stsrc2_buffer, *const stdst_buffer;
 			int screen_width;
@@ -309,39 +318,16 @@ void ONScripter::alphaBlend(SDL_Surface *mask_surface,
 			(ONSBuf *)effect_dst_surface->pixels + effect_dst_surface->w * rect.y + rect.x,
 			(ONSBuf *)accumulation_surface->pixels + accumulation_surface->w * rect.y + rect.x,
 			screen_width, mask_surface, &rect, mask_value, lowest_mask, overflow_mask};
+#ifdef USE_PARALLEL
 		parallel::For(0, rect.h, 1, blender, rect.w * rect.h);
 #else
 #ifdef USE_OMP_PARALLEL
 #pragma omp parallel for
 #endif //USE_OMP_PARALLEL
-		for (int i = 0; i < rect.h; i++) {
-			ONSBuf *src1_buffer = (ONSBuf *)effect_src_surface->pixels + effect_src_surface->w * rect.y + rect.x + screen_width * i;
-			ONSBuf *src2_buffer = (ONSBuf *)effect_dst_surface->pixels + effect_dst_surface->w * rect.y + rect.x + screen_width * i;
-			ONSBuf *dst_buffer = (ONSBuf *)accumulation_surface->pixels + accumulation_surface->w * rect.y + rect.x + screen_width * i;
-			const ONSBuf *mask_buffer = (ONSBuf *)mask_surface->pixels + mask_surface->w * ((rect.y + i) % mask_surface->h);
-
-			int j2 = rect.x;
-			for (int j = 0; j < rect.w; j++) {
-				Uint32 mask2 = 0;
-				Uint32 mask = *(mask_buffer + j2) & lowest_mask;
-				if (mask_value > mask) {
-					mask2 = mask_value - mask;
-					if (mask2 & overflow_mask) mask2 = lowest_mask;
-				}
-				BLEND_PIXEL_MASK();
-				src1_buffer++; src2_buffer++; dst_buffer++;
-
-				if (j2 >= mask_surface->w) j2 = 0;
-				else                       j2++;
-			}
-			src1_buffer += screen_width - rect.w;
-			src2_buffer += screen_width - rect.w;
-			dst_buffer += screen_width - rect.w;
-		}
+		for (int i = 0; i < rect.h; i++) blender(i);
 #endif //USE_PARALLEL
 	} else { // ALPHA_BLEND_CONST
 		Uint32 mask2 = mask_value & lowest_mask;
-#ifdef USE_PARALLEL
 		struct Blender {
 			ONSBuf *const stsrc1_buffer, *const stsrc2_buffer, *const stdst_buffer;
 			Uint32 mask2;
@@ -351,10 +337,7 @@ void ONScripter::alphaBlend(SDL_Surface *mask_surface,
 				ONSBuf *src1_buffer = stsrc1_buffer + screen_width * i;
 				ONSBuf *src2_buffer = stsrc2_buffer + screen_width * i;
 				ONSBuf *dst_buffer = stdst_buffer + screen_width * i;
-				for (int j = rect_w; j != 0; j--) {
-					BLEND_PIXEL_MASK();
-					src1_buffer++; src2_buffer++; dst_buffer++;
-				}
+				alphaBlendConst32(src1_buffer, src2_buffer, dst_buffer, mask2, rect_w);
 				src1_buffer += screen_width - rect_w;
 				src2_buffer += screen_width - rect_w;
 				dst_buffer += screen_width - rect_w;
@@ -363,23 +346,13 @@ void ONScripter::alphaBlend(SDL_Surface *mask_surface,
 			(ONSBuf *)effect_dst_surface->pixels + effect_dst_surface->w * rect.y + rect.x,
 			(ONSBuf *)accumulation_surface->pixels + accumulation_surface->w * rect.y + rect.x,
 			mask2,screen_width,rect.w};
+#ifdef USE_PARALLEL
 		parallel::For(0, rect.h, 1, blender,rect.h * rect.w);
 #else
 #ifdef USE_OMP_PARALLEL
 #pragma omp parallel for
 #endif //USE_OMP_PARALLEL
-		for (int i = 0; i < rect.h; i++) {
-			ONSBuf *src1_buffer = (ONSBuf *)effect_src_surface->pixels + effect_src_surface->w * rect.y + rect.x + screen_width * i;
-			ONSBuf *src2_buffer = (ONSBuf *)effect_dst_surface->pixels + effect_dst_surface->w * rect.y + rect.x + screen_width * i;
-			ONSBuf *dst_buffer = (ONSBuf *)accumulation_surface->pixels + accumulation_surface->w * rect.y + rect.x + screen_width * i;
-			for (int j = rect.w; j != 0; j--) {
-				BLEND_PIXEL_MASK();
-				src1_buffer++; src2_buffer++; dst_buffer++;
-			}
-			src1_buffer += screen_width - rect.w;
-			src2_buffer += screen_width - rect.w;
-			dst_buffer += screen_width - rect.w;
-		}
+		for (int i = 0; i < rect.h; i++) blender(i);
 #endif //USE_PARALLEL
 	}
 

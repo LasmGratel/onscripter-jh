@@ -386,7 +386,7 @@ void AnimationInfo::blendOnSurface( SDL_Surface *dst_surface, int dst_x, int dst
     alpha &= 0xff;
     int pitch = image_surface->pitch / sizeof(ONSBuf);
 
-#ifdef USE_PARALLEL
+
 	struct Blender {
 		ONSBuf *const stsrc_buffer, *const stdst_buffer;
 		const int alpha, dst_rect_w, dst_rect_h, pitch, dst_surface_w;
@@ -410,27 +410,13 @@ void AnimationInfo::blendOnSurface( SDL_Surface *dst_surface, int dst_x, int dst
 	} blender = { (ONSBuf *)image_surface->pixels + pitch * src_rect.y + image_surface->w * current_cell / num_of_cells + src_rect.x,
 		(ONSBuf *)dst_surface->pixels + dst_surface->w * dst_rect.y + dst_rect.x,
 		alpha,dst_rect.w,dst_rect.h,pitch,dst_surface->w };
+#ifdef USE_PARALLEL
 	parallel::For(0, dst_rect.h, 1, blender, dst_rect.h * dst_rect.w);
 #else
 #if defined (USE_OMP_PARALLEL)
 #pragma omp parallel for
 #endif
-	for (int i = 0; i<dst_rect.h; i++) {
-		ONSBuf *src_buffer = (ONSBuf *)image_surface->pixels + pitch * src_rect.y + image_surface->w*current_cell / num_of_cells + src_rect.x + (pitch)* i;
-		ONSBuf *dst_buffer = (ONSBuf *)dst_surface->pixels + dst_surface->w * dst_rect.y + dst_rect.x + (dst_surface->w) * i;
-#if defined(BPP16)    
-		unsigned char *alphap = alpha_buf + image_surface->w * src_rect.y + image_surface->w*current_cell / num_of_cells + src_rect.x + image_surface->w;
-#else
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN
-		unsigned char *alphap = (unsigned char *)src_buffer + 3;
-#else
-		unsigned char *alphap = (unsigned char *)src_buffer;
-#endif //SDL_BYTEORDER == SDL_LIL_ENDIAN
-#endif //defined(BPP16)  
-		for (int j = dst_rect.w; j != 0; j--, src_buffer++, dst_buffer++) {
-			BLEND_PIXEL();
-		}
-	}
+	for (int i = 0; i < dst_rect.h; i++) blender(i);
 #endif
 
     SDL_UnlockSurface( image_surface );
@@ -467,7 +453,6 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
     alpha &= 0xff;
     int pitch = image_surface->pitch / sizeof(ONSBuf);
     // set pixel by inverse-projection with raster scan
-#ifdef USE_PARALLEL
 	struct Blender {
 		int (*corner_xy)[2], *min_xy, *max_xy;
 		int (*inv_mat)[2];
@@ -522,59 +507,13 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
 			}
 		}
 	} blender = { corner_xy, min_xy, max_xy, inv_mat, this, dst_surface, alpha, pitch, dst_x, dst_y };
+#ifdef USE_PARALLEL
 	parallel::For(min_xy[1], max_xy[1] + 1, 1, blender, (max_xy[1] - min_xy[1] + 1) * (max_xy[0] + 1 - min_xy[0]));
 #else
 #ifdef USE_OMP_PARALLEL
 #pragma omp parallel for
 #endif
-    for (int y=min_xy[1] ; y<= max_xy[1] ; y++){
-        // calculate the start and end point for each raster scan
-        int raster_min = min_xy[0], raster_max = max_xy[0];
-        for (int i=0 ; i<4 ; i++){
-            int i2 = (i+1)&3; // = (i+1)%4
-            if (corner_xy[i][1] == corner_xy[i2][1]) continue;
-            int x = (corner_xy[i2][0] - corner_xy[i][0])*(y-corner_xy[i][1])/(corner_xy[i2][1] - corner_xy[i][1]) + corner_xy[i][0];
-            if (corner_xy[i2][1] - corner_xy[i][1] > 0){
-                if (raster_min < x) raster_min = x;
-            }
-            else{
-                if (raster_max > x) raster_max = x;
-            }
-        }
-
-        if (raster_min < 0)               raster_min = 0;
-        if (raster_max >= dst_surface->w) raster_max = dst_surface->w - 1;
-
-        ONSBuf *dst_buffer = (ONSBuf *)dst_surface->pixels + dst_surface->w * y + raster_min;
-
-        // inverse-projection
-        int x_offset2 = (inv_mat[0][1] * (y-dst_y) >> 9) + pos.w;
-        int y_offset2 = (inv_mat[1][1] * (y-dst_y) >> 9) + pos.h;
-        for (int x=raster_min-dst_x ; x<=raster_max-dst_x ; x++, dst_buffer++){
-            int x2 = ((inv_mat[0][0] * x >> 9) + x_offset2) >> 1;
-            int y2 = ((inv_mat[1][0] * x >> 9) + y_offset2) >> 1;
-
-            if (x2 < 0 || x2 >= pos.w ||
-                y2 < 0 || y2 >= pos.h) continue;
-
-            ONSBuf *src_buffer = (ONSBuf *)image_surface->pixels + pitch * y2 + x2 + pos.w*current_cell;
-#if defined(BPP16)    
-            unsigned char *alphap = alpha_buf + image_surface->w * y2 + x2 + pos.w*current_cell;
-#else
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN
-            unsigned char *alphap = (unsigned char *)src_buffer + 3;
-#else
-            unsigned char *alphap = (unsigned char *)src_buffer;
-#endif
-#endif
-            if (blending_mode == BLEND_NORMAL)
-                BLEND_PIXEL()
-            else if (blending_mode == BLEND_ADD)
-                ADDBLEND_PIXEL()
-            else
-                SUBBLEND_PIXEL();
-        }
-    }
+	for (int y = min_xy[1]; y <= max_xy[1]; y++) blender(y);
 #endif
     
     // unlock surface
