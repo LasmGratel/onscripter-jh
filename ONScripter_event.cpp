@@ -1384,6 +1384,7 @@ void ONScripter::runEventLoop()
 			  }
 #ifdef ANDROID
 			  else {
+				  SDL_SetWindowSize( window, screen_device_height, screen_device_width );
 				  repaintCommand();
 				  break;
 			  }
