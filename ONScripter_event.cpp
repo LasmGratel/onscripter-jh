@@ -1384,12 +1384,13 @@ void ONScripter::runEventLoop()
 			  }
 #ifdef ANDROID
 			  else {
-				  SDL_SetWindowSize( window, screen_device_height, screen_device_width );
+				  if(compatibilityMode) repaintCommand();
+				  SDL_SetWindowSize( window, screen_device_width, screen_device_height);
 				  repaintCommand();
 				  break;
 			  }
 #endif //ANDROID
-			  SDL_RenderPresent(renderer);
+			  //SDL_RenderPresent(renderer);
 			  break;
 #else
           case SDL_ACTIVEEVENT:
