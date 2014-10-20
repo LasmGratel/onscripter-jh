@@ -1252,8 +1252,9 @@ void ONScripter::runEventLoop()
             num_fingers = 0;
             if (ret) return;
             break;
+#endif //SDL_VERSION_ATLEAST(2,0,0)
 #endif
-#else
+#if !defined(ANDROID) || SDL_VERSION_ATLEAST(2,0,0)
           case SDL_MOUSEMOTION:
             if (mouseMoveEvent( &event.motion )) return;
             if (btndown_flag){
@@ -1265,8 +1266,10 @@ void ONScripter::runEventLoop()
                     break;
 
                 tmp_event.button.type = SDL_MOUSEBUTTONDOWN;
-                tmp_event.button.x = event.motion.x;
-                tmp_event.button.y = event.motion.y;
+#if defined(IOS) || defined(ANDROID) || defined(WINRT)
+				tmp_event.button.x = device_width * event.motion.x - (device_width - screen_device_width) / 2;;
+				tmp_event.button.y = device_width * event.motion.y - (device_width - screen_device_width) / 2;
+#endif
                 ret = mousePressEvent( &tmp_event.button );
                 if (ret) return;
             }
@@ -1275,10 +1278,18 @@ void ONScripter::runEventLoop()
           case SDL_MOUSEBUTTONDOWN:
             if ( !btndown_flag ) break;
           case SDL_MOUSEBUTTONUP:
+#if defined(IOS) || defined(ANDROID) || defined(WINRT)
+			event.button.x = device_width * event.button.x - (device_width - screen_device_width) / 2;;
+			event.button.y = device_width * event.button.y - (device_width - screen_device_width) / 2;
+#endif
             ret = mousePressEvent( &event.button );
             if (ret) return;
             break;
 		  case SDL_MOUSEWHEEL:
+#if defined(IOS) || defined(ANDROID) || defined(WINRT)
+			  event.wheel.x = device_width * event.wheel.x - (device_width - screen_device_width) / 2;;
+			  event.wheel.y = device_width * event.wheel.y - (device_width - screen_device_width) / 2;
+#endif
 			ret = mouseWheelEvent(&event.wheel);
 			if (ret) return;
 			break;

@@ -40,6 +40,10 @@ Coding2UTF16 *coding2utf16 = nullptr;
 #import "MoviePlayer.h"
 #endif
 
+#ifdef WINRT
+#include "ScriptSelector.h"
+#endif
+
 #if defined(PSP)
 #include <pspkernel.h>
 #include <psputility.h>
@@ -179,7 +183,7 @@ int main( int argc, char *argv[] )
     SetupCallbacks();
 #elif defined(WINRT)
 	char currentDir[256];
-	auto appInstallDirectory = Windows::Storage::ApplicationData::Current->LocalFolder->Path + "\\ons\\";
+	auto appInstallDirectory = Windows::Storage::ApplicationData::Current->LocalFolder->Path + "\\";
 	const wchar_t *wText = appInstallDirectory->Begin();
 	WCharToMByte(wText,currentDir,256);
 	char* cptr = currentDir;
@@ -189,9 +193,11 @@ int main( int argc, char *argv[] )
 			break;
 	}
 	cptr[i] = '\0';
-	ons.setArchivePath(currentDir);
+	{
+		ScriptSelector ss(currentDir);
+		ons.setArchivePath(ss.selectedPath);
+	}
 	ons.disableRescale();
-	ons.enableButtonShortCut();
 #elif defined(WINCE)
     char currentDir[256];
     strcpy(currentDir, argv[0]);
