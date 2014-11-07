@@ -55,6 +55,10 @@ void ONScripter::setCaption(const char *title, const char *iconstr){
 #endif
 }
 
+void ONScripter::setDebugLevel(int debug){
+	debug_level = debug;
+}
+
 void ONScripter::initSDL()
 {
 	/* ---------------------------------------- */
@@ -77,6 +81,9 @@ void ONScripter::initSDL()
 #endif
 
 #if !defined(IOS)
+#ifdef ANDROID && SDL_VERSION_ATLEAST(2, 0, 0)
+	SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
+#endif
 	if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) == 0 && SDL_JoystickOpen(0) != NULL)
 		utils::printInfo("Initialize JOYSTICK\n");
 #endif
@@ -153,6 +160,8 @@ void ONScripter::initSDL()
 
 #ifdef _WIN32
 	int window_flag = SDL_WINDOW_SHOWN;
+#elif defined(MACOSX) || (defined(LINUX) && !defined(ANDROID))
+	int window_flag = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
 #else
 	int window_flag = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS;
 #endif //_WIN32
@@ -178,12 +187,6 @@ void ONScripter::initSDL()
 	if (info.texture_formats[0] == SDL_PIXELFORMAT_ABGR8888)
 		texture_format = SDL_PIXELFORMAT_ABGR8888;
 	SDL_RenderClear(renderer);
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-	for (int i = 0; i < 3; ++i) {
-		SDL_RenderPresent(renderer);
-		SDL_RenderClear(renderer);
-	}
-#endif //SDL_VERSION_ATLEAST(2,0,0)
 #else
 #if defined(ANDROID)
 	// use hardware scaling
@@ -735,14 +738,18 @@ void ONScripter::flushDirect(SDL_Rect &rect, int refresh_mode)
 	SDL_UpdateTexture(texture, &rect, (unsigned char*)accumulation_surface->pixels + accumulation_surface->pitch*rect.y + rect.x*sizeof(ONSBuf), accumulation_surface->pitch);
 	SDL_UnlockSurface(accumulation_surface);
 	
+#ifdef ANDROID
 	if (compatibilityMode) {
 		SDL_RenderClear(renderer);
 		SDL_RenderCopy(renderer, texture, NULL, NULL);
 		SDL_RenderPresent(renderer);
 	} else {
+#endif
 		SDL_RenderCopy(renderer, texture, &src_rect, &dst_rect);
 		SDL_RenderPresent(renderer);
+#ifdef ANDROID
 	}
+#endif
 #else //USE_SDL_RENDERER
 	refreshSurface(accumulation_surface, &rect, refresh_mode);
 	SDL_Rect dst_rect = rect;

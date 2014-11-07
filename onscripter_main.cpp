@@ -103,6 +103,8 @@ void optionHelp()
     printf( "      --render-font-outline\trender the outline of a text instead of casting a shadow\n");
     printf( "      --edit\t\tenable online modification of the volume and variables when 'z' is pressed\n");
     printf( "      --key-exe file\tset a file (*.EXE) that includes a key table\n");
+	printf( "      --enc:sjis\tuse sjis coding script\n");
+	printf( "      --debug:1\tprint debug info\n");
     printf( "  -h, --help\t\tshow this help and exit\n");
     printf( "  -v, --version\t\tshow the version information and exit\n");
     exit(0);
@@ -321,6 +323,9 @@ int main( int argc, char *argv[] )
             }
 			else if (!strcmp(argv[0] + 1, "-enc:sjis")) {
 				if (coding2utf16 == nullptr) coding2utf16 = new SJIS2UTF16();
+			}
+			else if (!strcmp(argv[0] + 1, "-debug:1")) {
+				ons.setDebugLevel(1);
 			}
 #if defined(ANDROID) 
 #if SDL_VERSION_ATLEAST(2,0,0)

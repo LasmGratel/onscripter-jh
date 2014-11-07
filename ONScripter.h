@@ -73,6 +73,7 @@ public:
 	void setFullscreenMode();
 	void setWindowMode();
 	void setCompatibilityMode();
+	void setDebugLevel(int debug);
 	void enableButtonShortCut();
 	void enableWheelDownAdvance();
 	void disableRescale();
