@@ -105,6 +105,7 @@ void optionHelp()
     printf( "      --key-exe file\tset a file (*.EXE) that includes a key table\n");
 	printf( "      --enc:sjis\tuse sjis coding script\n");
 	printf( "      --debug:1\tprint debug info\n");
+    printf( "      --fontcache\tcache default font\n");
     printf( "  -h, --help\t\tshow this help and exit\n");
     printf( "  -v, --version\t\tshow the version information and exit\n");
     exit(0);
@@ -327,6 +328,9 @@ int main( int argc, char *argv[] )
 			else if (!strcmp(argv[0] + 1, "-debug:1")) {
 				ons.setDebugLevel(1);
 			}
+            else if (!strcmp(argv[0] + 1, "-fontcache")) {
+                ons.setFontCache();
+            }
 #if defined(ANDROID) 
 #if SDL_VERSION_ATLEAST(2,0,0)
             else if (!strcmp(argv[0] + 1, "-compatible")){

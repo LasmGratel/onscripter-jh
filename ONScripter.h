@@ -73,6 +73,7 @@ public:
 	void setFullscreenMode();
 	void setWindowMode();
 	void setCompatibilityMode();
+    void setFontCache();
 	void setDebugLevel(int debug);
 	void enableButtonShortCut();
 	void enableWheelDownAdvance();
@@ -313,6 +314,7 @@ private:
 	bool edit_flag;
 	char *key_exe_file;
 	bool compatibilityMode;
+    bool cacheFont = false;
 
 	// variables relevant to button
 	struct ButtonState {
@@ -708,6 +710,7 @@ private:
 	AnimationInfo text_info;
 	AnimationInfo sentence_font_info;
 	char *font_file;
+    void *font_cache = nullptr;
 	int erase_text_window_mode;
 	bool text_on_flag; // suppress the effect of erase_text_window_mode
 	bool draw_cursor_flag;

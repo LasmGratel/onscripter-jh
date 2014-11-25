@@ -25,6 +25,7 @@
 #include "FontInfo.h"
 #include "Utils.h"
 #include <stdio.h>
+#include <string.h>
 #include <SDL_ttf.h>
 
 #if defined(PSP)
@@ -53,6 +54,10 @@ static struct FontContainer{
 #endif
     };
 } root_font_container;
+
+char *FontInfo::cache_font_file = nullptr;
+void *FontInfo::font_cache = nullptr;
+int FontInfo::font_cache_size = 0;
 
 FontInfo::FontInfo()
 {
@@ -96,9 +101,15 @@ void *FontInfo::openFont( char *font_file, int ratio1, int ratio2 )
     if ( !fc->next ){
         fc->next = new FontContainer();
         fc->next->size = font_size;
-        FILE *fp = fopen( font_file, "r" );
+        SDL_RWops *fp;
+        bool useFile = (cache_font_file == nullptr || strcmp(cache_font_file, font_file) != 0);
+        if (useFile) {
+          fp = SDL_RWFromFile(font_file, "r");
+        } else {
+          fp = SDL_RWFromConstMem(font_cache, font_cache_size);
+        }
         if ( fp == NULL ) return NULL;
-        fclose( fp );
+        fp->close(fp);
 #if defined(PSP)
         fc->next->rw_ops = SDL_RWFromFile(font_file, "r");
         fc->next->font[0] = TTF_OpenFontRW( fc->next->rw_ops, SDL_TRUE, font_size * ratio1 / ratio2 );
@@ -109,9 +120,11 @@ void *FontInfo::openFont( char *font_file, int ratio1, int ratio2 )
         fc->next->power_resume_number = psp_power_resume_number;
         strcpy(fc->next->name, font_file);
 #else
-        fc->next->font[0] = TTF_OpenFont( font_file, font_size * ratio1 / ratio2 );
+        if (useFile) fc->next->font[0] = TTF_OpenFont(font_file, font_size * ratio1 / ratio2);
+        else fc->next->font[0] = TTF_OpenFontRW(SDL_RWFromConstMem(font_cache, font_cache_size), 1, font_size * ratio1 / ratio2);
 #if (SDL_TTF_MAJOR_VERSION>=2) && (SDL_TTF_MINOR_VERSION>=0) && (SDL_TTF_PATCHLEVEL>=10)
-        fc->next->font[1] = TTF_OpenFont( font_file, font_size * ratio1 / ratio2 );
+        if (useFile) fc->next->font[1] = TTF_OpenFont(font_file, font_size * ratio1 / ratio2);
+        else fc->next->font[1] = TTF_OpenFontRW(SDL_RWFromConstMem(font_cache, font_cache_size), 1, font_size * ratio1 / ratio2);
 		if (fc->next->font[1] == nullptr) {
 			utils::printError("Open font failed: %s\n", TTF_GetError());
 		}

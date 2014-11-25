@@ -33,6 +33,9 @@ public:
     enum { YOKO_MODE = 0,
            TATE_MODE = 1
     };
+    static char *cache_font_file;
+    static void *font_cache;
+    static int font_cache_size;
     void *ttf_font[2]; // 0...normal rendering, 1...outline rendering
     uchar3 color;
     uchar3 on_color, off_color, nofile_color;

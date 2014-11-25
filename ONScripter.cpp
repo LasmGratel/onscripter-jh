@@ -374,6 +374,11 @@ void ONScripter::setCompatibilityMode()
 	compatibilityMode = true;
 }
 
+void ONScripter::setFontCache()
+{
+  cacheFont = true;
+}
+
 void ONScripter::enableButtonShortCut()
 {
 	force_button_shortcut_flag = true;
@@ -552,6 +557,21 @@ int ONScripter::init()
 	defineresetCommand();
 
 	readToken();
+
+    if (cacheFont) {
+      SDL_RWops *fontfp = SDL_RWFromFile(font_file, "rb");
+      if (fontfp == nullptr) {
+        utils::printError("can't open font file: %s\n", font_file);
+        return -1;
+      }
+      int size = fontfp->size(fontfp);
+      font_cache = malloc(size);
+      fontfp->read(fontfp, font_cache, 1, size);
+      fontfp->close(fontfp);
+      FontInfo::cache_font_file = font_file;
+      FontInfo::font_cache = font_cache;
+      FontInfo::font_cache_size = size;
+    }
 
 	if (sentence_font.openFont(font_file, screen_ratio1, screen_ratio2) == NULL) {
 		utils::printError("can't open font file: %s\n", font_file);
