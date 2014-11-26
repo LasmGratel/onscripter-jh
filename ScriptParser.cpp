@@ -353,19 +353,19 @@ int ScriptParser::saveFileIOBuf( const char *filename, int offset, const char *s
     bool use_save_dir = false;
     if (strcmp(filename, "envdata") != 0) use_save_dir = true;
     
-    FILE *fp;
+    SDL_RWops *fp;
     if ( (fp = fopen( filename, "wb", use_save_dir )) == NULL ) return -1;
     
-    size_t ret = fwrite(file_io_buf+offset, 1, file_io_buf_ptr-offset, fp);
+    size_t ret = fp->write(fp, file_io_buf + offset, 1, file_io_buf_ptr - offset);
 
     if (savestr){
         fputc('"', fp);
-        fwrite(savestr, 1, strlen(savestr), fp);
+        fp->write(fp, savestr, 1, strlen(savestr));
         fputc('"', fp);
         fputc('*', fp);
     }
 
-    fclose(fp);
+    fp->close(fp);
 
     if (ret != file_io_buf_ptr-offset) return -2;
 
@@ -377,18 +377,17 @@ size_t ScriptParser::loadFileIOBuf( const char *filename )
     bool use_save_dir = false;
     if (strcmp(filename, "envdata") != 0) use_save_dir = true;
 
-    FILE *fp;
+    SDL_RWops *fp;
     if ( (fp = fopen( filename, "rb", use_save_dir )) == NULL )
         return 0;
     
-    fseek(fp, 0, SEEK_END);
-    size_t len = ftell(fp);
+    size_t len = fp->size(fp);
     file_io_buf_ptr = len;
     allocFileIOBuf();
 
-    fseek(fp, 0, SEEK_SET);
-    size_t ret = fread(file_io_buf, 1, len, fp);
-    fclose(fp);
+    fp->seek(fp, 0, RW_SEEK_SET);
+    size_t ret = fp->read(fp, file_io_buf, 1, len);
+    fp->close(fp);
 
     return ret;
 }
@@ -700,7 +699,7 @@ ScriptParser::EffectLink *ScriptParser::parseEffect(bool init_flag)
     return NULL;
 }
 
-FILE *ScriptParser::fopen(const char *path, const char *mode, bool use_save_dir)
+SDL_RWops *ScriptParser::fopen(const char *path, const char *mode, bool use_save_dir)
 {
     char filename[256];
     if (use_save_dir && save_dir)
@@ -708,14 +707,14 @@ FILE *ScriptParser::fopen(const char *path, const char *mode, bool use_save_dir)
     else
         sprintf( filename, "%s%s", archive_path, path );
 
-    return ::fopen( filename, mode );
+    return SDL_RWFromFile( filename, mode );
 }
 
 void ScriptParser::createKeyTable( const char *key_exe )
 {
     if (!key_exe) return;
     
-    FILE *fp = ::fopen(key_exe, "rb");
+    SDL_RWops *fp = SDL_RWFromFile(key_exe, "rb");
     if (fp == NULL){
         utils::printError( "createKeyTable: can't open EXE file %s\n", key_exe);
         return;
@@ -744,7 +743,7 @@ void ScriptParser::createKeyTable( const char *key_exe )
         ring_buffer[ring_last] = ch;
         ring_last = (ring_last+1)%256;
     }
-    fclose(fp);
+    fp->close(fp);
 
     if (ch == EOF)
         errorAndExit( "createKeyTable: can't find a key table." );

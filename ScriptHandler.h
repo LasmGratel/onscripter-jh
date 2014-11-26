@@ -102,7 +102,7 @@ public:
 
     void reset();
     void setSaveDir(const char *path);
-    FILE *fopen( const char *path, const char *mode, bool use_save_dir=false );
+    SDL_RWops *fopen( const char *path, const char *mode, bool use_save_dir=false );
     void setKeyTable( const unsigned char *key_table );
 
     // basic parser function
@@ -177,7 +177,7 @@ public:
     void errorAndExit( const char *str );
 
     ArrayVariable *getRootArrayVariable();
-    void loadArrayVariable( FILE *fp );
+    void loadArrayVariable( SDL_RWops *fp );
     
     void addNumAlias( const char *str, int no );
     void addStrAlias( const char *str1, const char *str2 );
@@ -281,7 +281,7 @@ private:
     };
     
     int  readScript(char *path);
-    int  readScriptSub(FILE *fp, char **buf, int encrypt_mode);
+    int  readScriptSub(SDL_RWops *fp, char **buf, int encrypt_mode);
     void readConfiguration();
     int  labelScript();
 

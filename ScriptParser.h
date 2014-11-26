@@ -68,7 +68,7 @@ public:
     void setCurrentLabel( const char *label );
     void gosubReal( const char *label, char *next_script, bool textgosub_flag=false );
 
-    FILE *fopen(const char *path, const char *mode, bool use_save_dir=false);
+    SDL_RWops *fopen(const char *path, const char *mode, bool use_save_dir = false);
     void saveGlovalData();
 
     /* Command */

@@ -41,6 +41,17 @@ static BOOL MByteToWChar(LPCSTR lpcszStr, LPWSTR lpwszStr, DWORD dwSize)
 #endif
 #include <stdio.h>
 #include <stdarg.h>
+#include "SDL_rwops.h"
+
+inline char fgetc(SDL_RWops *fp) {
+  char c;
+  fp->read(fp, &c, sizeof(c), 1);
+  return c;
+}
+
+inline void fputc(char c, SDL_RWops *fp){
+  fp->write(fp, &c, sizeof(c), 1);
+}
 
 namespace utils{
 	inline void printInfo(const char *format, ...){

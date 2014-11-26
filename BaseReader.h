@@ -25,7 +25,8 @@
 #ifndef __BASE_READER_H__
 #define __BASE_READER_H__
 
-#include <stdio.h>
+#include <stddef.h>
+#include "SDL_rwops.h"
 
 #ifndef SEEK_END
 #define SEEK_END 2
@@ -73,7 +74,7 @@ struct BaseReader
 
     struct ArchiveInfo{
         ArchiveInfo *next;
-        FILE *file_handle;
+        SDL_RWops *file_handle;
         int power_resume_number; // currently only for PSP
         char *file_name;
         FileInfo *fi_list;
@@ -89,7 +90,7 @@ struct BaseReader
             num_of_files = 0;
         }
         ~ArchiveInfo(){
-            if (file_handle) fclose( file_handle );
+            if (file_handle) file_handle->close(file_handle);
             if (file_name)   delete[] file_name;
             if (fi_list)     delete[] fi_list;
         }

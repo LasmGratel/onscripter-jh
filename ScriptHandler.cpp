@@ -134,7 +134,7 @@ void ScriptHandler::setSaveDir(const char *path)
     strcpy(save_dir, path);
 }
 
-FILE *ScriptHandler::fopen( const char *path, const char *mode, bool use_save_dir )
+SDL_RWops *ScriptHandler::fopen( const char *path, const char *mode, bool use_save_dir )
 {
     char *filename;
     if (use_save_dir && save_dir){
@@ -146,7 +146,7 @@ FILE *ScriptHandler::fopen( const char *path, const char *mode, bool use_save_di
         sprintf( filename, "%s%s", archive_path, path );
     }
 
-    FILE *fp = ::fopen( filename, mode );
+    SDL_RWops *fp = SDL_RWFromFile(filename, mode);
     delete[] filename;
 
     return fp;
@@ -575,28 +575,28 @@ void ScriptHandler::setKidokuskip( bool kidokuskip_flag )
 
 void ScriptHandler::saveKidokuData()
 {
-    FILE *fp;
+  SDL_RWops *fp;
 
     if ( ( fp = fopen( "kidoku.dat", "wb", true ) ) == NULL ){
 		utils::printError("can't write kidoku.dat\n");
         return;
     }
 
-    fwrite( kidoku_buffer, 1, script_buffer_length/8, fp );
-    fclose( fp );
+    fp->write(fp, kidoku_buffer, 1, script_buffer_length/8);
+    fp->close( fp );
 }
 
 void ScriptHandler::loadKidokuData()
 {
-    FILE *fp;
+  SDL_RWops *fp;
 
     setKidokuskip( true );
     kidoku_buffer = new char[ script_buffer_length/8 + 1 ];
     memset( kidoku_buffer, 0, script_buffer_length/8 + 1 );
 
     if ( ( fp = fopen( "kidoku.dat", "rb", true ) ) != NULL ){
-        fread( kidoku_buffer, 1, script_buffer_length/8, fp );
-        fclose( fp );
+        fp->read(fp, kidoku_buffer, 1, script_buffer_length/8);
+        fp->close( fp );
     }
 }
 
@@ -943,7 +943,7 @@ int ScriptHandler::readScript( char *path )
     archive_path = new char[strlen(path) + 1];
     strcpy( archive_path, path );
 
-    FILE *fp = NULL;
+    SDL_RWops *fp = NULL;
     char filename[10];
     int i, encrypt_mode = 0;
     if ((fp = fopen("0.txt", "rb")) != NULL){
@@ -967,11 +967,10 @@ int ScriptHandler::readScript( char *path )
         return -1;
     }
     
-    fseek( fp, 0, SEEK_END );
-    int estimated_buffer_length = ftell( fp ) + 1;
+    int estimated_buffer_length = fp->size( fp ) + 1;
 
     if (encrypt_mode == 0){
-        fclose(fp);
+        fp->close(fp);
         for (i=1 ; i<100 ; i++){
             sprintf(filename, "%d.txt", i);
             if ((fp = fopen(filename, "rb")) == NULL){
@@ -979,9 +978,8 @@ int ScriptHandler::readScript( char *path )
                 fp = fopen(filename, "rb");
             }
             if (fp){
-                fseek( fp, 0, SEEK_END );
-                estimated_buffer_length += ftell(fp)+1;
-                fclose(fp);
+                estimated_buffer_length += fp->size(fp)+1;
+                fp->close(fp);
             }
         }
     }
@@ -994,9 +992,9 @@ int ScriptHandler::readScript( char *path )
     
     tmp_script_buf = new unsigned char[TMP_SCRIPT_BUF_LEN];
     if (encrypt_mode > 0){
-        fseek( fp, 0, SEEK_SET );
+        fp->seek( fp, 0, RW_SEEK_SET );
         readScriptSub( fp, &p_script_buffer, encrypt_mode );
-        fclose( fp );
+        fp->close( fp );
     }
     else{
         for (i=0 ; i<100 ; i++){
@@ -1007,7 +1005,7 @@ int ScriptHandler::readScript( char *path )
             }
             if (fp){
                 readScriptSub( fp, &p_script_buffer, 0 );
-                fclose(fp);
+                fp->close(fp);
             }
         }
     }
@@ -1018,7 +1016,7 @@ int ScriptHandler::readScript( char *path )
     return 0;
 }
 
-int ScriptHandler::readScriptSub( FILE *fp, char **buf, int encrypt_mode )
+int ScriptHandler::readScriptSub(SDL_RWops *fp, char **buf, int encrypt_mode)
 {
     unsigned char magic[5] = {0x79, 0x57, 0x0d, 0x80, 0x04 };
     int  magic_counter = 0;
@@ -1032,7 +1030,7 @@ int ScriptHandler::readScriptSub( FILE *fp, char **buf, int encrypt_mode )
     size_t len=0, count=0;
     while(1){
         if (len == count){
-            len = fread(tmp_script_buf, 1, TMP_SCRIPT_BUF_LEN, fp);
+            len = fp->read(fp, tmp_script_buf, 1, TMP_SCRIPT_BUF_LEN);
             if (len == 0){
                 if (cr_flag) *(*buf)++ = 0x0a;
                 break;

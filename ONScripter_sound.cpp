@@ -179,13 +179,13 @@ int ONScripter::playSound(const char *filename, int format, bool loop_flag, int 
     }
 
     if (format & SOUND_MIDI){
-        FILE *fp;
+        SDL_RWops *fp;
         if ( (fp = fopen(TMP_MUSIC_FILE, "wb", true)) == NULL){
             utils::printError("can't open temporaly MIDI file %s\n", TMP_MUSIC_FILE);
         }
         else{
-            fwrite(buffer, 1, length, fp);
-            fclose( fp );
+            fp->write(fp, buffer, 1, length);
+            fp->close( fp );
             ext_music_play_once_flag = !loop_flag;
             if (playMIDI(loop_flag) == 0){
                 delete[] buffer;

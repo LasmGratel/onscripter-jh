@@ -3,6 +3,7 @@
  *  DirectReader.h - Reader from independent files
  *
  *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -88,25 +89,25 @@ protected:
         };
     } root_registered_compression_type, *last_registered_compression_type;
 
-    FILE *fopen(const char *path, const char *mode);
-    unsigned char readChar( FILE *fp );
-    unsigned short readShort( FILE *fp );
-    unsigned long readLong( FILE *fp );
-    void writeChar( FILE *fp, unsigned char ch );
-    void writeShort( FILE *fp, unsigned short ch );
-    void writeLong( FILE *fp, unsigned long ch );
+    SDL_RWops *fopen(const char *path, const char *mode);
+    unsigned char readChar(SDL_RWops *fp);
+    unsigned short readShort(SDL_RWops *fp);
+    unsigned long readLong(SDL_RWops *fp);
+    void writeChar(SDL_RWops *fp, unsigned char ch);
+    void writeShort(SDL_RWops *fp, unsigned short ch);
+    void writeLong(SDL_RWops *fp, unsigned long ch);
     static unsigned short swapShort( unsigned short ch );
     static unsigned long swapLong( unsigned long ch );
-    size_t decodeNBZ( FILE *fp, size_t offset, unsigned char *buf );
-    size_t encodeNBZ( FILE *fp, size_t length, unsigned char *buf );
-    int getbit( FILE *fp, int n );
-    size_t decodeSPB( FILE *fp, size_t offset, unsigned char *buf );
+    size_t decodeNBZ(SDL_RWops *fp, size_t offset, unsigned char *buf);
+    size_t encodeNBZ(SDL_RWops *fp, size_t length, unsigned char *buf);
+    int getbit(SDL_RWops *fp, int n);
+    size_t decodeSPB(SDL_RWops *fp, size_t offset, unsigned char *buf);
     size_t decodeLZSS( struct ArchiveInfo *ai, int no, unsigned char *buf );
     int getRegisteredCompressionType( const char *file_name );
-    size_t getDecompressedFileLength( int type, FILE *fp, size_t offset );
+    size_t getDecompressedFileLength(int type, SDL_RWops *fp, size_t offset);
     
 private:
-    FILE *getFileHandle( const char *file_name, int &compression_type, size_t *length );
+    SDL_RWops *getFileHandle(const char *file_name, int &compression_type, size_t *length);
 };
 
 #endif // __DIRECT_READER_H__

@@ -105,7 +105,7 @@ DirectReader::~DirectReader()
     }
 }
 
-FILE *DirectReader::fopen(const char *path, const char *mode)
+SDL_RWops *DirectReader::fopen(const char *path, const char *mode)
 {
     size_t len = strlen(archive_path) + strlen(path) + 1;
     if (file_path_len < len){
@@ -117,7 +117,7 @@ FILE *DirectReader::fopen(const char *path, const char *mode)
     }
     sprintf( file_full_path, "%s%s", archive_path, path );
 
-    FILE *fp = ::fopen( file_full_path, mode );
+    SDL_RWops *fp = SDL_RWFromFile(file_full_path, mode);
     if (fp) return fp;
 
 #if !defined(WIN32) && !defined(MACOS9) && !defined(PSP) && !defined(__OS2__)
@@ -162,36 +162,36 @@ FILE *DirectReader::fopen(const char *path, const char *mode)
         cur_p = delim_p+1;
     }
 
-    fp = ::fopen( file_full_path, mode );
+    fp = SDL_RWFromFile( file_full_path, mode );
 #endif
 
     return fp;
 }
 
-unsigned char DirectReader::readChar( FILE *fp )
+unsigned char DirectReader::readChar(SDL_RWops *fp)
 {
     unsigned char ret;
     
-    fread( &ret, 1, 1, fp );
+    fp->read(fp, &ret, 1, 1);
     return key_table[ret];
 }
 
-unsigned short DirectReader::readShort( FILE *fp )
+unsigned short DirectReader::readShort(SDL_RWops *fp)
 {
     unsigned short ret;
     unsigned char buf[2];
     
-    fread( &buf, 1, 2, fp );
+    fp->read(fp, &buf, 1, 2);
     ret = key_table[buf[0]] << 8 | key_table[buf[1]];
     return ret;
 }
 
-unsigned long DirectReader::readLong( FILE *fp )
+unsigned long DirectReader::readLong(SDL_RWops *fp)
 {
     unsigned long ret;
     unsigned char buf[4];
     
-    fread( &buf, 1, 4, fp );
+    fp->read(fp, &buf, 1, 4);
     ret = key_table[buf[0]];
     ret = ret << 8 | key_table[buf[1]];
     ret = ret << 8 | key_table[buf[2]];
@@ -199,21 +199,21 @@ unsigned long DirectReader::readLong( FILE *fp )
     return ret;
 }
 
-void DirectReader::writeChar( FILE *fp, unsigned char ch )
+void DirectReader::writeChar(SDL_RWops *fp, unsigned char ch)
 {
-    fwrite( &ch, 1, 1, fp );
+    fp->write(fp, &ch, 1, 1);
 }
 
-void DirectReader::writeShort( FILE *fp, unsigned short ch )
+void DirectReader::writeShort(SDL_RWops *fp, unsigned short ch)
 {
     unsigned char buf[2];
 
     buf[0] = (ch>>8) & 0xff;
     buf[1] = ch & 0xff;
-    fwrite( &buf, 1, 2, fp );
+    fp->write(fp, &buf, 1, 2);
 }
 
-void DirectReader::writeLong( FILE *fp, unsigned long ch )
+void DirectReader::writeLong(SDL_RWops *fp, unsigned long ch)
 {
     unsigned char buf[4];
     
@@ -221,7 +221,7 @@ void DirectReader::writeLong( FILE *fp, unsigned long ch )
     buf[1] = (unsigned char)((ch>>16) & 0xff);
     buf[2] = (unsigned char)((ch>>8)  & 0xff);
     buf[3] = (unsigned char)(ch & 0xff);
-    fwrite( &buf, 1, 4, fp );
+    fp->write(fp, &buf, 1, 4);
 }
 
 unsigned short DirectReader::swapShort( unsigned short ch )
@@ -289,9 +289,9 @@ int DirectReader::getRegisteredCompressionType( const char *file_name )
     return fi;
 }*/
 
-FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type, size_t *length )
+SDL_RWops *DirectReader::getFileHandle( const char *file_name, int &compression_type, size_t *length )
 {
-    FILE *fp;
+    SDL_RWops *fp;
     unsigned int i;
 
     compression_type = NO_COMPRESSION;
@@ -320,8 +320,7 @@ FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type,
             *length = getDecompressedFileLength( compression_type, fp, 0 );
         }
         else{
-            fseek( fp, 0, SEEK_END );
-            *length = ftell( fp );
+            *length = fp->size(fp);
         }
     }
             
@@ -332,9 +331,9 @@ size_t DirectReader::getFileLength( const char *file_name )
 {
     int compression_type;
     size_t len;
-    FILE *fp = getFileHandle( file_name, compression_type, &len );
+    SDL_RWops *fp = getFileHandle(file_name, compression_type, &len);
 
-    if ( fp ) fclose( fp );
+    if ( fp ) fp->close( fp );
     
     return len;
 }
@@ -343,22 +342,22 @@ size_t DirectReader::getFile( const char *file_name, unsigned char *buffer, int 
 {
     int compression_type;
     size_t len, c, total = 0;
-    FILE *fp = getFileHandle( file_name, compression_type, &len );
+    SDL_RWops *fp = getFileHandle(file_name, compression_type, &len);
     
     if ( fp ){
         if      ( compression_type & NBZ_COMPRESSION ) return decodeNBZ( fp, 0, buffer );
         else if ( compression_type & SPB_COMPRESSION ) return decodeSPB( fp, 0, buffer );
 
-        fseek( fp, 0, SEEK_SET );
+        fp->seek( fp, 0, RW_SEEK_SET );
         total = len;
         while( len > 0 ){
             if ( len > READ_LENGTH ) c = READ_LENGTH;
             else                     c = len;
             len -= c;
-            fread( buffer, 1, c, fp );
+            fp->read( fp, buffer, c, 1 );
             buffer += c;
         }
-        fclose( fp );
+        fp->close( fp );
         if ( location ) *location = ARCHIVE_TYPE_NONE;
     }
 
@@ -417,39 +416,70 @@ void DirectReader::convertCodingToUTF8( char *dst_buf, const char *src_buf )
     *dst_buf++ = 0;
 }
 
-size_t DirectReader::decodeNBZ( FILE *fp, size_t offset, unsigned char *buf )
+size_t DirectReader::decodeNBZ(SDL_RWops *fp, size_t offset, unsigned char *buf)
 {
     if (key_table_flag)
         utils::printError("may not decode NBZ with key_table enabled.\n");
     
     unsigned int original_length, count;
-	BZFILE *bfp;
 	void *unused;
-	int err, len, nunused;
+	int len, nunused;
 
-    fseek( fp, offset, SEEK_SET );
+    fp->seek( fp, offset, RW_SEEK_SET );
     original_length = count = readLong( fp );
 
-	bfp = BZ2_bzReadOpen( &err, fp, 0, 0, NULL, 0 );
-	if ( bfp == NULL || err != BZ_OK ) return 0;
+    if (buf == nullptr) return 0;
+    bz_stream strm;
+    strm.bzalloc = NULL;
+    strm.bzfree = NULL;
+    strm.opaque = NULL;
+    int ret = BZ2_bzDecompressInit(&strm, 0, 0);
+    if (ret != BZ_OK) return 0;
+    strm.avail_in = 0;
+    char *bzbuffer = new char[5000];
+    strm.next_in = bzbuffer;
 
-	while( err == BZ_OK && count > 0 ){
-        if ( count >= READ_LENGTH )
-            len = BZ2_bzRead( &err, bfp, buf, READ_LENGTH );
-        else
-            len = BZ2_bzRead( &err, bfp, buf, count );
-        count -= len;
-		buf += len;
+	while( count > 0 ){
+      int rlen;
+      strm.next_out = (char*) buf;
+      if (count >= READ_LENGTH)
+        strm.avail_out = rlen = READ_LENGTH;
+      else
+        strm.avail_out = rlen = count;
+      if (rlen <= 0) continue;
+      for (;;) {
+        if (strm.avail_in == 0) {
+          strm.avail_in = fp->read(fp, &bzbuffer, sizeof(char), 5000);
+          strm.next_in = bzbuffer;
+        }
+        ret = BZ2_bzDecompress(&strm);
+        if (ret == BZ_STREAM_END) {
+          len = rlen - strm.avail_out;
+          break;
+        }
+        if (ret != BZ_OK) {
+          len = 0;
+          break;
+        }
+        if (strm.avail_out == 0) {
+          len = rlen;
+          break;
+        }
+      }
+      count -= len;
+      buf += len;
 	}
 
-	BZ2_bzReadGetUnused(&err, bfp, &unused, &nunused );
-	BZ2_bzReadClose( &err, bfp );
+    BZ2_bzDecompressEnd(&strm);
+    delete[] bzbuffer;
 
     return original_length - count;
 }
 
-size_t DirectReader::encodeNBZ( FILE *fp, size_t length, unsigned char *buf )
+size_t DirectReader::encodeNBZ(SDL_RWops *fp, size_t length, unsigned char *buf)
 {
+  //TODO:
+  /*
     unsigned int bytes_in, bytes_out;
 	int err;
 
@@ -470,10 +500,11 @@ size_t DirectReader::encodeNBZ( FILE *fp, size_t length, unsigned char *buf )
 
 	BZ2_bzWriteClose( &err, bfp, 0, &bytes_in, &bytes_out );
     
-    return bytes_out;
+    return bytes_out;*/
+  return 0;
 }
 
-int DirectReader::getbit( FILE *fp, int n )
+int DirectReader::getbit(SDL_RWops *fp, int n)
 {
     int i, x = 0;
     static int getbit_buf;
@@ -481,7 +512,7 @@ int DirectReader::getbit( FILE *fp, int n )
     for ( i=0 ; i<n ; i++ ){
         if ( getbit_mask == 0 ){
             if (getbit_len == getbit_count){
-                getbit_len = fread(read_buf, 1, READ_LENGTH, fp);
+                getbit_len = fp->read(fp, read_buf, 1, READ_LENGTH);
                 if (getbit_len == 0) return EOF;
                 getbit_count = 0;
             }
@@ -496,7 +527,7 @@ int DirectReader::getbit( FILE *fp, int n )
     return x;
 }
 
-size_t DirectReader::decodeSPB( FILE *fp, size_t offset, unsigned char *buf )
+size_t DirectReader::decodeSPB(SDL_RWops *fp, size_t offset, unsigned char *buf)
 {
     unsigned int count;
     unsigned char *pbuf, *psbuf;
@@ -506,7 +537,7 @@ size_t DirectReader::decodeSPB( FILE *fp, size_t offset, unsigned char *buf )
     getbit_mask = 0;
     getbit_len = getbit_count = 0;
     
-    fseek( fp, offset, SEEK_SET );
+    fp->seek( fp, offset, RW_SEEK_SET );
     size_t width  = readShort( fp );
     size_t height = readShort( fp );
 
@@ -598,7 +629,7 @@ size_t DirectReader::decodeLZSS( struct ArchiveInfo *ai, int no, unsigned char *
     getbit_mask = 0;
     getbit_len = getbit_count = 0;
 
-    fseek( ai->file_handle, ai->fi_list[no].offset, SEEK_SET );
+    ai->file_handle->seek( ai->file_handle, ai->fi_list[no].offset, RW_SEEK_SET );
     memset( decomp_buffer, 0, N-F );
     r = N - F;
 
@@ -621,10 +652,10 @@ size_t DirectReader::decodeLZSS( struct ArchiveInfo *ai, int no, unsigned char *
     return count;
 }
 
-size_t DirectReader::getDecompressedFileLength( int type, FILE *fp, size_t offset )
+size_t DirectReader::getDecompressedFileLength(int type, SDL_RWops *fp, size_t offset)
 {
     size_t length=0;
-    fseek( fp, offset, SEEK_SET );
+    fp->seek( fp, offset, RW_SEEK_SET );
     
     if ( type == NBZ_COMPRESSION ){
         length = readLong( fp );

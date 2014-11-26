@@ -104,8 +104,8 @@ int NsaReader::open( const char *nsa_path )
 int NsaReader::openForConvert( char *nsa_name, int archive_type, unsigned int nsa_offset )
 {
     sar_flag = false;
-    if ( ( archive_info.file_handle = ::fopen( nsa_name, "rb" ) ) == NULL ){
-        utils::printError( "can't open file %s\n", nsa_name );
+    if ( ( archive_info.file_handle = SDL_RWFromFile( nsa_name, "rb" ) ) == NULL ){
+        utils::printError( "can't open file %s: %s\n", nsa_name, SDL_GetError() );
         return -1;
     }
 
@@ -114,13 +114,13 @@ int NsaReader::openForConvert( char *nsa_name, int archive_type, unsigned int ns
     return 0;
 }
 
-int NsaReader::writeHeader( FILE *fp, int archive_type, int nsa_offset )
+int NsaReader::writeHeader(SDL_RWops *fp, int archive_type, int nsa_offset)
 {
     ArchiveInfo *ai = &archive_info;
     return writeHeaderSub( ai, fp, archive_type, nsa_offset );
 }
 
-size_t NsaReader::putFile( FILE *fp, int no, size_t offset, size_t length, size_t original_length, int compression_type, bool modified_flag, unsigned char *buffer )
+size_t NsaReader::putFile(SDL_RWops *fp, int no, size_t offset, size_t length, size_t original_length, int compression_type, bool modified_flag, unsigned char *buffer)
 {
     ArchiveInfo *ai = &archive_info;
     return putFileSub( ai, fp, no, offset, length, original_length , compression_type, modified_flag, buffer );

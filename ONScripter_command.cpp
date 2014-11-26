@@ -2277,7 +2277,7 @@ int ONScripter::getregCommand()
 
     utils::printInfo("  reading Registry file for [%s] %s\n", path, key );
         
-    FILE *fp;
+    SDL_RWops *fp;
     if ( ( fp = fopen( registry_file, "r" ) ) == NULL ){
         utils::printError("Cannot open file [%s]\n", registry_file );
         return RET_CONTINUE;
@@ -2285,12 +2285,12 @@ int ONScripter::getregCommand()
 
     char reg_buf[256], reg_buf2[256];
     bool found_flag = false;
-    while( fgets( reg_buf, 256, fp) && !found_flag ){
+    while( fp->read(fp, reg_buf, 1, 256) && !found_flag ){
         if ( reg_buf[0] == '[' ){
             unsigned int c=0;
             while ( reg_buf[c] != ']' && reg_buf[c] != '\0' ) c++;
             if ( !strncmp( reg_buf + 1, path, (c-1>strlen(path))?(c-1):strlen(path) ) ){
-                while( fgets( reg_buf2, 256, fp) ){
+                while( fp->read(fp, reg_buf2, 1, 256) ){
 
                     script_h.pushCurrent( reg_buf2 );
                     buf = script_h.readStr();
@@ -2319,7 +2319,7 @@ int ONScripter::getregCommand()
     }
 
     if ( !found_flag ) utils::printError("  The key is not found.\n" );
-    fclose(fp);
+    fp->close(fp);
 
     return RET_CONTINUE;
 }
@@ -2568,7 +2568,7 @@ int ONScripter::exec_dllCommand()
 
     utils::printInfo("  reading %s for %s\n", dll_file, dll_name );
 
-    FILE *fp;
+    SDL_RWops *fp;
     if ( ( fp = fopen( dll_file, "r" ) ) == NULL ){
         utils::printError("Cannot open file [%s]\n", dll_file );
         return RET_CONTINUE;
@@ -2576,13 +2576,13 @@ int ONScripter::exec_dllCommand()
 
     char dll_buf[256], dll_buf2[256];
     bool found_flag = false;
-    while( fgets( dll_buf, 256, fp) && !found_flag ){
+    while( fp->read(fp, dll_buf, 1, 256) && !found_flag ){
         if ( dll_buf[0] == '[' ){
             c=0;
             while ( dll_buf[c] != ']' && dll_buf[c] != '\0' ) c++;
             if ( !strncmp( dll_buf + 1, dll_name, (c-1>strlen(dll_name))?(c-1):strlen(dll_name) ) ){
                 found_flag = true;
-                while( fgets( dll_buf2, 256, fp) ){
+                while (fp->read(fp, dll_buf2, 1, 256)) {
                     c=0;
                     while ( dll_buf2[c] == ' ' || dll_buf2[c] == '\t' ) c++;
                     if ( !strncmp( &dll_buf2[c], "str", 3 ) ){
@@ -2614,7 +2614,7 @@ int ONScripter::exec_dllCommand()
     }
 
     if ( !found_flag ) utils::printError("  The DLL is not found in %s.\n", dll_file );
-    fclose( fp );
+    fp->close( fp );
     
     return RET_CONTINUE;
 }
