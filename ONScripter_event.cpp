@@ -1116,10 +1116,10 @@ void ONScripter::runEventLoop()
     while ( SDL_WaitEvent(&event) ) {
         bool ret = false;
         // ignore continous SDL_MOUSEMOTION
-        while (event.type == SDL_MOUSEMOTION){
+        while (event.type == SDL_MOUSEMOTION || event.type == SDL_FINGERMOTION) {
 #if SDL_VERSION_ATLEAST(1, 3, 0)
             if ( SDL_PeepEvents( &tmp_event, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT ) == 0 ) break;
-            if (tmp_event.type != SDL_MOUSEMOTION) break;
+            if (tmp_event.type != SDL_MOUSEMOTION && tmp_event.type != SDL_FINGERMOTION) break;
             SDL_PeepEvents( &tmp_event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT );
 #else
             if ( SDL_PeepEvents( &tmp_event, 1, SDL_PEEKEVENT, SDL_ALLEVENTS ) == 0 ) break;
