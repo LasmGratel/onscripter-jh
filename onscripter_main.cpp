@@ -336,6 +336,9 @@ int main( int argc, char *argv[] )
             else if (!strcmp(argv[0] + 1, "-compatible")){
 				ons.setCompatibilityMode(); 
             }
+            else if (!strcmp(argv[0] + 1, "-assets-file")){
+                ons.setUppercaseFile(); 
+            }
 #else
             else if ( !strcmp( argv[0]+1, "-open-only" ) ){
                 argc--;

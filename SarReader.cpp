@@ -106,7 +106,7 @@ void SarReader::readArchive( ArchiveInfo *ai, int archive_type, unsigned int off
             //skip the beginning double-quote
             unsigned char ch = key_table[fgetc(ai->file_handle)];
             while ((ch = key_table[fgetc(ai->file_handle)]) != '"') {
-                //if ( 'a' <= ch && ch <= 'z' ) ch += 'A' - 'a';
+                if ( 'a' <= ch && ch <= 'z' ) ch += 'A' - 'a';
                 ai->fi_list[i].name[count++] = ch;
             }
             ai->fi_list[i].name[count] = '\0';
@@ -130,7 +130,7 @@ void SarReader::readArchive( ArchiveInfo *ai, int archive_type, unsigned int off
             int count = 0;
 
             while ((ch = key_table[fgetc(ai->file_handle)])) {
-                //if ( 'a' <= ch && ch <= 'z' ) ch += 'A' - 'a';
+                if ( 'a' <= ch && ch <= 'z' ) ch += 'A' - 'a';
                 ai->fi_list[i].name[count++] = ch;
             }
             ai->fi_list[i].name[count] = ch;

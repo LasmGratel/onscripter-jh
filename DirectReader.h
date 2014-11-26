@@ -33,6 +33,9 @@
 class DirectReader : public BaseReader
 {
 public:
+#ifdef ANDROID
+    static bool uppercase;
+#endif
     DirectReader( const char *path=NULL, const unsigned char *key_table=NULL );
     ~DirectReader();
 

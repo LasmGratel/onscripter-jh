@@ -296,7 +296,9 @@ ONScripter::ONScripter()
 	sprite_info = new AnimationInfo[MAX_SPRITE_NUM];
 	sprite2_info = new AnimationInfo[MAX_SPRITE2_NUM];
 	current_button_state.down_flag = false;
-	compatibilityMode = false;
+#ifdef ANDROID
+    compatibilityMode = false;
+#endif
 
 	int i;
 	for (i = 0; i < MAX_SPRITE2_NUM; i++)
@@ -369,15 +371,21 @@ void ONScripter::setWindowMode()
 	window_mode = true;
 }
 
-void ONScripter::setCompatibilityMode()
-{
-	compatibilityMode = true;
-}
-
 void ONScripter::setFontCache()
 {
   cacheFont = true;
 }
+
+#ifdef ANDROID
+void ONScripter::setCompatibilityMode()
+{
+  compatibilityMode = true;
+}
+
+void ONScripter::setUppercaseFile(){
+  DirectReader::uppercase = true;
+}
+#endif
 
 void ONScripter::enableButtonShortCut()
 {

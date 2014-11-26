@@ -26,6 +26,7 @@
 #include "Utils.h"
 #include "coding2utf16.h"
 #include <bzlib.h>
+#include <cctype>
 #if !defined(WIN32) && !defined(MACOS9) && !defined(PSP) && !defined(__OS2__)
 #include <dirent.h>
 #endif
@@ -48,6 +49,9 @@ extern Coding2UTF16 *coding2utf16;
 #define N (1 << EI)  /* buffer size */
 #define F ((1 << EJ) + P)  /* lookahead buffer size */
 
+#ifdef ANDROID
+bool DirectReader::uppercase = false;
+#endif
 DirectReader::DirectReader( const char *path, const unsigned char *key_table )
 {
     file_full_path = NULL;
@@ -323,6 +327,21 @@ SDL_RWops *DirectReader::getFileHandle( const char *file_name, int &compression_
             *length = fp->size(fp);
         }
     }
+#ifdef ANDROID
+    else if (uppercase) {
+      for (i = 0; i < len; i++) {
+        capital_name[i] = toupper(capital_name[i]);
+      }
+      if ( (fp = fopen( capital_name, "rb" )) != NULL && len >= 3 ){
+        compression_type = getRegisteredCompressionType(capital_name);
+        if (compression_type == NBZ_COMPRESSION || compression_type == SPB_COMPRESSION) {
+          *length = getDecompressedFileLength(compression_type, fp, 0);
+        } else {
+          *length = fp->size(fp);
+        }
+      }
+    }
+#endif
             
     return fp;
 }

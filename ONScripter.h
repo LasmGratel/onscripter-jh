@@ -72,7 +72,10 @@ public:
 	void setSaveDir(const char *path);
 	void setFullscreenMode();
 	void setWindowMode();
+#ifdef ANDROID
 	void setCompatibilityMode();
+    void setUppercaseFile();
+#endif
     void setFontCache();
 	void setDebugLevel(int debug);
 	void enableButtonShortCut();
@@ -312,8 +315,10 @@ private:
 	bool enable_wheeldown_advance_flag;
 	bool disable_rescale_flag;
 	bool edit_flag;
-	char *key_exe_file;
+    char *key_exe_file;
+#ifdef ANDROID
 	bool compatibilityMode;
+#endif
     bool cacheFont = false;
 
 	// variables relevant to button
