@@ -1254,7 +1254,7 @@ void ONScripter::runEventLoop()
             break;
 #endif //SDL_VERSION_ATLEAST(2,0,0)
 #endif
-#if !defined(ANDROID) || SDL_VERSION_ATLEAST(2,0,0)
+#if !defined(ANDROID) && SDL_VERSION_ATLEAST(2,0,0)
           case SDL_MOUSEMOTION:
             if (mouseMoveEvent( &event.motion )) return;
             if (btndown_flag){
