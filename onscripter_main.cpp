@@ -333,7 +333,7 @@ int main( int argc, char *argv[] )
             }
 #if defined(ANDROID) 
 #if SDL_VERSION_ATLEAST(2,0,0)
-            else if (!strcmp(argv[0] + 1, "-compatible")){
+            else if (!strcmp(argv[0] + 1, "-compatible")) {
 				ons.setCompatibilityMode(); 
             }
 #else
@@ -344,6 +344,11 @@ int main( int argc, char *argv[] )
                 return 0;
             }
 #endif //SDL_VERSION_ATLEAST(2,0,0)
+			else if (!strcmp(argv[0] + 1, "-save-dir"))  {
+				argc--;
+				argv++;
+				ons.setSaveDir(argv[0]);
+			}
 #endif
             else{
                 utils::printInfo(" unknown option %s\n", argv[0] );
