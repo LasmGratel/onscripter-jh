@@ -2,8 +2,8 @@
  *
  *  ONScripter.h - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
- *            (C) 2014 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
+ *            (C) 2014-2015 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -270,6 +270,7 @@ public:
 	int bltCommand();
 	int bgcopyCommand();
 	int bgCommand();
+	int bdownCommand();
 	int barclearCommand();
 	int barCommand();
 	int aviCommand();
@@ -646,6 +647,7 @@ private:
 	Uint32 mp3fadein_duration;
 	Uint32 mp3fadeout_duration_internal;
 	Uint32 mp3fadein_duration_internal;
+	char *fadeout_music_file_name;
 	Mix_Music *music_info;
 	char *loop_bgm_name[2];
 

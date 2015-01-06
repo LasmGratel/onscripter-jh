@@ -2,8 +2,8 @@
  * 
  *  ONScripter_event.cpp - Event handler of ONScripter
  *
- *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
- *            (C) 2014 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
+ *            (C) 2014-2015 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -274,7 +274,7 @@ void ONScripter::flushEventSub( SDL_Event &event )
             Mix_VolumeMusic( tmp * MIX_MAX_VOLUME / 100 );
         } else {
             char *ext = NULL;
-            if (music_file_name) ext = strrchr(music_file_name, '.');
+			if (fadeout_music_file_name) ext = strrchr(fadeout_music_file_name, '.');
             if (ext && (strcmp(ext+1, "OGG") && strcmp(ext+1, "ogg"))){
                 // set break event to return to script processing when playing music other than ogg
                 SDL_Event event;
@@ -480,10 +480,25 @@ bool ONScripter::mousePressEvent( SDL_MouseButtonEvent *event )
     else if ( event->button == SDL_BUTTON_LEFT &&
               ( event->type == SDL_MOUSEBUTTONUP || btndown_flag ) ){
         current_button_state.button = current_over_button;
-        if (current_over_button == 0)
-            sprintf(current_button_state.str, "LCLICK");
-        else
-            sprintf(current_button_state.str, "S%d", current_over_button);
+		if (current_over_button == -1) {
+			if (!bexec_flag) current_button_state.button = 0;
+			sprintf(current_button_state.str, "LCLICK");
+		} else {
+			sprintf(current_button_state.str, "S%d", current_over_button);
+			if (bexec_flag && current_button_link) {
+				ButtonLink *cbl = current_button_link;
+				if (current_button_link->exbtn_ctl[2]) {
+					SDL_Rect check_src_rect = cbl->image_rect;
+					SDL_Rect check_dst_rect = { 0, 0, 0, 0 };
+					decodeExbtnControl(cbl->exbtn_ctl[2], &check_src_rect, &check_dst_rect);
+				} else {
+					sprite_info[cbl->sprite_no].visible = true;
+					sprite_info[cbl->sprite_no].setCell(2);
+					dirty_rect.add(cbl->image_rect);
+				}
+				flush(refreshMode());
+			}
+		}
             
         if ( event->type == SDL_MOUSEBUTTONDOWN )
             current_button_state.down_flag = true;
@@ -865,15 +880,31 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
              event->keysym.sym == SDLK_KP_ENTER ||
              (spclclk_flag && event->keysym.sym == SDLK_SPACE) ){
             current_button_state.button = current_over_button;
-            if (current_over_button == 0)
-                sprintf(current_button_state.str, "RETURN");
-            else
-                sprintf(current_button_state.str, "S%d", current_over_button);
+			if (current_over_button == -1) {
+				if (!bexec_flag) current_button_state.button = 0;
+				sprintf(current_button_state.str, "RETURN");
+			} else {
+				sprintf(current_button_state.str, "S%d", current_over_button);
+				if (bexec_flag && current_button_link) {
+					ButtonLink *cbl = current_button_link;
+					if (current_button_link->exbtn_ctl[2]) {
+						SDL_Rect check_src_rect = cbl->image_rect;
+						SDL_Rect check_dst_rect = { 0, 0, 0, 0 };
+						decodeExbtnControl(cbl->exbtn_ctl[2], &check_src_rect, &check_dst_rect);
+					} else {
+						sprite_info[cbl->sprite_no].visible = true;
+						sprite_info[cbl->sprite_no].setCell(2);
+						dirty_rect.add(cbl->image_rect);
+					}
+					flush(refreshMode());
+				}
+			}
             if ( event->type == SDL_KEYDOWN )
                 current_button_state.down_flag = true;
         }
         else{
-            current_button_state.button = 0;
+			current_button_state.button = -1;
+			if (!bexec_flag) current_button_state.button = 0;
             sprintf(current_button_state.str, "SPACE");
         }
         playClickVoice();
@@ -1384,28 +1415,38 @@ void ONScripter::runEventLoop()
 
             return;
 #if SDL_VERSION_ATLEAST(2,0,0)
-		  case SDL_WINDOWEVENT:
-			  if (event.window.event != SDL_WINDOWEVENT_FOCUS_GAINED) { 
-				  switch (event.window.event) {
-				  case SDL_WINDOWEVENT_EXPOSED: SDL_RenderPresent(renderer); break;
-				  case SDL_WINDOWEVENT_MINIMIZED: Mix_PauseMusic(); break;
-				  case SDL_WINDOWEVENT_RESTORED: Mix_ResumeMusic(); break;
-				  }
+		  case SDL_WINDOWEVENT:  
+			  switch (event.window.event) {
+			  case SDL_WINDOWEVENT_EXPOSED: SDL_RenderPresent(renderer); break;
+			  case SDL_WINDOWEVENT_FOCUS_LOST:
+				  Mix_PauseMusic();
+				  // the mouse cursor leaves the window
+				  SDL_MouseMotionEvent mevent;
+				  mevent.x = screen_device_width;
+				  mevent.y = screen_device_height;
+				  mouseMoveEvent(&mevent);
 				  break;
-			  }
+			  case SDL_WINDOWEVENT_FOCUS_GAINED:
+				  Mix_ResumeMusic();
 #ifdef ANDROID
-			  else {
-				  if(compatibilityMode) repaintCommand();
+				  if (compatibilityMode) repaintCommand();
 				  SDL_SetWindowSize( window, screen_device_width, screen_device_height);
 				  repaintCommand();
+#endif //ANDROID
 				  break;
 			  }
-#endif //ANDROID
 			  //SDL_RenderPresent(renderer);
 			  break;
 #else
           case SDL_ACTIVEEVENT:
-            if ( !event.active.gain ) break;
+			  if (!event.active.gain) {
+				  // the mouse cursor leaves the window
+				  SDL_MouseMotionEvent mevent;
+				  mevent.x = screen_device_width;
+				  mevent.y = screen_device_height;
+				  mouseMoveEvent(&mevent);
+				  break;
+			  }
 #ifdef ANDROID
             if (event.active.state == SDL_APPACTIVE){
                 screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
