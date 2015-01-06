@@ -2,8 +2,8 @@
  *
  *  ONScripter_image.cpp - Image processing in ONScripter
  *
- *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
- *            (C) 2014 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
+ *            (C) 2014-2015 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -163,9 +163,8 @@ SDL_Surface *ONScripter::createSurfaceFromFile(char *filename, bool *has_alpha, 
 		utils::printError(" *** force-loading a JPG image [%s]\n", filename);
 		tmp = IMG_LoadJPG_RW(src);
 	}
-	if (!tmp) utils::printError("failed to load image: %s\n", IMG_GetError());
 
-	if (has_alpha) {
+	if (tmp && has_alpha) {
 		if (tmp->format->Amask || is_png)
 			*has_alpha = true;
 		else
@@ -177,7 +176,7 @@ SDL_Surface *ONScripter::createSurfaceFromFile(char *filename, bool *has_alpha, 
 	if (buffer != tmp_image_buf) delete[] buffer;
 
 	if (!tmp)
-		utils::printError(" *** can't load file [%s] ***\n", filename);
+		utils::printError(" *** can't load file [%s] %s ***\n", filename, IMG_GetError());
 
 	return tmp;
 }

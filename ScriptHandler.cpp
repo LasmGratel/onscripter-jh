@@ -2,8 +2,8 @@
  *
  *  ScriptHandler.cpp - Script manipulation class
  *
- *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
- *            (C) 2014 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
+ *            (C) 2014-2015 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -1187,6 +1187,7 @@ int ScriptHandler::labelScript()
                 buf++;
                 current_line++;
             }
+			SKIP_SPACE(buf);
             label_info[ label_counter ].start_address = buf;
         }
         else{

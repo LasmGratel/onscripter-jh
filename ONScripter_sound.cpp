@@ -2,8 +2,8 @@
  * 
  *  ONScripter_sound.cpp - Methods for playing sound
  *
- *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
- *            (C) 2014 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
+ *            (C) 2014-2015 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -318,6 +318,11 @@ int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag)
                          ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_SPACE ||
                          ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_ESCAPE )
                         done_flag = true;
+					if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_RCTRL)
+						ctrl_pressed_status &= ~0x01;
+
+					if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_LCTRL)
+						ctrl_pressed_status &= ~0x02;
                     break;
                   case SDL_QUIT:
                     ret = 1;
