@@ -1140,6 +1140,39 @@ void ONScripter::timerEvent()
     }
 }
 
+#if (defined(IOS) || defined(ANDROID) || defined(WINRT)) && SDL_VERSION_ATLEAST(2, 0, 0)
+SDL_MouseWheelEvent transTouchKey(SDL_TouchFingerEvent &finger) {
+	static struct FingerPoint {
+		float x, y;
+	} finger_start;
+
+	static Sint32 old_key = 0;
+	SDL_MouseWheelEvent mw;
+	if (finger.type == SDL_FINGERDOWN) {
+		finger_start.x = finger.x;
+		finger_start.y = finger.y;
+	} else if (finger.type == SDL_FINGERMOTION) {
+		float dtfinger = finger.y - finger_start.y;
+		Sint32 key = 0;
+		if (dtfinger > 0.5) key = -1;
+		else if (dtfinger < -0.5) key = 1;
+		if (old_key != key) {
+			mw.y = key;
+			old_key = key;
+			return mw;
+		}
+	}
+	mw.y = 0;
+	return mw;
+}
+
+bool ONScripter::convTouchKey(SDL_TouchFingerEvent &finger) {
+	SDL_MouseWheelEvent mw = transTouchKey(finger);
+	if (mw.y != 0) return mouseWheelEvent(&mw);
+	return false;
+}
+#endif
+
 void ONScripter::runEventLoop()
 {
     SDL_Event event, tmp_event;
@@ -1162,9 +1195,10 @@ void ONScripter::runEventLoop()
 
         switch (event.type) {
 #if defined(IOS) || defined(ANDROID) || defined(WINRT)
-#if SDL_VERSION_ATLEAST(2,0,0)
+#if SDL_VERSION_ATLEAST(2, 0, 0)
 		case SDL_FINGERMOTION:
 		{
+			if (convTouchKey(event.tfinger)) return;
 			tmp_event.motion.x = device_width *event.tfinger.x - (device_width -screen_device_width)/2;
 			tmp_event.motion.y = device_height*event.tfinger.y - (device_height-screen_device_height)/2;
 			if (mouseMoveEvent( &tmp_event.motion )) return;
@@ -1182,6 +1216,7 @@ void ONScripter::runEventLoop()
 			break;
 		case SDL_FINGERDOWN:
 		{
+			convTouchKey(event.tfinger);
 			tmp_event.motion.x = device_width *event.tfinger.x - (device_width -screen_device_width)/2;
 			tmp_event.motion.y = device_height*event.tfinger.y - (device_height-screen_device_height)/2;
 			if (mouseMoveEvent( &tmp_event.motion )) return;
@@ -1213,7 +1248,7 @@ void ONScripter::runEventLoop()
 					tmp_event.button.button = SDL_BUTTON_RIGHT;
 				tmp_event.button.x = device_width *event.tfinger.x - (device_width -screen_device_width)/2;
 				tmp_event.button.y = device_height*event.tfinger.y - (device_height-screen_device_height)/2;
-                                ret = mousePressEvent( &tmp_event.button );
+                ret = mousePressEvent( &tmp_event.button );
 			}
 			tmp_event.key.keysym.sym = SDLK_LCTRL;
 			keyUpEvent( &tmp_event.key );
