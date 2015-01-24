@@ -510,6 +510,9 @@ private:
 	void keyUpEvent(SDL_KeyboardEvent *event);
 	bool keyPressEvent(SDL_KeyboardEvent *event);
 	void timerEvent();
+#if (defined(IOS) || defined(ANDROID) || defined(WINRT)) && SDL_VERSION_ATLEAST(2, 0, 0)
+	bool convTouchKey(SDL_TouchFingerEvent &finger);
+#endif
 	void runEventLoop();
 
 	// ----------------------------------------

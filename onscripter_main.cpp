@@ -156,20 +156,6 @@ extern "C" void playVideoIOS(const char *filename, bool click_flag, bool loop_fl
 }
 #endif
 
-#ifdef WINRT
-#include "windows.h"
-BOOL WCharToMByte(LPCWSTR lpcwszStr, LPSTR lpszStr, DWORD dwSize)
-{
-	DWORD dwMinSize;
-	dwMinSize = WideCharToMultiByte(CP_OEMCP,NULL,lpcwszStr,-1,NULL,0,NULL,FALSE);
-	if (dwSize < dwMinSize) {
-		return FALSE;
-	}
-	WideCharToMultiByte(CP_OEMCP, NULL, lpcwszStr, -1, lpszStr, dwSize, NULL, FALSE);
-	return TRUE;
-}
-#endif
-
 #if (defined(QWS) || defined(ANDROID)) && !SDL_VERSION_ATLEAST(2,0,0)
 int SDL_main( int argc, char **argv )
 #elif defined(PSP)
@@ -185,20 +171,9 @@ int main( int argc, char *argv[] )
     ons.enableButtonShortCut();
     SetupCallbacks();
 #elif defined(WINRT)
-	char currentDir[256];
-	auto appInstallDirectory = Windows::Storage::ApplicationData::Current->LocalFolder->Path + "\\";
-	const wchar_t *wText = appInstallDirectory->Begin();
-	WCharToMByte(wText,currentDir,256);
-	char* cptr = currentDir;
-	int i, len = strlen(currentDir);
-	for (i = len - 1; i>0; i--) {
-		if (cptr[i] == '\\' || cptr[i] == '/')
-			break;
-	}
-	cptr[i] = '\0';
 	{
-		ScriptSelector ss(currentDir);
-		ons.setArchivePath(ss.selectedPath);
+		ScriptSelector ss;
+		ons.setArchivePath(ss.selectedPath.c_str());
 	}
 	ons.disableRescale();
 #elif defined(WINCE)
