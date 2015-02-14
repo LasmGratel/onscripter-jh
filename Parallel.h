@@ -18,6 +18,17 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+#pragma once
+
+#ifdef USE_OMP_PARALLEL
+#include <omp.h>
+static const int omp_thread_num = omp_get_thread_num();
+inline int omp_threadClamp(int threadnum) {
+	if (threadnum > omp_thread_num) threadnum = omp_thread_num;
+	if (threadnum < 1) threadnum = 1;
+	return threadnum;
+}
+#endif
 
 #ifdef USE_PARALLEL
 #ifndef __PARALLEL_H__
@@ -38,7 +49,7 @@ namespace parallel{
 #ifdef ANDROID
       static const int MINSCALE = 65536;
 #else
-      static const int MINSCALE = 4096;
+      static const int MINSCALE = 16384;
 #endif
       struct ThreadData {
         int lr[2];
