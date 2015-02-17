@@ -26,7 +26,7 @@
 #include <new>
 #include "resize_image.h"
 #include "Utils.h"
-#if defined (USE_OMP_PARALLEL) || defined (USE_PARALLEL)
+#if defined(USE_OMP_PARALLEL) || defined(USE_PARALLEL)
 #include "Parallel.h"
 #endif
 
@@ -315,13 +315,9 @@ void ONScripter::alphaBlend(SDL_Surface *mask_surface,
       (ONSBuf *)effect_dst_surface->pixels + effect_dst_surface->w * rect.y + rect.x,
       (ONSBuf *)accumulation_surface->pixels + accumulation_surface->w * rect.y + rect.x,
       screen_width, mask_surface, &rect, mask_value, lowest_mask, overflow_mask };
-#ifdef USE_PARALLEL
+#if defined(USE_PARALLEL) || defined(USE_OMP_PARALLEL)
     parallel::For(0, rect.h, 1, blender, rect.w * rect.h);
 #else
-#ifdef USE_OMP_PARALLEL
-    omp_set_num_threads(omp_threadClamp(rect.w * rect.h / 16384));
-#pragma omp parallel for
-#endif //USE_OMP_PARALLEL
     for (int i = 0; i < rect.h; i++) blender(i);
 #endif //USE_PARALLEL
   } else { // ALPHA_BLEND_CONST
@@ -344,13 +340,9 @@ void ONScripter::alphaBlend(SDL_Surface *mask_surface,
       (ONSBuf *)effect_dst_surface->pixels + effect_dst_surface->w * rect.y + rect.x,
       (ONSBuf *)accumulation_surface->pixels + accumulation_surface->w * rect.y + rect.x,
       mask2,screen_width,rect.w};
-#ifdef USE_PARALLEL
+#if defined(USE_PARALLEL) || defined(USE_OMP_PARALLEL)
     parallel::For(0, rect.h, 1, blender, rect.h * rect.w);
 #else
-#ifdef USE_OMP_PARALLEL
-    omp_set_num_threads(omp_threadClamp(rect.h * rect.w / 16384));
-#pragma omp parallel for
-#endif //USE_OMP_PARALLEL
     for (int i = 0; i < rect.h; i++) blender(i);
 #endif //USE_PARALLEL
     }

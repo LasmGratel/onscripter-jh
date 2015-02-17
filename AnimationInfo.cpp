@@ -27,8 +27,11 @@
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
-#if defined (USE_OMP_PARALLEL) || defined (USE_PARALLEL)
+#if defined(USE_OMP_PARALLEL) || defined(USE_PARALLEL)
 #include "Parallel.h"
+#ifdef USE_PARALLEL
+parallel::ThreadPool parallel::threadPool;
+#endif
 #endif
 
 #if defined(BPP16)
@@ -405,13 +408,9 @@ void AnimationInfo::blendOnSurface(SDL_Surface *dst_surface, int dst_x, int dst_
   } blender = { (ONSBuf *)image_surface->pixels + pitch * src_rect.y + image_surface->w * current_cell / num_of_cells + src_rect.x,
     (ONSBuf *)dst_surface->pixels + dst_surface->w * dst_rect.y + dst_rect.x,
     alpha, dst_rect.w, dst_rect.h, pitch, dst_surface->w };
-#ifdef USE_PARALLEL
+#if defined(USE_PARALLEL) || defined(USE_OMP_PARALLEL)
   parallel::For(0, dst_rect.h, 1, blender, dst_rect.h * dst_rect.w);
 #else
-#if defined (USE_OMP_PARALLEL)
-  omp_set_num_threads(omp_threadClamp(dst_rect.h * dst_rect.w / 16384));
-#pragma omp parallel for
-#endif
   for (int i = 0; i < dst_rect.h; i++) blender(i);
 #endif
 
@@ -503,13 +502,9 @@ void AnimationInfo::blendOnSurface2(SDL_Surface *dst_surface, int dst_x, int dst
       }
     }
   } blender = { corner_xy, min_xy, max_xy, inv_mat, this, dst_surface, alpha, pitch, dst_x, dst_y };
-#ifdef USE_PARALLEL
+#if defined(USE_PARALLEL) || defined(USE_OMP_PARALLEL)
   parallel::For(min_xy[1], max_xy[1] + 1, 1, blender, (max_xy[1] - min_xy[1] + 1) * (max_xy[0] + 1 - min_xy[0]));
 #else
-#ifdef USE_OMP_PARALLEL	
-  omp_set_num_threads(omp_threadClamp((max_xy[1] - min_xy[1] + 1) * (max_xy[0] + 1 - min_xy[0]) / 16384));
-#pragma omp parallel for
-#endif
   for (int y = min_xy[1]; y <= max_xy[1]; y++) blender(y);
 #endif
 
