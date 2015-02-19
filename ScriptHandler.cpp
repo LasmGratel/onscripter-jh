@@ -199,6 +199,7 @@ const char *ScriptHandler::readToken()
 #endif             
              (!english_mode && ch == '>') ||
              ch == '!' || ch == '#' || ch == ',' || ch == '"'){ // text
+      bool ignore_clickstr_flag = false;
         while(1){
             if ( IS_TWO_BYTE(ch) ){
                 addStringBuffer( ch );
@@ -206,8 +207,13 @@ const char *ScriptHandler::readToken()
                 if (ch == 0x0a || ch == '\0') break;
                 addStringBuffer( ch );
                 buf++;
+                if (!wait_script && !ignore_clickstr_flag &&
+                  checkClickstr(buf - 2) > 0)
+                  wait_script = buf;
+                ignore_clickstr_flag = false;
             }
             else{
+              ignore_clickstr_flag = false;
                 if (ch == '%' || ch == '?'){
                     addIntVariable(&buf);
                     SKIP_SPACE(buf);
@@ -220,6 +226,7 @@ const char *ScriptHandler::readToken()
                     if (ch == 0x0a || ch == '\0') break;
                     addStringBuffer( ch );
                     buf++;
+                    if (ch == '_') ignore_clickstr_flag = true;
                     if (!wait_script && ch == '@') wait_script = buf;
                 }
             }

@@ -2,7 +2,7 @@
  *
  *  ONScripter_rmenu.cpp - Right click menu handler of ONScripter
  *
- *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
  *            (C) 2014 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
@@ -105,7 +105,7 @@ void ONScripter::leaveSystemCall( bool restore_flag )
     if ( restore_flag ){
         
         current_page = cached_page;
-        restoreTextBuffer();
+        SDL_BlitSurface(backup_surface, NULL, text_info.image_surface, NULL);
         root_button_link.next = shelter_button_link;
         root_select_link.next = shelter_select_link;
 
@@ -129,6 +129,8 @@ void ONScripter::leaveSystemCall( bool restore_flag )
 
 int ONScripter::executeSystemCall()
 {
+  SDL_BlitSurface(text_info.image_surface, NULL, backup_surface, NULL);
+
     enterSystemCall();
 
     while(system_menu_mode != SYSTEM_NULL){
