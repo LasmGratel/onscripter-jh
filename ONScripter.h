@@ -557,6 +557,9 @@ private:
 	SDL_Surface *screenshot_surface; // Screenshot
 	int screenshot_w, screenshot_h;
 	SDL_Surface *image_surface; // Reference for loadImage()
+    int max_texture_width, max_texture_height;
+    SDL_Texture *blt_texture;
+    SDL_Rect blt_texture_src_rect;
 
 	unsigned char *tmp_image_buf;
 	unsigned long tmp_image_buf_length;

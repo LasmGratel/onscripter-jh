@@ -11416,5 +11416,5 @@ uint16_t SJIS2UTF16::conv2UTF16(uint16_t in) const {
 }
 
 SJIS2UTF16::~SJIS2UTF16(){
-  if (sjis_2_utf16 != nullptr) delete[] sjis_2_utf16;
+  delete[] sjis_2_utf16;
 }

@@ -23981,5 +23981,5 @@ uint16_t GBK2UTF16::conv2UTF16(uint16_t in) const{
 }
 
 GBK2UTF16::~GBK2UTF16(){
-  if(gbk_2_utf16 != nullptr) delete[] gbk_2_utf16;
+  delete[] gbk_2_utf16;
 }

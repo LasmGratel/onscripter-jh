@@ -186,6 +186,8 @@ void ONScripter::initSDL()
 	SDL_GetRendererInfo(renderer, &info);
 	if (info.texture_formats[0] == SDL_PIXELFORMAT_ABGR8888)
 		texture_format = SDL_PIXELFORMAT_ABGR8888;
+    max_texture_width = info.max_texture_width;
+    max_texture_height = info.max_texture_height;
 	SDL_RenderClear(renderer);
 #else
 #if defined(ANDROID)
@@ -441,6 +443,7 @@ int ONScripter::init()
 	backup_surface = AnimationInfo::allocSurface(screen_width, screen_height, texture_format);
 	effect_src_surface = AnimationInfo::allocSurface(screen_width, screen_height, texture_format);
 	effect_dst_surface = AnimationInfo::allocSurface(screen_width, screen_height, texture_format);
+    blt_texture = nullptr;
 
 #if defined(USE_SDL_RENDERER)
 	screenshot_surface = AnimationInfo::alloc32bitSurface(screen_device_width, screen_device_height, texture_format);
@@ -642,6 +645,7 @@ void ONScripter::reset()
 	current_cd_track = -1;
 
 	resetSub();
+    if (blt_texture != nullptr) SDL_DestroyTexture(blt_texture);
 }
 
 void ONScripter::resetSub()
