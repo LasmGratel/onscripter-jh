@@ -230,7 +230,7 @@ public:
 	int getcselstrCommand();
 	int getcselnumCommand();
 	int gameCommand();
-	//int flushoutCommand();
+	int flushoutCommand();
 	int fileexistCommand();
 	int exec_dllCommand();
 	int exbtnCommand();

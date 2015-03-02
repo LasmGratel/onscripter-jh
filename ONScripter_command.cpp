@@ -2566,8 +2566,7 @@ int ONScripter::gameCommand()
     return RET_CONTINUE;
 }
 
-//TODO:flushoutCommand
-/*int ONScripter::flushoutCommand()
+int ONScripter::flushoutCommand()
 {
 	//Mion: flushout special effect
 	// not quite the same as NScr's, but looks good
@@ -2582,11 +2581,11 @@ int ONScripter::gameCommand()
 	setStr(&bg_info.file_name, "white");
 	createBackground();
 	SDL_BlitSurface(bg_info.image_surface, NULL, effect_dst_surface, NULL);
-	SDL_BlitSurface(accumulation_surface, NULL, effect_src_surface, NULL);
+    SDL_BlitSurface(accumulation_surface, NULL, effect_tmp_surface, NULL);
 	while (doEffect(&tmp_effect));
 
 	return RET_CONTINUE;
-}*/
+}
 
 int ONScripter::fileexistCommand()
 {
