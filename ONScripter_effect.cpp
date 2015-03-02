@@ -71,6 +71,16 @@ bool ONScripter::setEffect( EffectLink *effect, bool generate_effect_dst, bool u
             utils::printInfo("dll effect: Got dll '%s'\n", effect->anim.image_name);
             if (!strncmp(effect->anim.image_name, "breakup.dll", 11))
                 initBreakup(effect->anim.image_name);
+#ifdef USE_BUILTIN_EFFECTS
+            else if (!strncmp(effect->anim.image_name, "cascade.dll", 11)) {
+            } else if (!strncmp(effect->anim.image_name, "whirl.dll", 9)) {
+              buildSinTable();
+              buildCosTable();
+              buildWhirlTable();
+            } else if (!strncmp(effect->anim.image_name, "trvswave.dll", 12)) {
+              buildSinTable();
+            }
+#endif
             dirty_rect.fill( screen_width, screen_height );
         }
     }
@@ -404,7 +414,17 @@ bool ONScripter::doEffect( EffectLink *effect, bool clear_dirty_region )
         if (effect->anim.image_name != NULL){
             if (!strncmp(effect->anim.image_name, "breakup.dll", 11)){
                 effectBreakup(effect->anim.image_name, effect_duration);
-            } else {
+            }
+#ifdef USE_BUILTIN_EFFECTS
+            else if (!strncmp(effect->anim.image_name, "cascade.dll", 11)) {
+              effectCascade(effect->anim.image_name, effect_duration);
+            } else if (!strncmp(effect->anim.image_name, "whirl.dll", 9)) {
+              effectWhirl(effect->anim.image_name, effect_duration);
+            } else if (!strncmp(effect->anim.image_name, "trvswave.dll", 12)) {
+              effectTrvswave(effect->anim.image_name, effect_duration);
+            }
+#endif
+            else {
                 // do crossfade
                 height = 256 * effect_counter / effect_duration;
                 alphaBlend( NULL, ALPHA_BLEND_CONST, height, &dirty_rect.bounding_box );

@@ -28,6 +28,9 @@
 #if defined(LINUX)
 #include <signal.h>
 #endif
+#if defined(WIN32) || defined(_WIN32)
+#include <stdlib.h>
+#endif
 
 #ifdef ANDROID
 extern "C"
@@ -342,10 +345,11 @@ int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag)
 
     }
     delete[] mpeg_buffer;
+#elif defined(WIN32) || defined(_WIN32)
+    system(filename);
 #else
     utils::printError( "mpegplay command is disabled.\n" );
 #endif
-
     return ret;
 }
 
@@ -384,6 +388,8 @@ int ONScripter::playAVI( const char *filename, bool click_flag )
         Mix_CloseAudio();
         openAudio();
     }
+#elif defined(WIN32) || defined(_WIN32)
+    system(filename);
 #else
     utils::printError( "avi command is disabled.\n" );
 #endif

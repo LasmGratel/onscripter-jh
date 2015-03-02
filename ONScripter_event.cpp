@@ -1454,6 +1454,7 @@ void ONScripter::runEventLoop()
 			  switch (event.window.event) {
 			  case SDL_WINDOWEVENT_EXPOSED: SDL_RenderPresent(renderer); break;
 			  case SDL_WINDOWEVENT_FOCUS_LOST:
+                  Mix_Pause(-1);
 				  Mix_PauseMusic();
 				  // the mouse cursor leaves the window
 				  SDL_MouseMotionEvent mevent;
@@ -1463,6 +1464,7 @@ void ONScripter::runEventLoop()
 				  break;
 			  case SDL_WINDOWEVENT_FOCUS_GAINED:
 				  Mix_ResumeMusic();
+                  Mix_Resume(-1);
 #ifdef ANDROID
 				  if (compatibilityMode) repaintCommand();
 				  SDL_SetWindowSize( window, screen_device_width, screen_device_height);

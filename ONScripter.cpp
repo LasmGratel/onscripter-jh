@@ -443,6 +443,7 @@ int ONScripter::init()
 	backup_surface = AnimationInfo::allocSurface(screen_width, screen_height, texture_format);
 	effect_src_surface = AnimationInfo::allocSurface(screen_width, screen_height, texture_format);
 	effect_dst_surface = AnimationInfo::allocSurface(screen_width, screen_height, texture_format);
+    effect_tmp_surface = AnimationInfo::allocSurface(screen_width, screen_height, texture_format);
     blt_texture = nullptr;
 
     screenshot_surface = nullptr;
@@ -457,6 +458,7 @@ int ONScripter::init()
 #endif //SDL_VERSION_ATLEAST(2,0,0)
 #endif //USE_SDL_RENDERER  
 
+    effect_tmp = 0;
 	tmp_image_buf = NULL;
 	tmp_image_buf_length = 0;
 	mean_size_of_loaded_images = 0;

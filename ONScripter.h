@@ -470,6 +470,20 @@ private:
 	void initBreakup(char *params);
 	void effectBreakup(char *params, int duration);
 
+#ifdef USE_BUILTIN_EFFECTS
+    //cascade
+    void effectCascade(char *params, int duration);
+
+    //trig
+    int *sin_table, *cos_table;
+    void buildSinTable();
+    void buildCosTable();
+    void effectTrvswave(char *params, int duration);
+    int *whirl_table;
+    void buildWhirlTable();
+    void effectWhirl(char *params, int duration);
+#endif
+
 	// ----------------------------------------
 	// variables and methods relevant to event
 	enum {
@@ -557,6 +571,7 @@ private:
 	SDL_Surface *screen_surface; // Text + Select_image + Tachi image + background
 	SDL_Surface *effect_dst_surface; // Intermediate source buffer for effect
 	SDL_Surface *effect_src_surface; // Intermediate destnation buffer for effect
+    SDL_Surface *effect_tmp_surface; // Intermediate buffer for effect
 	SDL_Surface *screenshot_surface; // Screenshot
 	int screenshot_w, screenshot_h;
 	SDL_Surface *image_surface; // Reference for loadImage()
@@ -577,8 +592,8 @@ private:
 	SDL_Surface *createSurfaceFromFile(char *filename, bool *has_alpha, int *location);
 
 	int  resizeSurface(SDL_Surface *src, SDL_Surface *dst);
-	void alphaBlend(SDL_Surface *mask_surface,
-		int trans_mode, Uint32 mask_value = 255, SDL_Rect *clip = NULL);
+	void alphaBlend(SDL_Surface *mask_surface, int trans_mode, Uint32 mask_value = 255, SDL_Rect *clip = NULL,
+      SDL_Surface *src1 = NULL, SDL_Surface *src2 = NULL, SDL_Surface *dst = NULL);
 	void alphaBlendText(SDL_Surface *dst_surface, SDL_Rect dst_rect,
 		SDL_Surface *src_surface, SDL_Color &color, SDL_Rect *clip, bool rotate_flag);
 	void makeNegaSurface(SDL_Surface *surface, SDL_Rect &clip);
@@ -696,6 +711,8 @@ private:
 		SKIP_TO_EOP = 4  // skip to end of page (press 'o' button)
 	};
 	int  skip_mode;
+
+    int effect_tmp; //tmp variable for use by effect routines
 
 	enum {
 		TRAP_NONE = 0,
