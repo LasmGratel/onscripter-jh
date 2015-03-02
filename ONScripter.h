@@ -188,6 +188,7 @@ public:
 	int locateCommand();
 	int loadgameCommand();
 	int ldCommand();
+    int layermessageCommand();
 	int kinsokuCommand();
 	int jumpfCommand();
 	int jumpbCommand();
@@ -247,6 +248,7 @@ public:
 	int drawbg2Command();
 	int drawbgCommand();
 	int drawCommand();
+    int deletescreenshotCommand();
 	int delayCommand();
 	int defineresetCommand();
 	int cspCommand();
@@ -392,6 +394,7 @@ public:
 	void executeLabel();
 	void runScript();
 	AnimationInfo *getSpriteInfo(int no){ return &sprite_info[no]; };
+    Uint32 getTextureFormat() { return texture_format; };
 private:
 	int  parseLine();
 	void deleteButtonLink();

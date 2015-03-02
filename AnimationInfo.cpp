@@ -122,6 +122,10 @@ void AnimationInfo::reset()
   mat[0][1] = 0;
   mat[1][0] = 0;
   mat[1][1] = 1024;
+
+#ifdef USE_BUILTIN_LAYER_EFFECTS
+  layer_no = -1;
+#endif
 }
 
 void AnimationInfo::deleteImageName(){
@@ -194,29 +198,48 @@ void AnimationInfo::stepAnimation(int t)
     remaining_time -= t;
 }
 
+#include "builtin_layer.h"
+
 bool AnimationInfo::proceedAnimation()
 {
   if (!visible || !is_animatable || remaining_time > 0) return false;
 
   bool is_changed = false;
 
-  if (loop_mode != 3 && num_of_cells > 1) {
-    current_cell += direction;
-    is_changed = true;
-  }
+#ifdef USE_BUILTIN_LAYER_EFFECTS
+  if (trans_mode == AnimationInfo::TRANS_LAYER) {
+    if (layer_no >= 0) {
+      LayerInfo *tmp = layer_info;
+      while (tmp) {
+        if (tmp->num == layer_no) break;
+        tmp = tmp->next;
+      }
+      if (tmp) {
+        tmp->handler->update();
+        is_changed = true;
+      }
+    }
+  } else
+#endif
+  {
+    if (loop_mode != 3 && num_of_cells > 1) {
+      current_cell += direction;
+      is_changed = true;
+    }
 
-  if (current_cell < 0) { // loop_mode must be 2
-    current_cell = 1;
-    direction = 1;
-  } else if (current_cell >= num_of_cells) {
-    if (loop_mode == 0) {
-      current_cell = 0;
-    } else if (loop_mode == 1) {
-      current_cell = num_of_cells - 1;
-      is_changed = false;
-    } else {
-      current_cell = num_of_cells - 2;
-      direction = -1;
+    if (current_cell < 0) { // loop_mode must be 2
+      current_cell = 1;
+      direction = 1;
+    } else if (current_cell >= num_of_cells) {
+      if (loop_mode == 0) {
+        current_cell = 0;
+      } else if (loop_mode == 1) {
+        current_cell = num_of_cells - 1;
+        is_changed = false;
+      } else {
+        current_cell = num_of_cells - 2;
+        direction = -1;
+      }
     }
   }
 
@@ -282,7 +305,7 @@ int AnimationInfo::doClipping(SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped)
     alphap++;\
 }
 #else
-#define BLEND_PIXEL(){\
+#define BLEND_PIXEL() do {\
     if ((*alphap == 255) && (alpha == 255)){\
         *dst_buffer = *src_buffer;\
         }\
@@ -295,7 +318,7 @@ int AnimationInfo::doClipping(SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped)
         *dst_buffer = mask_rb | mask_g | 0xff000000;\
     }                        \
     alphap += 4;\
-}
+} while(0)
 // Originally, the above looks like this.
 //      mask1 = mask2 ^ 0xff;
 //      Uint32 mask_rb = (((*dst_buffer & 0xff00ff) * mask1 +
@@ -318,7 +341,7 @@ int AnimationInfo::doClipping(SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped)
     alphap++;\
 }
 #else
-#define ADDBLEND_PIXEL(){\
+#define ADDBLEND_PIXEL() do {\
     Uint32 mask2 = (*alphap * alpha) >> 8;\
     Uint32 mask_rb = (*dst_buffer & RBMASK) +\
                      ((((*src_buffer & RBMASK) * mask2) >> 8) & RBMASK);\
@@ -329,7 +352,7 @@ int AnimationInfo::doClipping(SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped)
     mask_g |= ((mask_g & RMASK) ? GMASK : 0);\
     *dst_buffer = (mask_rb & RBMASK) | (mask_g & GMASK) | 0xff000000;\
     alphap += 4;\
-}
+} while(0)
 #endif
 
 #if defined(BPP16)
@@ -387,7 +410,7 @@ void AnimationInfo::blendOnSurface(SDL_Surface *dst_surface, int dst_x, int dst_
 
   struct Blender {
     ONSBuf *const stsrc_buffer, *const stdst_buffer;
-    const int alpha, dst_rect_w, dst_rect_h, pitch, dst_surface_w;
+    const int alpha, dst_rect_w, dst_rect_h, pitch, dst_surface_w, blendmode;
 
     void operator()(const int i) const {
       ONSBuf *src_buffer = stsrc_buffer + (pitch)* i;
@@ -402,12 +425,15 @@ void AnimationInfo::blendOnSurface(SDL_Surface *dst_surface, int dst_x, int dst_
 #endif //SDL_BYTEORDER == SDL_LIL_ENDIAN
 #endif //defined(BPP16)  
       for (int j = dst_rect_w; j != 0; j--, src_buffer++, dst_buffer++) {
-        BLEND_PIXEL();
+        if (blendmode == AnimationInfo::BLEND_NORMAL) BLEND_PIXEL();
+#ifdef USE_BUILTIN_LAYER_EFFECTS
+        else if (blendmode == AnimationInfo::BLEND_ADD) ADDBLEND_PIXEL();
+#endif
       }
     }
   } blender = { (ONSBuf *)image_surface->pixels + pitch * src_rect.y + image_surface->w * current_cell / num_of_cells + src_rect.x,
     (ONSBuf *)dst_surface->pixels + dst_surface->w * dst_rect.y + dst_rect.x,
-    alpha, dst_rect.w, dst_rect.h, pitch, dst_surface->w };
+    alpha, dst_rect.w, dst_rect.h, pitch, dst_surface->w, blending_mode };
 #if defined(USE_PARALLEL) || defined(USE_OMP_PARALLEL)
   parallel::For(0, dst_rect.h, 1, blender, dst_rect.h * dst_rect.w);
 #else
@@ -494,16 +520,16 @@ void AnimationInfo::blendOnSurface2(SDL_Surface *dst_surface, int dst_x, int dst
 #endif
 #endif
         if (thiz->blending_mode == BLEND_NORMAL)
-          BLEND_PIXEL()
+          BLEND_PIXEL();
         else if (thiz->blending_mode == BLEND_ADD)
-        ADDBLEND_PIXEL()
+          ADDBLEND_PIXEL();
         else
-        SUBBLEND_PIXEL();
+          SUBBLEND_PIXEL();
       }
     }
   } blender = { corner_xy, min_xy, max_xy, inv_mat, this, dst_surface, alpha, pitch, dst_x, dst_y };
 #if defined(USE_PARALLEL) || defined(USE_OMP_PARALLEL)
-  parallel::For(min_xy[1], max_xy[1] + 1, 1, blender, (max_xy[1] - min_xy[1] + 1) * (max_xy[0] + 1 - min_xy[0]));
+  parallel::For(min_xy[1], max_xy[1] + 1, 1, blender, (max_xy[1] - min_xy[1] + 1) * (max_xy[0] + 1 - min_xy[0]) * 4);
 #else
   for (int y = min_xy[1]; y <= max_xy[1]; y++) blender(y);
 #endif

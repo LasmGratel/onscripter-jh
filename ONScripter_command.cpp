@@ -955,6 +955,8 @@ int ONScripter::savescreenshotCommand()
         if ( filename[i] == '/' || filename[i] == '\\' )
             filename[i] = DELIMITER;
 
+    if (screenshot_surface == nullptr) screenshot_surface = AnimationInfo::alloc32bitSurface(screen_device_width, screen_device_height, texture_format);
+
     SDL_Surface *surface = AnimationInfo::alloc32bitSurface( screenshot_w, screenshot_h, texture_format );
     resizeSurface( screenshot_surface, surface );
     SDL_SaveBMP( surface, filename );
@@ -1863,6 +1865,33 @@ int ONScripter::ldCommand()
     return RET_CONTINUE;
 }
 
+#ifdef USE_BUILTIN_LAYER_EFFECTS
+#include "builtin_layer.h"
+#endif
+
+int ONScripter::layermessageCommand()
+{
+  int no = script_h.readInt();
+  const char *message = script_h.readStr();
+
+#ifndef USE_BUILTIN_LAYER_EFFECTS
+  utils::printInfo("layermessage: layer effect support not available (%d,'%s')\n", no, message);
+  return RET_CONTINUE;
+#else
+  LayerInfo *tmp = layer_info;
+  while (tmp) {
+    if (tmp->num == no) break;
+    tmp = tmp->next;
+  }
+  if (tmp) {
+    getret_str = tmp->handler->message(message, getret_int);
+    //printf("layermessage returned: '%s', %d\n", getret_str, getret_int);
+  }
+#endif // ndef NO_LAYER_EFFECTS
+
+  return RET_CONTINUE;
+}
+
 int ONScripter::kinsokuCommand()
 {
     if (script_h.compareString("on")){
@@ -2212,6 +2241,7 @@ int ONScripter::getscreenshotCommand()
 
     screenshot_w = w;
     screenshot_h = h;
+    if (screenshot_surface == nullptr) screenshot_surface = AnimationInfo::alloc32bitSurface(screen_device_width, screen_device_height, texture_format);
 #ifdef USE_SDL_RENDERER
     SDL_Rect rect = {(device_width -screen_device_width)/2, 
                      (device_height-screen_device_height)/2,
@@ -2898,6 +2928,15 @@ int ONScripter::drawCommand()
     dirty_rect.clear();
     
     return RET_CONTINUE;
+}
+
+int ONScripter::deletescreenshotCommand()
+{
+  if (screenshot_surface) {
+    SDL_FreeSurface(screenshot_surface);
+    screenshot_surface = nullptr;
+  }
+  return RET_CONTINUE;
 }
 
 int ONScripter::delayCommand()

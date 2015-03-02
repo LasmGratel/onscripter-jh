@@ -445,11 +445,7 @@ int ONScripter::init()
 	effect_dst_surface = AnimationInfo::allocSurface(screen_width, screen_height, texture_format);
     blt_texture = nullptr;
 
-#if defined(USE_SDL_RENDERER)
-	screenshot_surface = AnimationInfo::alloc32bitSurface(screen_device_width, screen_device_height, texture_format);
-#else
-	screenshot_surface = AnimationInfo::alloc32bitSurface( screen_width, screen_height, texture_format );
-#endif
+    screenshot_surface = nullptr;
 	screenshot_w = screen_width;
 	screenshot_h = screen_height;
 

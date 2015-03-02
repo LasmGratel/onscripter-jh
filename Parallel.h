@@ -121,7 +121,7 @@ namespace parallel {
   void For(const int first, const int last, const int step, const Body &body, const int scale = -1) {
     assert(step > 0);
     if (last > first) {
-      static const int MINSCALE = 65536;
+      static const int MINSCALE = 65536 * 4;
 #ifdef USE_OMP_PARALLEL
       scale > 0 ? omp_set_num_threads(thread_clamp(scale / MINSCALE)) : omp_set_num_threads(thread_num);
 #pragma omp parallel for

@@ -3,6 +3,7 @@
  *  AnimationInfo.h - General image storage class of ONScripter
  *
  *  Copyright (c) 2001-2013 Ogapee. All rights reserved.
+ *            (C) 2015 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -49,13 +50,19 @@ public:
            TRANS_DIRECT         = 5,
            TRANS_PALLETTE       = 6,
            TRANS_TOPRIGHT       = 7,
-           TRANS_MASK           = 8
+           TRANS_MASK           = 8,
+#ifdef USE_BUILTIN_LAYER_EFFECTS
+           TRANS_LAYER          = 9
+#endif
     };
 
     bool is_copy; // allocated buffers should not be deleted from a copied instance
     
     /* variables set from the image tag */
     int trans_mode;
+#ifdef USE_BUILTIN_LAYER_EFFECTS
+    int layer_no;
+#endif
     uchar3 direct_color;
     int pallette_number;
     uchar3 color;

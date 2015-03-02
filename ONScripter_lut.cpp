@@ -90,6 +90,7 @@ static ONScripter::FuncLUT func_lut[] = {
     {"setwindow3",		&ONScripter::setwindow3Command},
     {"setwindow2",		&ONScripter::setwindow2Command},
     {"setwindow",		&ONScripter::setwindowCommand},
+    {"setlayer",        &ONScripter::setlayerCommand},
     {"setkinsoku",		&ONScripter::setkinsokuCommand},
     {"setcursor",		&ONScripter::setcursorCommand},
     {"selnum",			&ONScripter::selectCommand},
@@ -217,6 +218,7 @@ static ONScripter::FuncLUT func_lut[] = {
     {"linepage",		&ONScripter::linepageCommand},
     {"len",				&ONScripter::lenCommand},
     {"ld",				&ONScripter::ldCommand},
+    {"layermessage",    &ONScripter::layermessageCommand},
     {"labellog",		&ONScripter::labellogCommand},
 
     {"kinsoku",			&ONScripter::kinsokuCommand},
@@ -314,6 +316,7 @@ static ONScripter::FuncLUT func_lut[] = {
     {"draw",			&ONScripter::drawCommand},
     {"div",				&ONScripter::divCommand},
     {"dim",				&ONScripter::dimCommand},
+    {"deletescreenshot",&ONScripter::deletescreenshotCommand},
     {"delay",			&ONScripter::delayCommand},
     {"defvoicevol",		&ONScripter::defvoicevolCommand},
     {"defsub",			&ONScripter::defsubCommand},

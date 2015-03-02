@@ -3,7 +3,7 @@
  *  ONScripter_animation.cpp - Methods to manipulate AnimationInfo
  *
  *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
- *            (C) 2014 jh10001 <jh10001@live.cn>
+ *            (C) 2014-2015 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -24,6 +24,9 @@
 
 #include "ONScripter.h"
 #include "Utils.h"
+#ifdef USE_BUILTIN_LAYER_EFFECTS
+#include "builtin_layer.h"
+#endif
 
 #define DEFAULT_CURSOR_WAIT    ":l/3,160,2;cursor0.bmp"
 #define DEFAULT_CURSOR_NEWPAGE ":l/3,160,2;cursor1.bmp"
@@ -43,8 +46,8 @@ int ONScripter::calcDurationToNextAnimation()
     for (int i=MAX_SPRITE_NUM-1 ; i>=0 ; i--){
         AnimationInfo *anim = &sprite_info[i];
         if (anim->visible && anim->is_animatable){
-            if (min == -1 || min > anim->remaining_time)
-                min = anim->remaining_time;
+          if (min == -1 || min > anim->remaining_time)
+            min = anim->remaining_time;
         }
     }
 
@@ -159,8 +162,13 @@ void ONScripter::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
     anim->deleteSurface();
     anim->abs_flag = true;
 
-    anim->surface_name = new char[ strlen(anim->file_name) + 1 ];
-    strcpy( anim->surface_name, anim->file_name );
+#ifdef USE_BUILTIN_LAYER_EFFECTS
+    if (anim->trans_mode != AnimationInfo::TRANS_LAYER) 
+#endif
+    {
+      anim->surface_name = new char[strlen(anim->file_name) + 1];
+      strcpy(anim->surface_name, anim->file_name);
+    }
 
     if (anim->mask_file_name){
         anim->mask_surface_name = new char[ strlen(anim->mask_file_name) + 1 ];
@@ -227,6 +235,12 @@ void ONScripter::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
             f_info.top_xy[0] += anim->orig_pos.w;
         }
     }
+#ifdef USE_BUILTIN_LAYER_EFFECTS
+    else if (anim->trans_mode == AnimationInfo::TRANS_LAYER) {
+      anim->allocImage(anim->pos.w, anim->pos.h, texture_format);
+      anim->fill(0, 0, 0, 0);
+    }
+#endif
     else{
         bool has_alpha;
         int location;
@@ -352,6 +366,31 @@ void ONScripter::parseTaggedString( AnimationInfo *anim )
         if (anim->trans_mode != AnimationInfo::TRANS_STRING)
             while(buffer[0] != '/' && buffer[0] != ';' && buffer[0] != '\0') buffer++;
     }
+#ifdef USE_BUILTIN_LAYER_EFFECTS
+    else if (buffer[0] == '*') {
+      LayerInfo *tmp = layer_info;
+      anim->trans_mode = AnimationInfo::TRANS_LAYER;
+      buffer++;
+      anim->layer_no = getNumberFromBuffer((const char**)&buffer);
+
+      while (tmp) {
+        if (tmp->num == anim->layer_no) break;
+        tmp = tmp->next;
+      }
+      if (tmp) {
+        anim->pos.x = anim->pos.y = 0;
+        anim->pos.w = screen_width;
+        anim->pos.h = screen_height;
+        tmp->handler->setSpriteInfo(sprite_info, anim);
+        anim->duration_list = new int[1];
+        anim->duration_list[0] = tmp->interval;
+        anim->is_animatable = true;
+        utils::printInfo("setup a sprite for layer %d\n", anim->layer_no);
+      } else
+        anim->layer_no = -1;
+      return;
+    }
+#endif
 
     if ( buffer[0] == '/' && anim->trans_mode != AnimationInfo::TRANS_STRING){
         buffer++;
@@ -407,6 +446,19 @@ void ONScripter::parseTaggedString( AnimationInfo *anim )
 
 void ONScripter::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect &clip )
 {
+#ifdef USE_BUILTIN_LAYER_EFFECTS
+  if (anim->trans_mode == AnimationInfo::TRANS_LAYER) {
+    if (anim->layer_no >= 0) {
+      LayerInfo *tmp = layer_info;
+      while (tmp) {
+        if (tmp->num == anim->layer_no) break;
+        tmp = tmp->next;
+      }
+      if (tmp) tmp->handler->refresh(dst_surface, clip);
+    }
+    return;
+  }
+#endif
     SDL_Rect poly_rect = anim->pos;
     if ( !anim->abs_flag ){
         poly_rect.x += sentence_font.x() * screen_ratio1 / screen_ratio2;

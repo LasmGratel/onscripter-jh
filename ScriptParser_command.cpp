@@ -239,6 +239,55 @@ int ScriptParser::shadedistanceCommand()
     return RET_CONTINUE;
 }
 
+#ifdef USE_BUILTIN_LAYER_EFFECTS
+#include "builtin_layer.h"
+#endif
+
+int ScriptParser::setlayerCommand()
+{
+  if (current_mode != DEFINE_MODE)
+    errorAndExit("setlayer: not in the define section");
+
+  int no = script_h.readInt();
+  int interval = script_h.readInt();
+  const char *dll = script_h.readStr();
+
+#ifndef USE_BUILTIN_LAYER_EFFECTS
+  utils::printError("setlayer: layer effect support not available (%d,%d,'%s')",
+    no, interval, dll);
+  return RET_CONTINUE;
+#else
+  Layer *handler = NULL;
+  const char *bslash = strrchr(dll, '\\');
+#if 0 //not supporting oldmovie yet
+  if ((bslash && !strncmp(bslash + 1, "oldmovie.dll", 12)) ||
+    !strncmp(dll, "oldmovie.dll", 12)) {
+    handler = new OldMovieLayer(screen_width, screen_height);
+  } else
+#endif //BPP16
+    if ((bslash && !strncmp(bslash + 1, "snow.dll", 8)) ||
+      !strncmp(dll, "snow.dll", 8)) {
+      handler = new FuruLayer(screen_width, screen_height, false, script_h.cBR);
+    } else if ((bslash && !strncmp(bslash + 1, "hana.dll", 8)) ||
+      !strncmp(dll, "hana.dll", 8)) {
+      handler = new FuruLayer(screen_width, screen_height, true, script_h.cBR);
+    } else {
+      utils::printError("setlayer: layer effect '%s' is not implemented.", dll);
+      return RET_CONTINUE;
+    }
+
+    utils::printInfo("Setup layer effect for '%s'.\n", dll);
+    LayerInfo *layer = new LayerInfo();
+    layer->num = no;
+    layer->interval = interval;
+    layer->handler = handler;
+    layer->next = layer_info;
+    layer_info = layer;
+#endif // ndef USE_BUILTIN_LAYER_EFFECTS
+
+    return RET_CONTINUE;
+}
+
 int ScriptParser::setkinsokuCommand()
 {
     if ( current_mode != DEFINE_MODE )

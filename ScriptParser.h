@@ -89,6 +89,7 @@ public:
     int skipCommand();
     int sinCommand();
     int shadedistanceCommand();
+    int setlayerCommand();
     int setkinsokuCommand();
     int selectvoiceCommand();
     int selectcolorCommand();

@@ -24,6 +24,18 @@
 
 #include "ScriptParser.h"
 #include "Utils.h"
+#ifdef USE_BUILTIN_LAYER_EFFECTS
+#include "builtin_layer.h"
+LayerInfo *layer_info = nullptr;
+
+void deleteLayerInfo() {
+  while (layer_info) {
+    LayerInfo *tmp = layer_info;
+    layer_info = layer_info->next;
+    delete tmp;
+  }
+}
+#endif
 
 #define VERSION_STR1 "ONScripter"
 #define VERSION_STR2 "Copyright (C) 2001-2014 Studio O.G.A. All Rights Reserved.\n          (C) 2014 jh10001"
@@ -250,6 +262,10 @@ void ScriptParser::reset()
     last_effect_link->next = NULL;
 
     current_mode = DEFINE_MODE;
+
+#ifdef USE_BUILTIN_LAYER_EFFECTS
+    deleteLayerInfo();
+#endif
 }
 
 int ScriptParser::openScript()
