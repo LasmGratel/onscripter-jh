@@ -345,7 +345,7 @@ int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag)
 
     }
     delete[] mpeg_buffer;
-#if !defined(WINRT) && (defined(WIN32) || defined(_WIN32))
+#elif !defined(WINRT) && (defined(WIN32) || defined(_WIN32))
     system(filename);
 #else
     utils::printError( "mpegplay command is disabled.\n" );
@@ -388,7 +388,7 @@ int ONScripter::playAVI( const char *filename, bool click_flag )
         Mix_CloseAudio();
         openAudio();
     }
-#if !defined(WINRT) && (defined(WIN32) || defined(_WIN32))
+#elif !defined(WINRT) && (defined(WIN32) || defined(_WIN32))
     system(filename);
 #else
     utils::printError( "avi command is disabled.\n" );
