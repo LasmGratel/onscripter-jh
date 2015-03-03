@@ -2,7 +2,7 @@
 *
 *  builtin_layer.h
 *
-*  Copyright (c) 2008-2012 "Uncle" Mion Sonozaki
+*  Copyright (c) 2009 "Uncle" Mion Sonozaki
 *            (C) 2015 jh10001 <jh10001@live.cn>
 *
 *  UncleMion@gmail.com
@@ -21,7 +21,6 @@
 *  along with this program; if not, write to the Free Software
 *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-
 #pragma once
 #ifdef USE_BUILTIN_LAYER_EFFECTS
 #include "BaseReader.h"
@@ -62,6 +61,34 @@ struct LayerInfo {
   }
 };
 extern LayerInfo *layer_info;
+
+class OldMovieLayer : public Layer {
+public:
+  OldMovieLayer(int w, int h);
+  ~OldMovieLayer();
+  void update();
+  char* message(const char *message, int &ret_int);
+  void refresh(SDL_Surface* surface, SDL_Rect &clip);
+
+private:
+  // message parameters
+  int blur_level;
+  int noise_level;
+  int glow_level;
+  int scratch_level;
+  int dust_level;
+  AnimationInfo *dust_sprite;
+  AnimationInfo *dust;
+
+  struct Pt { int x; int y; int type; int cell; } *dust_pts;
+  int rx, ry, // Offset of blur (second copy of background image)
+    ns;     // Current noise surface
+  int gv, // Current glow level
+    go; // Glow delta: flips between 1 and -1 to fade the glow in and out.
+  bool initialized;
+
+  void om_init();
+};
 
 static const int N_FURU_ELEMENTS = 3;
 static const int FURU_ELEMENT_BUFSIZE = 512; // should be a power of 2
@@ -136,4 +163,8 @@ private:
   void validate_params();
   void buildAmpTables();
 };
+
+inline void drawTaggedSurface(SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect &clip) {
+  anim->blendOnSurface(dst_surface, anim->pos.x, anim->pos.y, clip, anim->trans);
+}
 #endif

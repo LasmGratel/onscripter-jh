@@ -106,11 +106,6 @@ static void setStr(char **dst, const char *src, int num = -1)
   }
 }
 
-inline static void drawTaggedSurface(SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect &clip)
-{
-  anim->blendOnSurface(dst_surface, anim->pos.x, anim->pos.y, clip, anim->trans);
-}
-
 static SDL_Surface *loadImage(char *file_name, bool *has_alpha, SDL_Surface *surface, BaseReader *br)
 {
   if (!file_name) return NULL;

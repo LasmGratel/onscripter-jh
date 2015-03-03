@@ -259,33 +259,30 @@ int ScriptParser::setlayerCommand()
 #else
   Layer *handler = NULL;
   const char *bslash = strrchr(dll, '\\');
-#if 0 //not supporting oldmovie yet
   if ((bslash && !strncmp(bslash + 1, "oldmovie.dll", 12)) ||
     !strncmp(dll, "oldmovie.dll", 12)) {
     handler = new OldMovieLayer(screen_width, screen_height);
-  } else
-#endif //BPP16
-    if ((bslash && !strncmp(bslash + 1, "snow.dll", 8)) ||
-      !strncmp(dll, "snow.dll", 8)) {
-      handler = new FuruLayer(screen_width, screen_height, false, script_h.cBR);
-    } else if ((bslash && !strncmp(bslash + 1, "hana.dll", 8)) ||
-      !strncmp(dll, "hana.dll", 8)) {
-      handler = new FuruLayer(screen_width, screen_height, true, script_h.cBR);
-    } else {
-      utils::printError("setlayer: layer effect '%s' is not implemented.", dll);
-      return RET_CONTINUE;
-    }
+  } else if ((bslash && !strncmp(bslash + 1, "snow.dll", 8)) ||
+    !strncmp(dll, "snow.dll", 8)) {
+    handler = new FuruLayer(screen_width, screen_height, false, script_h.cBR);
+  } else if ((bslash && !strncmp(bslash + 1, "hana.dll", 8)) ||
+    !strncmp(dll, "hana.dll", 8)) {
+    handler = new FuruLayer(screen_width, screen_height, true, script_h.cBR);
+  } else {
+    utils::printError("setlayer: layer effect '%s' is not implemented.", dll);
+    return RET_CONTINUE;
+  }
 
-    utils::printInfo("Setup layer effect for '%s'.\n", dll);
-    LayerInfo *layer = new LayerInfo();
-    layer->num = no;
-    layer->interval = interval;
-    layer->handler = handler;
-    layer->next = layer_info;
-    layer_info = layer;
+  utils::printInfo("Setup layer effect for '%s'.\n", dll);
+  LayerInfo *layer = new LayerInfo();
+  layer->num = no;
+  layer->interval = interval;
+  layer->handler = handler;
+  layer->next = layer_info;
+  layer_info = layer;
 #endif // ndef USE_BUILTIN_LAYER_EFFECTS
 
-    return RET_CONTINUE;
+  return RET_CONTINUE;
 }
 
 int ScriptParser::setkinsokuCommand()

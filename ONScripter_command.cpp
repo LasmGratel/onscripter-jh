@@ -943,9 +943,10 @@ int ONScripter::savetimeCommand()
 
 int ONScripter::savescreenshotCommand()
 {
-    if      ( script_h.isName( "savescreenshot" ) ){
-    }
-    else if ( script_h.isName( "savescreenshot2" ) ){
+  bool delete_flag = false;
+    if      ( script_h.isName( "savescreenshot2" ) ){
+    } else if ( script_h.isName( "savescreenshot" ) ){
+      delete_flag = true;
     }
 
     const char *buf = script_h.readStr();
@@ -961,6 +962,10 @@ int ONScripter::savescreenshotCommand()
     resizeSurface( screenshot_surface, surface );
     SDL_SaveBMP( surface, filename );
     SDL_FreeSurface( surface );
+    if (delete_flag) {
+      SDL_FreeSurface(screenshot_surface);
+      screenshot_surface = nullptr;
+    }
 
     return RET_CONTINUE;
 }
