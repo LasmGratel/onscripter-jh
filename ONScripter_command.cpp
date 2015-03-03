@@ -943,10 +943,9 @@ int ONScripter::savetimeCommand()
 
 int ONScripter::savescreenshotCommand()
 {
-  bool delete_flag = false;
+    bool delete_flag = true;
     if      ( script_h.isName( "savescreenshot2" ) ){
-    } else if ( script_h.isName( "savescreenshot" ) ){
-      delete_flag = true;
+      delete_flag = false;
     }
 
     const char *buf = script_h.readStr();
@@ -960,7 +959,7 @@ int ONScripter::savescreenshotCommand()
 
     SDL_Surface *surface = AnimationInfo::alloc32bitSurface( screenshot_w, screenshot_h, texture_format );
     resizeSurface( screenshot_surface, surface );
-    SDL_SaveBMP( surface, filename );
+    if (SDL_SaveBMP(surface, filename) != 0) utils::printError("Save screenshot failed: %s", SDL_GetError());
     SDL_FreeSurface( surface );
     if (delete_flag) {
       SDL_FreeSurface(screenshot_surface);
