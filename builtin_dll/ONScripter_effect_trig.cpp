@@ -27,7 +27,7 @@
 #ifdef USE_BUILTIN_EFFECTS
 #include "../ONScripter.h"
 
-static enum {
+enum {
   //some constants for trig tables
   TRIG_TABLE_SIZE = 256,
   TRIG_FACTOR = 16384

@@ -1243,20 +1243,17 @@ int ONScripter::playCommand()
 int ONScripter::ofscopyCommand()
 {
 #ifdef USE_SDL_RENDERER
-    SDL_Surface *tmp_surface = AnimationInfo::alloc32bitSurface( screen_device_width, screen_device_height, texture_format );
-    SDL_Rect rect = {(device_width -screen_device_width)/2,
-                     (device_height-screen_device_height)/2,
-                     screen_device_width, screen_device_height};
-    SDL_LockSurface(tmp_surface);
-    SDL_RenderReadPixels(renderer, &rect, tmp_surface->format->format, tmp_surface->pixels, tmp_surface->pitch);
-    SDL_UnlockSurface(tmp_surface);
-    resizeSurface( tmp_surface, accumulation_surface );
-    SDL_FreeSurface(tmp_surface);
+  SDL_Surface *tmp_surface = AnimationInfo::alloc32bitSurface(screen_view_rect.w, screen_view_rect.h, texture_format);
+  SDL_LockSurface(tmp_surface);
+  SDL_RenderReadPixels(renderer, &screen_view_rect, tmp_surface->format->format, tmp_surface->pixels, tmp_surface->pitch);
+  SDL_UnlockSurface(tmp_surface);
+  resizeSurface(tmp_surface, accumulation_surface);
+  SDL_FreeSurface(tmp_surface);
 #else
-    SDL_BlitSurface(screen_surface, NULL, accumulation_surface, NULL);
+  SDL_BlitSurface(screen_surface, NULL, accumulation_surface, NULL);
 #endif
 
-    return RET_CONTINUE;
+  return RET_CONTINUE;
 }
 
 int ONScripter::negaCommand()
@@ -2245,15 +2242,13 @@ int ONScripter::getscreenshotCommand()
 
     screenshot_w = w;
     screenshot_h = h;
-    if (screenshot_surface == nullptr) screenshot_surface = AnimationInfo::alloc32bitSurface(screen_device_width, screen_device_height, texture_format);
 #ifdef USE_SDL_RENDERER
-    SDL_Rect rect = {(device_width -screen_device_width)/2, 
-                     (device_height-screen_device_height)/2,
-                     screen_device_width, screen_device_height};
+    if (screenshot_surface == nullptr) screenshot_surface = AnimationInfo::alloc32bitSurface(screen_view_rect.w, screen_view_rect.h, texture_format);
     SDL_LockSurface(screenshot_surface);
-    SDL_RenderReadPixels(renderer, &rect, screenshot_surface->format->format, screenshot_surface->pixels, screenshot_surface->pitch);
+    SDL_RenderReadPixels(renderer, &screen_view_rect, screenshot_surface->format->format, screenshot_surface->pixels, screenshot_surface->pitch);
     SDL_UnlockSurface(screenshot_surface);
 #else
+    if (screenshot_surface == nullptr) screenshot_surface = AnimationInfo::alloc32bitSurface(screen_device_width, screen_device_height, texture_format);
     SDL_BlitSurface(screen_surface, NULL, screenshot_surface, NULL);
 #endif
 

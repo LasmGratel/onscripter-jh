@@ -28,6 +28,7 @@
 #ifdef USE_FONTCONFIG
 #include <fontconfig/fontconfig.h>
 #endif
+#include <stdlib.h>
 
 extern Coding2UTF16 *coding2utf16;
 extern "C" void waveCallback(int channel);
@@ -46,6 +47,26 @@ static void SDL_Quit_Wrapper()
 	SDL_Quit();
 }
 #endif
+
+void ONScripter::calcViewRect() {
+  int vieww, viewh;
+  int swdh = screen_width * device_height;
+  int dwsh = device_width * screen_height;
+  if (swdh == dwsh) {
+    vieww = device_width;
+    viewh = device_height;
+  } else if (swdh > dwsh) {
+    vieww = device_width;
+    viewh = (int)ceil(screen_height * ((float)device_width / screen_width));
+  } else {
+    vieww = (int)ceil(screen_width * ((float)device_height / screen_height));
+    viewh = device_height;
+  }
+  screen_view_rect.x = (device_width - vieww) / 2;
+  screen_view_rect.y = (device_height - viewh) / 2;
+  screen_view_rect.w = vieww;
+  screen_view_rect.h = viewh;
+}
 
 void ONScripter::setCaption(const char *title, const char *iconstr){
 #if SDL_VERSION_ATLEAST(2,0,0)
@@ -176,6 +197,7 @@ void ONScripter::initSDL()
 		exit(-1);
 	}
 	SDL_GetWindowSize(window, &device_width, &device_height);
+    calcViewRect();
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 	SDL_RenderSetLogicalSize(renderer, script_h.screen_width, script_h.screen_height);
@@ -906,6 +928,8 @@ void ONScripter::setFullScreen(bool fullscreen){
 	if (fullscreen != fullscreen_mode) {
 #if SDL_VERSION_ATLEAST(2,0,0)
 		SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+        SDL_GetWindowSize(window, &device_width, &device_height);
+        calcViewRect();
 		flushDirect(screen_rect, refreshMode());
 		fullscreen_mode = fullscreen;
 #else

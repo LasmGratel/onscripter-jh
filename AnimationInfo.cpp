@@ -31,8 +31,13 @@
 #include "Parallel.h"
 #ifdef USE_PARALLEL
 parallel::ThreadPool parallel::threadPool;
+#endif //USE_PARALLEL
 #endif
+#ifdef USE_SIMD
+#include "simd/simd.h"
 #endif
+#include "Utils.h"
+
 
 #if defined(BPP16)
 #define RMASK 0xf800
@@ -305,20 +310,99 @@ int AnimationInfo::doClipping(SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped)
     alphap++;\
 }
 #else
-#define BLEND_PIXEL() do {\
-    if ((*alphap == 255) && (alpha == 255)){\
-        *dst_buffer = *src_buffer;\
-        }\
-        else if (*alphap != 0){\
-        Uint32 mask2 = (*alphap * alpha) >> 8;\
-        Uint32 temp = *dst_buffer & 0xff00ff;\
-        Uint32 mask_rb = (((((*src_buffer & 0xff00ff) - temp ) * mask2 ) >> 8 ) + temp ) & 0xff00ff;\
-        temp = *dst_buffer & 0x00ff00;\
-        Uint32 mask_g  = (((((*src_buffer & 0x00ff00) - temp ) * mask2 ) >> 8 ) + temp ) & 0x00ff00;\
-        *dst_buffer = mask_rb | mask_g | 0xff000000;\
-    }                        \
+#ifdef USE_SIMD
+inline void blendPixel32(const Uint32 *src_buffer, Uint32 *__restrict dst_buffer, Uint8 alpha, Uint8 *alphap) {
+#if DEBUG
+  Uint32 mask2 = (*alphap * alpha) >> 8; 
+  Uint32 temp = *dst_buffer & 0xff00ff;
+  Uint32 mask_rb = (((((*src_buffer & 0xff00ff) - temp) * mask2) >> 8) + temp) & 0xff00ff; 
+  temp = *dst_buffer & 0x00ff00; 
+  Uint32 mask_g = (((((*src_buffer & 0x00ff00) - temp) * mask2) >> 8) + temp) & 0x00ff00; 
+  Uint32 trueP = mask_rb | mask_g | 0xff000000; 
+#endif
+  using namespace simd;
+  uint8x4 src = load(src_buffer), dst = load(dst_buffer);
+  uint8x4 zero = uint8x4::zero();
+  uint16x4 r1 = widen(src, zero);
+  uint16x4 dstu = widen(dst, zero);
+  r1 -= dstu;
+  uint16x4 am(alpha);
+  uint16x4 a(*alphap);
+  a *= am;
+  a >>= 8;
+  r1 *= a;
+  r1 >>= 8;
+  uint8x4 r = narrow_hz(r1);
+  r += dst;
+  *dst_buffer = uint8x4::cvt2i32(r) | AMASK;
+}
+
+inline void blend4Pixel32(const Uint32 *src_buffer, Uint32 *__restrict dst_buffer, Uint8 alpha, Uint8 *alphap) {
+#if DEBUG
+  Uint32 trueP[4];
+  Uint32 trueA[4];
+  {
+    Uint8 *ap = alphap;
+    for (int i = 0; i < 4; ++i) {
+      Uint32 mask2 = (*ap * alpha) >> 8;
+      trueA[i] = mask2;
+      Uint32 temp = dst_buffer[i] & 0xff00ff;
+      Uint32 mask_rb = (((((src_buffer[i] & 0xff00ff) - temp) * mask2) >> 8) + temp) & 0xff00ff;
+      temp = dst_buffer[i] & 0x00ff00;
+      Uint32 mask_g = (((((src_buffer[i] & 0x00ff00) - temp) * mask2) >> 8) + temp) & 0x00ff00;
+      trueP[i] = mask_rb | mask_g | 0xff000000;
+      ap += 4;
+    }
+  }
+#endif
+  using namespace simd;
+  uint8x16 src = load_u(src_buffer), dst = load_u(dst_buffer);
+  uint8x16 zero = uint8x16::zero();
+  uint16x8 dstu = widen_lo(dst, zero);
+  uint16x8 r1 = widen_lo(src, zero);
+  r1 -= dstu;
+  dstu = widen_hi(dst, zero);
+  uint16x8 r2 = widen_hi(src, zero);
+  r2 -= dstu;
+  uint16x8 am(alpha);
+  uint16x8 a = uint16x8::set2(*alphap, *(alphap + 4));
+  alphap += 8;
+  a *= am;
+  a >>= 8;
+  r1 *= a;
+  r1 >>= 8;
+  a = uint16x8::set2(*alphap, *(alphap + 4));
+  a *= am;
+  a >>= 8;
+  r2 *= a;
+  r2 >>= 8;
+  uint8x16 r = pack_hz(r1, r2);
+  r += dst;
+  uint8x16 amask =
+#ifdef SDL_BYTEORDER == SDL_LIL_ENDIAN
+    uint8x16::set(0, 0, 0, 0xFF);
+#else
+    uint8x16::set(0xFF, 0, 0, 0);
+#endif
+  r |= amask;
+  store_u(dst_buffer, r);
+}
+
+#define BLEND_PIXEL() do{\
+  blendPixel32(src_buffer, dst_buffer, alpha, alphap);\
+  alphap += 4;\
+}while(0)
+#else
+#define BLEND_PIXEL() do{\
+    Uint32 mask2 = (*alphap * alpha) >> 8;\
+    Uint32 temp = *dst_buffer & 0xff00ff;\
+    Uint32 mask_rb = (((((*src_buffer & 0xff00ff) - temp ) * mask2 ) >> 8 ) + temp ) & 0xff00ff;\
+    temp = *dst_buffer & 0x00ff00;\
+    Uint32 mask_g  = (((((*src_buffer & 0x00ff00) - temp ) * mask2 ) >> 8 ) + temp ) & 0x00ff00;\
+    *dst_buffer = mask_rb | mask_g | 0xff000000;\
     alphap += 4;\
-} while(0)
+}while(0)
+#endif
 // Originally, the above looks like this.
 //      mask1 = mask2 ^ 0xff;
 //      Uint32 mask_rb = (((*dst_buffer & 0xff00ff) * mask1 +
@@ -341,18 +425,52 @@ int AnimationInfo::doClipping(SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped)
     alphap++;\
 }
 #else
-#define ADDBLEND_PIXEL() do {\
+#define ADDBLEND_PIXEL() do{\
     Uint32 mask2 = (*alphap * alpha) >> 8;\
-    Uint32 mask_rb = (*dst_buffer & RBMASK) +\
-                     ((((*src_buffer & RBMASK) * mask2) >> 8) & RBMASK);\
-    mask_rb |= ((mask_rb & AMASK) ? RMASK : 0) |\
-               ((mask_rb & GMASK) ? BMASK : 0);\
-    Uint32 mask_g = (*dst_buffer & GMASK) +\
-                    ((((*src_buffer & GMASK) * mask2) >> 8) & GMASK);\
+    Uint32 mask_rb = (*dst_buffer & RBMASK) + ((((*src_buffer & RBMASK) * mask2) >> 8) & RBMASK);\
+    mask_rb |= ((mask_rb & AMASK) ? RMASK : 0) | ((mask_rb & GMASK) ? BMASK : 0);\
+    Uint32 mask_g = (*dst_buffer & GMASK) + ((((*src_buffer & GMASK) * mask2) >> 8) & GMASK);\
     mask_g |= ((mask_g & RMASK) ? GMASK : 0);\
     *dst_buffer = (mask_rb & RBMASK) | (mask_g & GMASK) | 0xff000000;\
     alphap += 4;\
-} while(0)
+}while(0)
+
+inline void rainAddBlendPixel32(const Uint32 *src_buffer, Uint32 *__restrict dst_buffer) {
+#ifdef USE_SIMD
+  using namespace simd;
+  uint8x4 src = uint8x4::cvt2vec(*src_buffer);
+  uint8x4 dst = uint8x4::cvt2vec(*dst_buffer);
+  dst = adds(dst, src);
+  *dst_buffer = uint8x4::cvt2i32(dst);
+#else
+  const Uint8 *src = (const Uint8*)src_buffer;
+  Uint8 *dst = (Uint8*)dst_buffer;
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+  ++dst; ++src;
+#endif
+  for (int i = 0; i < 3; ++i, ++src, ++dst) {
+    int result = (*dst) + (*src);
+    (*dst) = (result < 255) ? result : 255;
+  }
+#endif
+}
+
+#ifdef USE_SIMD
+inline void rainAddBlend32(const Uint32 *src_buffer, Uint32 *__restrict dst_buffer, int remain) {
+  using namespace simd;
+  while (remain >= 4) {
+    uint8x16 srcvec = load_u(src_buffer),
+      dstvec = load_u(dst_buffer);
+    uint8x16 r = adds(srcvec, dstvec);
+    store_u(dst_buffer, r);
+    remain -= 4; src_buffer += 4; dst_buffer += 4;
+  }
+  while (remain > 0) {
+    rainAddBlendPixel32(src_buffer, dst_buffer);
+    --remain; ++src_buffer; ++dst_buffer;
+  }
+}
+#endif // USE_SIMD
 #endif
 
 #if defined(BPP16)
@@ -398,22 +516,21 @@ void AnimationInfo::blendOnSurface(SDL_Surface *dst_surface, int dst_x, int dst_
   dst_rect.w = pos.w;
   dst_rect.h = pos.h;
   if (doClipping(&dst_rect, &clip, &src_rect)) return;
+  if (alpha == 0) return;
 
   /* ---------------------------------------- */
-
   SDL_LockSurface(dst_surface);
   SDL_LockSurface(image_surface);
 
   alpha &= 0xff;
   int pitch = image_surface->pitch / sizeof(ONSBuf);
 
-
   struct Blender {
     ONSBuf *const stsrc_buffer, *const stdst_buffer;
     const int alpha, dst_rect_w, dst_rect_h, pitch, dst_surface_w, blendmode;
 
     void operator()(const int i) const {
-      ONSBuf *src_buffer = stsrc_buffer + (pitch)* i;
+      const ONSBuf *src_buffer = stsrc_buffer + (pitch)* i;
       ONSBuf *dst_buffer = stdst_buffer + (dst_surface_w)* i;
 #if defined(BPP16)    
       unsigned char *alphap = alpha_buf + image_surface->w * src_rect.y + image_surface->w*current_cell / num_of_cells + src_rect.x + image_surface->w;
@@ -424,12 +541,42 @@ void AnimationInfo::blendOnSurface(SDL_Surface *dst_surface, int dst_x, int dst_
       unsigned char *alphap = (unsigned char *)src_buffer;
 #endif //SDL_BYTEORDER == SDL_LIL_ENDIAN
 #endif //defined(BPP16)  
-      for (int j = dst_rect_w; j != 0; j--, src_buffer++, dst_buffer++) {
-        if (blendmode == AnimationInfo::BLEND_NORMAL) BLEND_PIXEL();
 #ifdef USE_BUILTIN_LAYER_EFFECTS
-        else if (blendmode == AnimationInfo::BLEND_ADD) ADDBLEND_PIXEL();
+      if (blendmode == AnimationInfo::BLEND_ADD) {
+#ifdef USE_SIMD
+        rainAddBlend32(src_buffer, dst_buffer, dst_rect_w);
+#else
+        for (int j = dst_rect_w; j != 0; j--, src_buffer++, dst_buffer++) {
+          if(*src_buffer != AMASK) rainAddBlendPixel32(src_buffer, dst_buffer);
+        }
+#endif //USE_SIMD
+      } else
 #endif
+#ifdef USE_SIMD
+      {
+        int remain = dst_rect_w;
+        while (remain > 0) {
+          if (*alphap == 0) {
+            --remain; ++src_buffer; ++dst_buffer; alphap += 4;
+          } else if ((*alphap == 255) && (alpha == 255)) {
+            *dst_buffer = *src_buffer;
+            --remain; ++src_buffer; ++dst_buffer; alphap += 4;
+#ifdef USE_SIMD
+          } else if (remain >= 4) {
+            blend4Pixel32(src_buffer, dst_buffer, alpha, alphap);
+            remain -= 4; src_buffer += 4; dst_buffer += 4; alphap += 16;
+#endif
+		  } else {
+            BLEND_PIXEL();
+            --remain; ++src_buffer; ++dst_buffer;
+          }
+        }
       }
+#else
+        for (int j = dst_rect_w; j != 0; j--, src_buffer++, dst_buffer++) {
+          BLEND_PIXEL();
+        }
+#endif
     }
   } blender = { (ONSBuf *)image_surface->pixels + pitch * src_rect.y + image_surface->w * current_cell / num_of_cells + src_rect.x,
     (ONSBuf *)dst_surface->pixels + dst_surface->w * dst_rect.y + dst_rect.x,

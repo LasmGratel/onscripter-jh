@@ -270,6 +270,7 @@ protected:
     int screen_device_width, screen_device_height;
     int device_width, device_height;
     SDL_Rect screen_rect;
+    SDL_Rect screen_view_rect;
     int screen_bpp;
     char *version_str;
     int underline_value;
