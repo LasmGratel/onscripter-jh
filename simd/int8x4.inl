@@ -39,7 +39,7 @@ namespace simd {
 
   inline uint8x4 adds(uint8x4 a, uint8x4 b) {
 #ifdef USE_SIMD_X86_SSE2
-    return _mm_adds_epi8(a, b); //PADDUSB xmm1, xmm2
+    return _mm_adds_epu8(a, b); //PADDUSB xmm1, xmm2
 #elif USE_SIMD_ARM_NEON
     return vqadd_u8(a, b);
 #endif

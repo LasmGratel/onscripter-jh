@@ -312,14 +312,6 @@ int AnimationInfo::doClipping(SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped)
 #else
 #ifdef USE_SIMD
 inline void blendPixel32(const Uint32 *src_buffer, Uint32 *__restrict dst_buffer, Uint8 alpha, Uint8 *alphap) {
-#if DEBUG
-  Uint32 mask2 = (*alphap * alpha) >> 8; 
-  Uint32 temp = *dst_buffer & 0xff00ff;
-  Uint32 mask_rb = (((((*src_buffer & 0xff00ff) - temp) * mask2) >> 8) + temp) & 0xff00ff; 
-  temp = *dst_buffer & 0x00ff00; 
-  Uint32 mask_g = (((((*src_buffer & 0x00ff00) - temp) * mask2) >> 8) + temp) & 0x00ff00; 
-  Uint32 trueP = mask_rb | mask_g | 0xff000000; 
-#endif
   using namespace simd;
   uint8x4 src = load(src_buffer), dst = load(dst_buffer);
   uint8x4 zero = uint8x4::zero();
@@ -328,33 +320,14 @@ inline void blendPixel32(const Uint32 *src_buffer, Uint32 *__restrict dst_buffer
   r1 -= dstu;
   uint16x4 am(alpha);
   uint16x4 a(*alphap);
-  a *= am;
-  a >>= 8;
-  r1 *= a;
-  r1 >>= 8;
+  a = (a * am) >> 8;
+  r1 = (r1 * a) >> 8;
   uint8x4 r = narrow_hz(r1);
   r += dst;
   *dst_buffer = uint8x4::cvt2i32(r) | AMASK;
 }
 
 inline void blend4Pixel32(const Uint32 *src_buffer, Uint32 *__restrict dst_buffer, Uint8 alpha, Uint8 *alphap) {
-#if DEBUG
-  Uint32 trueP[4];
-  Uint32 trueA[4];
-  {
-    Uint8 *ap = alphap;
-    for (int i = 0; i < 4; ++i) {
-      Uint32 mask2 = (*ap * alpha) >> 8;
-      trueA[i] = mask2;
-      Uint32 temp = dst_buffer[i] & 0xff00ff;
-      Uint32 mask_rb = (((((src_buffer[i] & 0xff00ff) - temp) * mask2) >> 8) + temp) & 0xff00ff;
-      temp = dst_buffer[i] & 0x00ff00;
-      Uint32 mask_g = (((((src_buffer[i] & 0x00ff00) - temp) * mask2) >> 8) + temp) & 0x00ff00;
-      trueP[i] = mask_rb | mask_g | 0xff000000;
-      ap += 4;
-    }
-  }
-#endif
   using namespace simd;
   uint8x16 src = load_u(src_buffer), dst = load_u(dst_buffer);
   uint8x16 zero = uint8x16::zero();
@@ -367,15 +340,11 @@ inline void blend4Pixel32(const Uint32 *src_buffer, Uint32 *__restrict dst_buffe
   uint16x8 am(alpha);
   uint16x8 a = uint16x8::set2(*alphap, *(alphap + 4));
   alphap += 8;
-  a *= am;
-  a >>= 8;
-  r1 *= a;
-  r1 >>= 8;
+  a = (a * am) >> 8;
+  r1 = (r1 * a) >> 8;
   a = uint16x8::set2(*alphap, *(alphap + 4));
-  a *= am;
-  a >>= 8;
-  r2 *= a;
-  r2 >>= 8;
+  a = (a * am) >> 8;
+  r2 = (r2 * a) >> 8;
   uint8x16 r = pack_hz(r1, r2);
   r += dst;
   uint8x16 amask =
