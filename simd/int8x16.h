@@ -38,13 +38,22 @@ namespace simd {
 #ifdef USE_SIMD_X86_SSE2
     uint8x16(__m128i v) : v_(v) {};
     operator __m128i() const { return v_; }
-    static uint8x16 zero() { return _mm_setzero_si128(); }
 #elif USE_SIMD_ARM_NEON
     uint8x16(uint8x16_t v) : v_(v) {};
     operator uint8x16_t() const { return v_; };
-    static uint8x16 zero() { return uint8x16(); }
 #endif
-    static uint8x16 set(uint8_t rm1, uint8_t rm2, uint8_t rm3, uint8_t rm4);
+    static uint8x16 set(uint8_t rm1, uint8_t rm2, uint8_t rm3, uint8_t rm4) {
+#ifdef USE_SIMD_X86_SSE2
+      return _mm_set_epi8(rm4, rm3, rm2, rm1, rm4, rm3, rm2, rm1, rm4, rm3, rm2, rm1, rm4, rm3, rm2, rm1);
+#elif USE_SIMD_ARM_NEON
+      union {
+        uint32_t v32[1];
+        uint8_t v[4];
+      };
+      v[0] = rm1; v[1] = rm2; v[2] = rm3; v[3] = rm4;
+      return reinterpret_cast<uint8x16_t>(vld1q_dup_u32(v32));
+#endif
+    };
   };
 
   //Arithmetic

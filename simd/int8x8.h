@@ -1,6 +1,6 @@
 /* -*- C++ -*-
 *
-*  int32x2.h
+*  int8x8.h
 *
 *  Copyright (C) 2015 jh10001 <jh10001@live.cn>
 *
@@ -23,37 +23,27 @@
 #ifndef __SIMD_H__
 #error "This file must be included through simd.h"
 #endif
-#include <stdint.h>
 
 namespace simd {
-  class uint32x2 {
+  class uint8x8 {
 #ifdef USE_SIMD_X86_SSE2
     __m128i v_;
 #elif USE_SIMD_ARM_NEON
-    uint32x2_t v_;
+    uint8x8_t v_;
 #endif
   public:
-    uint32x2() = default;
-    uint32x2(const uint32x2&) = default;
-    uint32x2 &operator=(const uint32x2&) = default;
+    uint8x8() = default;
+    uint8x8(const uint8x8&) = default;
+    uint8x8 &operator=(const uint8x8&) = default;
 #ifdef USE_SIMD_X86_SSE2
-    uint32x2(__m128i v) : v_(v) {};
+    uint8x8(__m128i v) : v_(v) {};
     operator __m128i() const { return v_; }
-    uint32x2(uint32_t rm) { v_ = _mm_set1_epi32(rm); }
-    static uint32x2 cvt2vec(uint32_t rm) { return _mm_cvtsi32_si128(rm);  /* MOVD xmm, r32 */ }
-    static uint32_t cvt2i32(uint32x2 a) { return _mm_cvtsi128_si32(a);  /* MOVD r32, xmm */ }
-    __m128i cvt2vu8() const { return v_; }
 #elif USE_SIMD_ARM_NEON
-    uint32x2(uint32x2_t v) : v_(v) {};
-    operator uint32x2_t() const { return v_; }
-    uint32x2(uint32_t rm) { v_ = vdup_n_u32(rm); }
-    static uint32x2 cvt2vec(uint32_t rm) {
-      uint32x2 r;
-      r = vset_lane_u32(rm, r, 0);
-      return r;
-    }
-    static uint32_t cvt2i32(uint32x2 a) { return vget_lane_u32(a, 0); }
-    uint8x8_t cvt2vu8() const { return vreinterpret_u8_u32(v_); }
+    uint8x8(uint8x8_t v) : v_(v) {};
+    operator uint8x8_t() const { return v_; }
 #endif
   };
+
+  class uint16x8;
+  static uint16x8 widen(uint8x8 a, uint8x8 b);
 }

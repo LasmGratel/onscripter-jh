@@ -1,6 +1,6 @@
 /* -*- C++ -*-
 *
-*  int32x2.h
+*  vec128.h
 *
 *  Copyright (C) 2015 jh10001 <jh10001@live.cn>
 *
@@ -23,37 +23,37 @@
 #ifndef __SIMD_H__
 #error "This file must be included through simd.h"
 #endif
-#include <stdint.h>
 
 namespace simd {
-  class uint32x2 {
+  class uint8x4;
+  class uint8x8;
+  class uint8x16;
+  class uint16x4;
+  class uint16x8;
+  class ivec128 {
 #ifdef USE_SIMD_X86_SSE2
     __m128i v_;
-#elif USE_SIMD_ARM_NEON
-    uint32x2_t v_;
 #endif
   public:
-    uint32x2() = default;
-    uint32x2(const uint32x2&) = default;
-    uint32x2 &operator=(const uint32x2&) = default;
+    ivec128() = default;
+    ivec128(const ivec128&) = default;
+    ivec128 &operator=(const ivec128&) = default;
 #ifdef USE_SIMD_X86_SSE2
-    uint32x2(__m128i v) : v_(v) {};
+    ivec128(__m128i v) : v_(v) {};
     operator __m128i() const { return v_; }
-    uint32x2(uint32_t rm) { v_ = _mm_set1_epi32(rm); }
-    static uint32x2 cvt2vec(uint32_t rm) { return _mm_cvtsi32_si128(rm);  /* MOVD xmm, r32 */ }
-    static uint32_t cvt2i32(uint32x2 a) { return _mm_cvtsi128_si32(a);  /* MOVD r32, xmm */ }
-    __m128i cvt2vu8() const { return v_; }
+    operator uint8x4() const { return v_; }
+    operator uint8x8() const { return v_; }
+    operator uint8x16() const { return v_; }
+    operator uint16x4() const { return v_; }
+    operator uint16x8() const { return v_; }
+    static ivec128 zero() { return _mm_setzero_si128(); }
 #elif USE_SIMD_ARM_NEON
-    uint32x2(uint32x2_t v) : v_(v) {};
-    operator uint32x2_t() const { return v_; }
-    uint32x2(uint32_t rm) { v_ = vdup_n_u32(rm); }
-    static uint32x2 cvt2vec(uint32_t rm) {
-      uint32x2 r;
-      r = vset_lane_u32(rm, r, 0);
-      return r;
-    }
-    static uint32_t cvt2i32(uint32x2 a) { return vget_lane_u32(a, 0); }
-    uint8x8_t cvt2vu8() const { return vreinterpret_u8_u32(v_); }
+    static ivec128 zero() { return ivec128(); }
+    operator uint8x4() const { return uint8x4(); }
+    operator uint8x8() const { return uint8x8(); }
+    operator uint8x16() const { return uint8x16(); }
+    operator uint16x4() const { return uint16x4(); }
+    operator uint16x8() const { return uint16x8(); }
 #endif
   };
 }

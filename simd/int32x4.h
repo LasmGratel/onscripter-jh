@@ -45,7 +45,7 @@ namespace simd {
 #elif USE_SIMD_ARM_NEON
     uint32x4(uint32x4_t v) : v_(v) {};
     operator uint32x4_t() const { return v_; }
-    uint32x4(uint32_t rm) { vdup_n_u32(rm); }
+    uint32x4(uint32_t rm) { v_ = vdupq_n_u32(rm); }
     static uint32x4 cvt2vec(uint32_t rm) {
       uint32x4 r;
       r = vsetq_lane_u32(rm, r, 0);

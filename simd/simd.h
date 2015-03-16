@@ -48,6 +48,8 @@
 #if defined(USE_SIMD_X86_SSE2) || defined(USE_SIMD_ARM_NEON)
 #include "int8x4.h"
 #include "int8x4.inl"
+#include "int8x8.h"
+#include "int8x8.inl"
 #include "int8x16.h"
 #include "int8x16.inl"
 #include "int16x4.h"
@@ -58,6 +60,8 @@
 #include "int32x2.inl"
 #include "int32x4.h"
 #include "int32x4.inl"
+#include "vec128.h"
+#include "vec128.inl"
 #endif
 
 #undef inline

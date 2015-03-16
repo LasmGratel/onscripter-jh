@@ -28,6 +28,9 @@
 #ifdef USE_FONTCONFIG
 #include <fontconfig/fontconfig.h>
 #endif
+#ifdef USE_SIMD
+#include "simd/simd.h"
+#endif
 #include <stdlib.h>
 
 extern Coding2UTF16 *coding2utf16;
@@ -1169,16 +1172,40 @@ void ONScripter::shadowTextDisplay(SDL_Surface *surface, SDL_Rect &clip)
 
 		SDL_PixelFormat *fmt = surface->format;
 		int color[3];
-		color[0] = current_font->window_color[0] + 1;
-		color[1] = current_font->window_color[1] + 1;
-		color[2] = current_font->window_color[2] + 1;
-
+		color[0] = current_font->window_color[0];
+		color[1] = current_font->window_color[1];
+		color[2] = current_font->window_color[2];
 		for (int i = rect.y; i < rect.y + rect.h; i++) {
-			for (int j = rect.x; j < rect.x + rect.w; j++, buf++) {
+#ifdef USE_SIMD
+          int remain = rect.w;
+          using namespace simd;
+          Uint32 mask = (color[0] << fmt->Rshift) | (color[1] << fmt->Gshift) | (color[2] << fmt->Bshift);
+          ivec128 zero = ivec128::zero();
+          uint8x8 maskv = uint32x2(mask).cvt2vu8();
+          uint16x8 maskwv = widen(maskv, zero);
+          while (remain >= 4) {
+            uint8x16 bufv = load_u(buf);
+            uint16x8 bufwv_lo = widen_lo(bufv, zero), bufwv_hi = widen_hi(bufv, zero);
+            bufwv_lo = (bufwv_lo * maskwv) >> 8;
+            bufwv_hi = (bufwv_hi * maskwv) >> 8;
+            bufv = pack_hz(bufwv_lo, bufwv_hi);
+            store_u(buf, bufv);
+            remain -= 4; buf += 4;
+          }
+          while (remain > 0) {
+            uint8x4 bufv = load(buf);
+            uint16x4 bufwv = widen(bufv, zero);
+            bufwv = (bufwv * maskwv.lo()) >> 8;
+            *buf = uint8x4::cvt2i32(narrow_hz(bufwv));
+            --remain; ++buf;
+          }
+#else
+			for (int j = rect.x; j < rect.x + rect.w; j++, buf++) {              
 				*buf = (((*buf & fmt->Rmask) >> fmt->Rshift) * color[0] >> 8) << fmt->Rshift |
 					(((*buf & fmt->Gmask) >> fmt->Gshift) * color[1] >> 8) << fmt->Gshift |
 					(((*buf & fmt->Bmask) >> fmt->Bshift) * color[2] >> 8) << fmt->Bshift;
 			}
+#endif
 			buf += surface->w - rect.w;
 		}
 

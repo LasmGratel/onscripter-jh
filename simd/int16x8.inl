@@ -78,20 +78,4 @@ namespace simd {
   inline uint16x8 operator>>=(uint16x8 &a, int imm8) {
     return a = a >> imm8;
   }
-
-  //Swizzle
-  inline uint16x8 uint16x8::set2(uint16_t rm1, uint16_t rm2){
-#ifdef USE_SIMD_X86_SSE2
-    uint16x8 r;
-    setzero(r);
-    r = _mm_cvtsi32_si128(rm1);  // MOVD r32, xmm
-    r = _mm_shufflelo_epi16(r, 0);  //PSHUFLW xmm1, xmm2, imm
-    r = _mm_insert_epi16(r, rm2, 4);  //PINSRW xmm, r32, imm
-    r = _mm_shufflehi_epi16(r, 0);  //PSUFHW xmm1, xmm2, imm
-    return r;
-#elif USE_SIMD_ARM_NEON
-    uint16x4_t rl = vdup_n_u16(rm1), rr = vdup_n_u16(rm2);
-    return vcombine_u16(rl, rr);
-#endif
-  }
 }

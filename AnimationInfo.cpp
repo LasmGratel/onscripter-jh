@@ -314,7 +314,7 @@ int AnimationInfo::doClipping(SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped)
 inline void blendPixel32(const Uint32 *src_buffer, Uint32 *__restrict dst_buffer, Uint8 alpha, Uint8 *alphap) {
   using namespace simd;
   uint8x4 src = load(src_buffer), dst = load(dst_buffer);
-  uint8x4 zero = uint8x4::zero();
+  ivec128 zero = ivec128::zero();
   uint16x4 r1 = widen(src, zero);
   uint16x4 dstu = widen(dst, zero);
   r1 -= dstu;
@@ -330,7 +330,7 @@ inline void blendPixel32(const Uint32 *src_buffer, Uint32 *__restrict dst_buffer
 inline void blend4Pixel32(const Uint32 *src_buffer, Uint32 *__restrict dst_buffer, Uint8 alpha, Uint8 *alphap) {
   using namespace simd;
   uint8x16 src = load_u(src_buffer), dst = load_u(dst_buffer);
-  uint8x16 zero = uint8x16::zero();
+  ivec128 zero = ivec128::zero();
   uint16x8 dstu = widen_lo(dst, zero);
   uint16x8 r1 = widen_lo(src, zero);
   r1 -= dstu;

@@ -253,11 +253,11 @@ inline static void alphaBlendCore32(Uint32 *src1_buffer, Uint32 *src2_buffer, Ui
   store_u(dst_buffer, r);
 }
 
-inline static void alphaBlendPixelCore32(Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *dst_buffer, Uint8 mask, simd::uint8x16 zero) {
+inline static void alphaBlendPixelCore32(Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *dst_buffer, Uint8 mask, simd::ivec128 zero) {
   using namespace simd;
   uint8x4 src1 = load(src1_buffer), src2 = load(src2_buffer);
-  uint16x4 r1 = widen(src2, (uint8x4)zero);
-  uint16x4 dstu = widen(src1, (uint8x4)zero);
+  uint16x4 r1 = widen(src2, zero);
+  uint16x4 dstu = widen(src1, zero);
   r1 -= dstu;
   uint16x4 m(mask);
   r1 *= m;
@@ -274,7 +274,7 @@ inline static void alphaBlend32(Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32
 #ifdef USE_SIMD
   using namespace simd;
   uint16x8 m_lo, m_hi;
-  uint8x16 zero = uint8x16::zero();
+  ivec128 zero = ivec128::zero();
   while (rect_w >= 4) {
     Uint32 mask2[4] = { 0 };
     for (int i = 0; i < 4; ++i) {
@@ -319,7 +319,7 @@ inline static void alphaBlend32(Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32
 inline static void alphaBlendConst32(Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *dst_buffer, Uint32 mask2, int remain){
 #ifdef USE_SIMD
   using namespace simd;
-  uint8x16 zero = uint8x16::zero();
+  ivec128 zero = ivec128::zero();
   uint16x8 m(mask2);
   while (remain >= 4) {
     alphaBlendCore32(src1_buffer, src2_buffer, dst_buffer, m, m, zero);
