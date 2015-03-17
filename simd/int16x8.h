@@ -81,7 +81,7 @@ namespace simd {
   static void setzero(uint16x8 &a);
 
   //Shift
-  static uint16x8 operator>>(uint16x8 a, int imm8);
+  static uint16x8 operator>>(uint16x8 a, immint<8> imm8);
 
-  static uint16x8 operator>>=(uint16x8 &a, int imm8);
+  static uint16x8 operator>>=(uint16x8 &a, immint<8> imm8);
 }

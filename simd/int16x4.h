@@ -63,7 +63,7 @@ namespace simd {
   static uint8x4 narrow_hz(uint16x4 a);
 
   //Shift
-  static uint16x4 operator>>(uint16x4 a, int imm8);
+  static uint16x4 operator>>(uint16x4 a, immint<8> imm8);
 
-  static uint16x4 operator>>=(uint16x4 &a, int imm8);
+  static uint16x4 operator>>=(uint16x4 &a, immint<8> imm8);
 }

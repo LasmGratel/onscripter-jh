@@ -81,6 +81,7 @@ public:
 	void renderFontOutline();
 	void enableEdit();
 	void setKeyEXE(const char *path);
+    const char* getArchivePath() { return archive_path; };
 	int  getWidth(){ return screen_width; };
 	int  getHeight(){ return screen_height; };
 	const char* getCurrentButtonStr(){ return current_button_state.str; };

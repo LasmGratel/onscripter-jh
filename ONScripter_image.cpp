@@ -239,12 +239,12 @@ inline static void alphaBlendCore32(Uint32 *src1_buffer, Uint32 *src2_buffer, Ui
   src1u = widen_hi(src1, zero);
   uint16x8 r2 = widen_hi(src2, zero);
   r2 -= src1u;
-  r1 = (r1 * m_lo) >> 8;
-  r2 = (r2 * m_hi) >> 8;
+  r1 = (r1 * m_lo) >> immint<8>();
+  r2 = (r2 * m_hi) >> immint<8>();
   uint8x16 r = pack_hz(r1, r2);
   r += src1;
   uint8x16 amask =
-#ifdef SDL_BYTEORDER == SDL_LIL_ENDIAN
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
     uint8x16::set(0, 0, 0, 0xFF);
 #else
     uint8x16::set(0xFF, 0, 0, 0);
@@ -261,7 +261,7 @@ inline static void alphaBlendPixelCore32(Uint32 *src1_buffer, Uint32 *src2_buffe
   r1 -= dstu;
   uint16x4 m(mask);
   r1 *= m;
-  r1 >>= 8;
+  r1 >>= immint<8>();
   uint8x4 r = narrow_hz(r1);
   r += src1;
   *dst_buffer = uint8x4::cvt2i32(r) | 0xff000000;

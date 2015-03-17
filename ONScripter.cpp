@@ -1186,8 +1186,8 @@ void ONScripter::shadowTextDisplay(SDL_Surface *surface, SDL_Rect &clip)
           while (remain >= 4) {
             uint8x16 bufv = load_u(buf);
             uint16x8 bufwv_lo = widen_lo(bufv, zero), bufwv_hi = widen_hi(bufv, zero);
-            bufwv_lo = (bufwv_lo * maskwv) >> 8;
-            bufwv_hi = (bufwv_hi * maskwv) >> 8;
+            bufwv_lo = (bufwv_lo * maskwv) >> immint<8>();
+            bufwv_hi = (bufwv_hi * maskwv) >> immint<8>();
             bufv = pack_hz(bufwv_lo, bufwv_hi);
             store_u(buf, bufv);
             remain -= 4; buf += 4;
@@ -1195,7 +1195,7 @@ void ONScripter::shadowTextDisplay(SDL_Surface *surface, SDL_Rect &clip)
           while (remain > 0) {
             uint8x4 bufv = load(buf);
             uint16x4 bufwv = widen(bufv, zero);
-            bufwv = (bufwv * maskwv.lo()) >> 8;
+            bufwv = (bufwv * maskwv.lo()) >> immint<8>();
             *buf = uint8x4::cvt2i32(narrow_hz(bufwv));
             --remain; ++buf;
           }

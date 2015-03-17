@@ -320,8 +320,8 @@ inline void blendPixel32(const Uint32 *src_buffer, Uint32 *__restrict dst_buffer
   r1 -= dstu;
   uint16x4 am(alpha);
   uint16x4 a(*alphap);
-  a = (a * am) >> 8;
-  r1 = (r1 * a) >> 8;
+  a = (a * am) >> immint<8>();
+  r1 = (r1 * a) >> immint<8>();
   uint8x4 r = narrow_hz(r1);
   r += dst;
   *dst_buffer = uint8x4::cvt2i32(r) | AMASK;
@@ -340,15 +340,15 @@ inline void blend4Pixel32(const Uint32 *src_buffer, Uint32 *__restrict dst_buffe
   uint16x8 am(alpha);
   uint16x8 a = uint16x8::set2(*alphap, *(alphap + 4));
   alphap += 8;
-  a = (a * am) >> 8;
-  r1 = (r1 * a) >> 8;
+  a = (a * am) >> immint<8>();
+  r1 = (r1 * a) >> immint<8>();
   a = uint16x8::set2(*alphap, *(alphap + 4));
-  a = (a * am) >> 8;
-  r2 = (r2 * a) >> 8;
+  a = (a * am) >> immint<8>();
+  r2 = (r2 * a) >> immint<8>();
   uint8x16 r = pack_hz(r1, r2);
   r += dst;
   uint8x16 amask =
-#ifdef SDL_BYTEORDER == SDL_LIL_ENDIAN
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
     uint8x16::set(0, 0, 0, 0xFF);
 #else
     uint8x16::set(0xFF, 0, 0, 0);

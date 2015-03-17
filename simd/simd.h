@@ -45,6 +45,19 @@
 #define inline __forceinline
 #endif
 
+namespace simd {
+  template<unsigned imm>
+  struct immint {
+#if _MSC_VER < 1900
+    static const int value = imm;
+    operator int() const { return value; }
+#else
+    static constexpr int value = imm;
+    constexpr operator int() const { return value; }
+#endif
+  };
+}
+
 #if defined(USE_SIMD_X86_SSE2) || defined(USE_SIMD_ARM_NEON)
 #include "int8x4.h"
 #include "int8x4.inl"

@@ -73,15 +73,15 @@ namespace simd{
   }
 
   //Shift
-  inline uint16x4 operator>>(uint16x4 a, int imm8) {
+  template<unsigned imm8>
+  inline uint16x4 shiftr(uint16x4 a) {
 #ifdef USE_SIMD_X86_SSE2
     return _mm_srli_epi16(a, imm8); //PSRLW xmm1, imm
 #elif USE_SIMD_ARM_NEON
     return vshr_n_u16(a, imm8);
 #endif
   }
-
-  inline uint16x4 operator>>=(uint16x4 &a, int imm8) {
-    return a = a >> imm8;
-  }
+  
+  inline uint16x4 operator>>(uint16x4 a, immint<8> imm8) { return shiftr<8>(a); }
+  inline uint16x4 operator>>=(uint16x4 &a, immint<8> imm8) { return a = a >> imm8; }
 }
