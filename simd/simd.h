@@ -40,7 +40,7 @@
 #endif
 
 #ifdef __GNUC__
-#define inline static __inline __attribute__((always_inline))
+#define inline static __inline __attribute__((__always_inline__))
 #elif defined(_MSC_VER)
 #define inline __forceinline
 #endif

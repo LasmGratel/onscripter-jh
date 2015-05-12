@@ -46,7 +46,19 @@ namespace simd {
   }
 
   //Load
-  inline uint8x16 load_u(const void* m) {
+  inline uint8x16 load_a(const void *m) {
+#if USE_SIMD_X86_SSE2
+    return _mm_load_si128(reinterpret_cast<const __m128i*>(m));  //MOVDQU xmm1, m128
+#elif USE_SIMD_ARM_NEON
+    uint8x16_t d;
+    __asm (
+      "vld1q.8 {%q0}, [%1 :16]" : "=w"(d) : "r"(m)
+    );
+    return d;
+#endif
+  }
+
+  inline uint8x16 load_u(const void *m) {
 #if USE_SIMD_X86_SSE3
     return _mm_lddqu_si128(reinterpret_cast<const __m128i*>(m));  //LDDQU xmm1, m128
 #elif USE_SIMD_X86_SSE2

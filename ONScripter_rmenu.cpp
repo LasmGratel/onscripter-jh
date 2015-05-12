@@ -3,7 +3,7 @@
  *  ONScripter_rmenu.cpp - Right click menu handler of ONScripter
  *
  *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
- *            (C) 2014 jh10001 <jh10001@live.cn>
+ *            (C) 2014-2015 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -24,6 +24,7 @@
 
 #include "ONScripter.h"
 #include "Utils.h"
+#include "coding2utf16.h"
 
 #define DIALOG_W 241
 #define DIALOG_H 167
@@ -44,16 +45,17 @@
 #define MESSAGE_OK "OK"
 #define MESSAGE_CANCEL "Cancel"
 #else
-#define MESSAGE_SAVE_EXIST "%s%s　%s月%s日%s时%s分"
-#define MESSAGE_SAVE_EMPTY "%s%s　————————————"
-#define MESSAGE_SAVE_CONFIRM "保存在%s%s？"
-#define MESSAGE_LOAD_CONFIRM "读取%s%s？"
-#define MESSAGE_RESET_CONFIRM "返回标题？"
-#define MESSAGE_END_CONFIRM "退出游戏？"
-#define MESSAGE_YES "是"
-#define MESSAGE_NO "否"
-#define MESSAGE_OK "确定"
-#define MESSAGE_CANCEL "取消"
+extern Coding2UTF16 *coding2utf16;
+#define MESSAGE_SAVE_EXIST coding2utf16->MESSAGE_SAVE_EXIST
+#define MESSAGE_SAVE_EMPTY coding2utf16->MESSAGE_SAVE_EMPTY
+#define MESSAGE_SAVE_CONFIRM coding2utf16->MESSAGE_SAVE_CONFIRM
+#define MESSAGE_LOAD_CONFIRM coding2utf16->MESSAGE_LOAD_CONFIRM
+#define MESSAGE_RESET_CONFIRM coding2utf16->MESSAGE_RESET_CONFIRM
+#define MESSAGE_END_CONFIRM coding2utf16->MESSAGE_END_CONFIRM
+#define MESSAGE_YES coding2utf16->MESSAGE_YES
+#define MESSAGE_NO coding2utf16->MESSAGE_NO
+#define MESSAGE_OK coding2utf16->MESSAGE_OK
+#define MESSAGE_CANCEL coding2utf16->MESSAGE_CANCEL
 #endif
 
 #ifdef ANDROID

@@ -2,7 +2,7 @@
  *
  *  sjis2utf16.cpp
  *
- *  Copyright (C) 2014 jh10001 <jh10001@live.cn>
+ *  Copyright (C) 2014-2015 jh10001 <jh10001@live.cn>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
  */
 
 #include "sjis2utf16.h"
+#include <string.h>
 
 static const uint16_t CODINGLEFT = 0x8140, CODINGRIGHT = 0xfcfc;
 static uint16_t *sjis_2_utf16 = nullptr;
@@ -11403,6 +11404,24 @@ static uint16_t sjis_2_utf16_org[][2] = {
 };
 
 void SJIS2UTF16::init() {
+  strcpy(space, "　");
+  strcpy(minus, "－");
+  strcpy(num_str, "０１２３４５６７８９");
+  strcpy(DEFAULT_START_KINSOKU, "」』）］｝、。，．・？！ヽヾゝゞ々ー");
+  strcpy(DEFAULT_END_KINSOKU, "「『（［｛");
+  strcpy(DEFAULT_SAVE_MENU_NAME, "＜セーブ＞");
+  strcpy(DEFAULT_LOAD_MENU_NAME, "＜ロード＞");
+  strcpy(DEFAULT_SAVE_ITEM_NAME, "しおり");
+  strcpy(MESSAGE_SAVE_EXIST, "%s%s　%s月%s日%s時%s分");
+  strcpy(MESSAGE_SAVE_EMPTY, "%s%s　－－－－－－－－－－－－");
+  strcpy(MESSAGE_SAVE_CONFIRM, "%s%sにセーブします。よろしいですか？");
+  strcpy(MESSAGE_LOAD_CONFIRM, "%s%sをロードします。よろしいですか？");
+  strcpy(MESSAGE_RESET_CONFIRM, "リセットします。よろしいですか？");
+  strcpy(MESSAGE_END_CONFIRM, "終了します。よろしいですか？");
+  strcpy(MESSAGE_YES, "はい");
+  strcpy(MESSAGE_NO, "いいえ");
+  strcpy(MESSAGE_OK, "ＯＫ");
+  strcpy(MESSAGE_CANCEL, "キャンセル");
   sjis_2_utf16 = new uint16_t[CODINGRIGHT - CODINGLEFT + 1];
   int i=0;
   while(sjis_2_utf16_org[i][0]){

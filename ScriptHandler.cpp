@@ -24,6 +24,9 @@
 
 #include "ScriptHandler.h"
 #include "Utils.h"
+#include "coding2utf16.h"
+
+extern Coding2UTF16 *coding2utf16;
 
 #define TMP_SCRIPT_BUF_LEN 4096
 #define STRING_BUFFER_LENGTH 2048
@@ -790,25 +793,24 @@ int ScriptHandler::getStringFromInteger( char *buffer, int no, int num_column, b
     int c = 0;
     if (is_zero_inserted){
         for (i=0 ; i<num_space ; i++){
-            buffer[c++] = ((char*)"£°")[0];
-            buffer[c++] = ((char*)"£°")[1];
+            buffer[c++] = coding2utf16->num_str[0];
+            buffer[c++] = coding2utf16->num_str[1];
         }
     }
     else{
         for (i=0 ; i<num_space ; i++){
-            buffer[c++] = ((char*)"¡¡")[0];
-            buffer[c++] = ((char*)"¡¡")[1];
+          buffer[c++] = coding2utf16->space[0];
+          buffer[c++] = coding2utf16->space[1];
         }
     }
     if (num_minus == 1){
-        buffer[c++] = "£­"[0];
-        buffer[c++] = "£­"[1];
+      buffer[c++] = coding2utf16->minus[0];
+      buffer[c++] = coding2utf16->minus[1];
     }
     c = (num_column-1)*2;
-    char num_str[] = "£°£±£²£³£´£µ£¶£·£¸£¹";
     for (i=0 ; i<num_digit ; i++){
-        buffer[c]   = num_str[ no % 10 * 2];
-        buffer[c+1] = num_str[ no % 10 * 2 + 1];
+      buffer[c] = coding2utf16->num_str[no % 10 * 2];
+      buffer[c + 1] = coding2utf16->num_str[no % 10 * 2 + 1];
         no /= 10;
         c -= 2;
     }

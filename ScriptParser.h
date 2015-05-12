@@ -3,7 +3,7 @@
  *  ScriptParser.h - Define block parser of ONScripter
  *
  *  Copyright (c) 2001-2013 Ogapee. All rights reserved.
- *            (C) 2014 jh10001 <jh10001@live.cn>
+ *            (C) 2014-2015 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -39,6 +39,9 @@
 #ifdef USE_LUA
 #include "LUAHandler.h"
 #endif
+#include "coding2utf16.h"
+
+extern Coding2UTF16 *coding2utf16;
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -52,8 +55,8 @@
 #define DEFAULT_LOOKBACK_NAME2 "doncur.bmp"
 #define DEFAULT_LOOKBACK_NAME3 "doffcur.bmp"
 
-#define DEFAULT_START_KINSOKU "¡¹¡»£©£Ý£ý¡¢¡££¬£®¡££¿£¡©c©d©f©g¡©©`"
-#define DEFAULT_END_KINSOKU   "¡¸¡º£¨£Û£û"
+#define DEFAULT_START_KINSOKU coding2utf16->DEFAULT_START_KINSOKU
+#define DEFAULT_END_KINSOKU   coding2utf16->DEFAULT_END_KINSOKU
 
 typedef unsigned char uchar3[3];
 
