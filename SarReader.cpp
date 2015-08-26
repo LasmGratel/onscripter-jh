@@ -86,7 +86,7 @@ void SarReader::readArchive( ArchiveInfo *ai, int archive_type, unsigned int off
         ai->num_of_files = 0;
         long unsigned int cur_offset = offset + 4;
         // there's an extra byte at the end of the header, not sure what for
-        while(1){
+        for (;;) {
             unsigned char ch = key_table[fgetc( ai->file_handle )];
             if (ch != '"') break;
             cur_offset++;

@@ -1446,6 +1446,7 @@ void ONScripter::disableGetButtonFlag()
 	gettab_flag = false;
 	getpageup_flag = false;
 	getpagedown_flag = false;
+	getmclick_flag = false;
 	getinsert_flag = false;
 	getfunction_flag = false;
 	getenter_flag = false;

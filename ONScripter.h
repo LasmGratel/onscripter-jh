@@ -58,6 +58,13 @@ class ONScripter : public ScriptParser {
 public:
 	typedef AnimationInfo::ONSBuf ONSBuf;
 
+    struct ButtonState{
+        unsigned int event_type;
+        unsigned char event_button;
+        int x, y, button;
+        char str[16];
+        bool down_flag;
+    };
 	ONScripter();
 	~ONScripter();
 
@@ -84,7 +91,7 @@ public:
     const char* getArchivePath() { return archive_path; };
 	int  getWidth(){ return screen_width; };
 	int  getHeight(){ return screen_height; };
-	const char* getCurrentButtonStr(){ return current_button_state.str; };
+    ButtonState &getCurrentButtonState(){return current_button_state;};
 	int  getSkip(){ return automode_flag ? 2 : ((skip_mode&SKIP_NORMAL) ? 1 : 0); };
 
 	int  openScript();
@@ -221,6 +228,7 @@ public:
 	int getmp3volCommand();
 	int getmouseposCommand();
 	int getmouseoverCommand();
+    int getmclickCommand();
 	int getlogCommand();
 	int getinsertCommand();
 	int getfunctionCommand();
@@ -322,11 +330,7 @@ private:
     bool cacheFont = false;
 
 	// variables relevant to button
-	struct ButtonState {
-		int x, y, button;
-		char str[16];
-		bool down_flag;
-	} current_button_state, last_mouse_state;
+    ButtonState current_button_state, last_mouse_state;
 
 	ButtonLink root_button_link, *current_button_link, exbtn_d_button_link;
 	bool is_exbtn_enabled;
@@ -346,6 +350,7 @@ private:
 	bool gettab_flag;
 	bool getpageup_flag;
 	bool getpagedown_flag;
+    bool getmclick_flag;
 	bool getinsert_flag;
 	bool getfunction_flag;
 	bool getenter_flag;
@@ -396,6 +401,7 @@ public:
 	void executeLabel();
 	void runScript();
 	AnimationInfo *getSpriteInfo(int no){ return &sprite_info[no]; };
+	AnimationInfo *getSprite2Info(int no){ return &sprite2_info[no]; };
     Uint32 getTextureFormat() { return texture_format; };
 private:
 	int  parseLine();

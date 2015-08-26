@@ -203,7 +203,7 @@ const char *ScriptHandler::readToken()
              (!english_mode && ch == '>') ||
              ch == '!' || ch == '#' || ch == ',' || ch == '"'){ // text
       bool ignore_clickstr_flag = false;
-        while(1){
+        for(;;){
             if ( IS_TWO_BYTE(ch) ){
                 addStringBuffer( ch );
                 ch = *++buf;
@@ -257,7 +257,7 @@ const char *ScriptHandler::readToken()
 #endif
     else if (english_mode && ch == '>'){
         ch = *++buf;
-        while (1){
+        for (;;) {
             if (ch == 0x0a || ch =='\0') break;
 
             if (ch != '\t') 
@@ -352,7 +352,7 @@ const char *ScriptHandler::readStr()
     string_buffer[0] = '\0';
     string_counter = 0;
 
-    while(1){
+    for (;;) {
         parseStr(&buf);
         buf = checkComma(buf);
         string_counter += strlen(str_string_buffer);
@@ -393,7 +393,7 @@ void ScriptHandler::skipToken()
 
     bool quat_flag = false;
     bool text_flag = false;
-    while(1){
+    for (;;) {
         if ( *buf == 0x0a || *buf == 0 ||
              (!quat_flag && !text_flag && (*buf == ':' || *buf == ';') ) ) break;
         if ( *buf == '"' ) quat_flag = !quat_flag;
@@ -1039,7 +1039,7 @@ int ScriptHandler::readScriptSub( FILE *fp, char **buf, int encrypt_mode )
         errorAndExit("readScriptSub: the EXE file must be specified with --key-exe option.");
 
     size_t len=0, count=0;
-    while(1){
+    for (;;) {
         if (len == count){
             len = fread(tmp_script_buf, 1, TMP_SCRIPT_BUF_LEN, fp);
             if (len == 0){
@@ -1333,7 +1333,7 @@ void ScriptHandler::parseStr( char **buf )
         int alias_buf_len = 0;
         bool first_flag = true;
         
-        while(1){
+        for (;;) {
             if ( alias_buf_len == 511 ) break;
             ch = **buf;
             
@@ -1403,7 +1403,7 @@ int ScriptHandler::parseInt( char **buf )
         bool num_alias_flag = false;
 
         char *buf_start = *buf;
-        while( 1 ){
+        for (;;) {
             ch = **buf;
             
             if ( (ch >= 'a' && ch <= 'z') || 
@@ -1472,7 +1472,7 @@ int ScriptHandler::parseIntExpression( char **buf )
     if ( op[0] == OP_INVALID )
         return num[0];
 
-    while(1){
+    for (;;) {
         readNextOp( buf, &op[1], &num[2] );
         if ( op[1] == OP_INVALID ) break;
 

@@ -525,6 +525,10 @@ bool ONScripter::mousePressEvent( SDL_MouseButtonEvent *event )
         sprintf(current_button_state.str, "WHEELDOWN");
     }
 #endif
+	else if (getmclick_flag && event->button == SDL_BUTTON_MIDDLE) {
+		current_button_state.button = -70;
+		sprintf(current_button_state.str, "MCLICK");
+	}
     else return false;
 
     if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
@@ -780,6 +784,25 @@ void ONScripter::shiftCursorOnButton( int diff )
 
 bool ONScripter::keyDownEvent( SDL_KeyboardEvent *event )
 {
+	if (event->keysym.sym == SDLK_ESCAPE) {
+		current_button_state.event_type = SDL_MOUSEBUTTONDOWN;
+		current_button_state.event_button = SDL_BUTTON_RIGHT;
+	}
+	else if (event->keysym.sym == SDLK_KP_ENTER) {
+		current_button_state.event_type = SDL_MOUSEBUTTONDOWN;
+		current_button_state.event_button = SDL_BUTTON_LEFT;
+	}
+	else if (event->keysym.sym == SDLK_LEFT) {
+		current_button_state.event_type = SDL_MOUSEBUTTONDOWN;
+		current_button_state.event_button = SDL_MOUSEWHEEL;
+		current_button_state.y = 1;
+	}
+	else if (event->keysym.sym == SDLK_RIGHT) {
+		current_button_state.event_type = SDL_MOUSEBUTTONDOWN;
+		current_button_state.event_button = SDL_MOUSEWHEEL;
+		current_button_state.y = -1;
+	}
+
     switch ( event->keysym.sym ) {
       case SDLK_RCTRL:
         ctrl_pressed_status  |= 0x01;
@@ -811,6 +834,25 @@ bool ONScripter::keyDownEvent( SDL_KeyboardEvent *event )
 
 void ONScripter::keyUpEvent( SDL_KeyboardEvent *event )
 {
+	if (event->keysym.sym == SDLK_ESCAPE) {
+		current_button_state.event_type = SDL_MOUSEBUTTONUP;
+		current_button_state.event_button = SDL_BUTTON_RIGHT;
+	}
+	else if (event->keysym.sym == SDLK_KP_ENTER) {
+		current_button_state.event_type = SDL_MOUSEBUTTONUP;
+		current_button_state.event_button = SDL_BUTTON_LEFT;
+	}
+	else if (event->keysym.sym == SDLK_LEFT) {
+		current_button_state.event_type = SDL_MOUSEBUTTONUP;
+		current_button_state.event_button = SDL_MOUSEWHEEL;
+		current_button_state.y = 1;
+	}
+	else if (event->keysym.sym == SDLK_RIGHT) {
+		current_button_state.event_type = SDL_MOUSEBUTTONUP;
+		current_button_state.event_button = SDL_MOUSEWHEEL;
+		current_button_state.y = -1;
+	}
+
     switch ( event->keysym.sym ) {
       case SDLK_RCTRL:
         ctrl_pressed_status  &= ~0x01;
@@ -1076,7 +1118,7 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
                 return true;
             }
         }
-        else if ( event->keysym.sym == SDLK_a && mode_ext_flag && !automode_flag ){
+        else if ( event->keysym.sym == SDLK_a && !automode_flag ){
             automode_flag = true;
             skip_mode &= ~SKIP_NORMAL;
             utils::printInfo("change to automode\n");
@@ -1205,8 +1247,8 @@ void ONScripter::runEventLoop()
 		case SDL_FINGERMOTION:
 		{
 			if (convTouchKey(event.tfinger)) return;
-			tmp_event.motion.x = device_width *event.tfinger.x - (device_width -screen_device_width)/2;
-			tmp_event.motion.y = device_height*event.tfinger.y - (device_height-screen_device_height)/2;
+			tmp_event.motion.x = device_width * event.tfinger.x - (device_width - screen_device_width) / 2;
+			tmp_event.motion.y = device_height * event.tfinger.y - (device_height - screen_device_height) / 2;
 			if (mouseMoveEvent( &tmp_event.motion )) return;
 			if (btndown_flag){
 				event.button.type = SDL_MOUSEBUTTONDOWN;
@@ -1223,8 +1265,8 @@ void ONScripter::runEventLoop()
 		case SDL_FINGERDOWN:
 		{
 			convTouchKey(event.tfinger);
-			tmp_event.motion.x = device_width *event.tfinger.x - (device_width -screen_device_width)/2;
-			tmp_event.motion.y = device_height*event.tfinger.y - (device_height-screen_device_height)/2;
+			tmp_event.motion.x = device_width * event.tfinger.x - (device_width - screen_device_width) / 2;
+			tmp_event.motion.y = device_height * event.tfinger.y - (device_height - screen_device_height) / 2;
 			if (mouseMoveEvent( &tmp_event.motion )) return;
 		}
 			if ( btndown_flag ){
@@ -1232,8 +1274,8 @@ void ONScripter::runEventLoop()
 				tmp_event.button.button = SDL_BUTTON_LEFT;
 				if (SDL_GetNumTouchFingers(event.tfinger.touchId) >= 2)
 					tmp_event.button.button = SDL_BUTTON_RIGHT;
-				tmp_event.button.x = device_width *event.tfinger.x - (device_width -screen_device_width)/2;
-				tmp_event.button.y = device_height*event.tfinger.y - (device_height-screen_device_height)/2;
+                tmp_event.motion.x = device_width * event.tfinger.x - (device_width - screen_device_width) / 2;
+                tmp_event.motion.y = device_height * event.tfinger.y - (device_height - screen_device_height) / 2;
 				ret = mousePressEvent( &tmp_event.button );
 			}
 			{
@@ -1252,8 +1294,8 @@ void ONScripter::runEventLoop()
 				tmp_event.button.button = SDL_BUTTON_LEFT;
 				if (SDL_GetNumTouchFingers(event.tfinger.touchId) >= 1)
 					tmp_event.button.button = SDL_BUTTON_RIGHT;
-				tmp_event.button.x = device_width *event.tfinger.x - (device_width -screen_device_width)/2;
-				tmp_event.button.y = device_height*event.tfinger.y - (device_height-screen_device_height)/2;
+                tmp_event.motion.x = device_width * event.tfinger.x - (device_width - screen_device_width) / 2;
+                tmp_event.motion.y = device_height * event.tfinger.y - (device_height - screen_device_height) / 2;
                 ret = mousePressEvent( &tmp_event.button );
 			}
 			tmp_event.key.keysym.sym = SDLK_LCTRL;
@@ -1348,12 +1390,16 @@ void ONScripter::runEventLoop()
             break;
             
           case SDL_MOUSEBUTTONDOWN:
+			current_button_state.event_type = event.type;
+			current_button_state.event_button = event.button.button;
             if ( !btndown_flag ) break;
           case SDL_MOUSEBUTTONUP:
 #if defined(IOS) || defined(ANDROID) || defined(WINRT)
 			event.button.x = device_width * event.button.x - (device_width - screen_device_width) / 2;;
 			event.button.y = device_width * event.button.y - (device_width - screen_device_width) / 2;
 #endif
+			current_button_state.event_type = event.type;
+			current_button_state.event_button = event.button.button;
             ret = mousePressEvent( &event.button );
             if (ret) return;
             break;

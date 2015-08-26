@@ -904,7 +904,7 @@ int ScriptParser::ifCommand()
     bool if_flag = true;
     if ( script_h.isName( "notif" ) ) if_flag = false;
 
-    while(1){
+    for (;;) {
         if (script_h.compareString("fchk")){
             script_h.readLabel();
             buf = script_h.readStr();
@@ -1033,7 +1033,6 @@ void ScriptParser::gosubReal( const char *label, char *next_script, bool textgos
 
     last_nest_info = last_nest_info->next;
     last_nest_info->next_script = next_script;
-    pretext_buf = &last_nest_info->next_script;
 
     if (textgosub_flag){
         last_nest_info->textgosub_flag = true;

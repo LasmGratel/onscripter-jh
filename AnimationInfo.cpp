@@ -530,11 +530,9 @@ void AnimationInfo::blendOnSurface(SDL_Surface *dst_surface, int dst_x, int dst_
           } else if ((*alphap == 255) && (alpha == 255)) {
             *dst_buffer = *src_buffer;
             --remain; ++src_buffer; ++dst_buffer; alphap += 4;
-#ifdef USE_SIMD
           } else if (remain >= 4) {
             blend4Pixel32(src_buffer, dst_buffer, alpha, alphap);
             remain -= 4; src_buffer += 4; dst_buffer += 4; alphap += 16;
-#endif
 		  } else {
             BLEND_PIXEL();
             --remain; ++src_buffer; ++dst_buffer;

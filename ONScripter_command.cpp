@@ -542,7 +542,7 @@ int ONScripter::splitCommand()
     
     char delimiter = script_h.readStr()[0];
 
-    char token[256];
+    char token256[256], *token=NULL;
     while( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
 
         unsigned int c=0;
@@ -552,6 +552,12 @@ int ONScripter::splitCommand()
             else
                 c++;
         }
+        
+        if (c < 256) 
+            token = token256;
+        else
+            token = new char[c+1];
+        
         memcpy( token, save_buf, c );
         token[c] = '\0';
         
@@ -564,6 +570,8 @@ int ONScripter::splitCommand()
             setStr( &script_h.getVariableData(script_h.current_variable.var_no).str, token );
         }
 
+        if (c >= 256) delete[] token;
+        
         save_buf += c;
         if (save_buf[0] != '\0') save_buf++;
     }
@@ -2121,7 +2129,7 @@ int ONScripter::gettagCommand()
     if ( !last_nest_info->previous || last_nest_info->nest_mode != NestInfo::LABEL )
         errorAndExit( "gettag: not in a subroutine, i.e. pretextgosub" );
 
-    char *buf = *pretext_buf;
+    char *buf = pretext_buf;
 
     if (buf[0] == '[')
         buf++;
@@ -2160,7 +2168,7 @@ int ONScripter::gettagCommand()
             }
         }
 
-        if (buf) *pretext_buf = buf;
+        if (buf) pretext_buf = buf;
         if (buf && *buf == '/')
             buf++;
         else
@@ -2168,11 +2176,11 @@ int ONScripter::gettagCommand()
     }
     while(end_status & ScriptHandler::END_COMMA);
 
-    if ((*pretext_buf)[0] == ']')
-        (*pretext_buf)++;
+    if (pretext_buf[0] == ']')
+        pretext_buf++;
     else if (zenkakko_flag && 
-             (*pretext_buf)[0] == "¡Û"[0] && (*pretext_buf)[1] == "¡Û"[1])
-        *pretext_buf += 2;
+             pretext_buf[0] == "¡Û"[0] && pretext_buf[1] == "¡Û"[1])
+        pretext_buf += 2;
 
     return RET_CONTINUE;
 }
@@ -2367,6 +2375,13 @@ int ONScripter::getregCommand()
     return RET_CONTINUE;
 }
 
+int ONScripter::getmclickCommand()
+{
+    getmclick_flag = true;
+    
+    return RET_CONTINUE;
+}
+
 int ONScripter::getmp3volCommand()
 {
     script_h.readInt();
@@ -2556,6 +2571,7 @@ int ONScripter::gameCommand()
     loadCursor( 1, NULL, 0, 0 );
 
 #ifdef USE_LUA
+    lua_handler.loadInitScript();
     if (lua_handler.isCallbackEnabled(LUAHandler::LUA_RESET)){
         if (lua_handler.callFunction(true, "reset"))
             errorAndExit( lua_handler.error_str );
@@ -2963,7 +2979,7 @@ int ONScripter::defineresetCommand()
         readVariables( script_h.global_variable_border, script_h.variable_range );
 
 #ifdef USE_LUA
-    lua_handler.init(this, &script_h);
+    lua_handler.init(this, &script_h, screen_ratio1, screen_ratio2);
 #endif    
 
     current_mode = DEFINE_MODE;
@@ -3234,6 +3250,7 @@ int ONScripter::btnwaitCommand()
         }
         getpageup_flag = true;
         getpagedown_flag = true;
+        getmclick_flag = true;
         getfunction_flag = true;
     }
     else{
@@ -3501,7 +3518,7 @@ int ONScripter::brCommand()
 
 inline static SDL_Texture* createMaximumTexture(SDL_Renderer *renderer, SDL_Rect &blt_rect, const SDL_Rect &src_rect, SDL_Surface *blt_surface,
   Uint32 texture_format, int max_texture_width, int max_texture_height) {
-  if (src_rect.w > max_texture_width || src_rect.h > max_texture_height) utils::printInfo("Too large texture");
+  if (src_rect.w > max_texture_width || src_rect.h > max_texture_height) utils::printInfo("Texture too large");
   blt_rect.w = blt_surface->w - src_rect.x > max_texture_width ? max_texture_width : blt_surface->w - src_rect.x;
   blt_rect.h = blt_surface->h - src_rect.y > max_texture_height ? max_texture_height : blt_surface->h - src_rect.y;
   blt_rect.x = src_rect.x;
