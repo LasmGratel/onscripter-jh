@@ -114,8 +114,8 @@ void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color 
     dst_rect.x = xy[0] + minx;
     dst_rect.y = xy[1] + TTF_FontAscent((TTF_Font*)info->ttf_font[0]) - maxy;
 #else
-	dst_rect.x = xy[0];
-	dst_rect.y = xy[1];
+    dst_rect.x = xy[0];
+    dst_rect.y = xy[1];
 #endif
     dst_rect.y -= (TTF_FontHeight((TTF_Font*)info->ttf_font[0]) - info->font_size_xy[1]*screen_ratio1/screen_ratio2)/2;
 

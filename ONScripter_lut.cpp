@@ -287,7 +287,7 @@ static ONScripter::FuncLUT func_lut[] = {
     {"for",				&ONScripter::forCommand},
     {"filelog",			&ONScripter::filelogCommand},
     {"fileexist",		&ONScripter::fileexistCommand},
-	{"flushout",        &ONScripter::flushoutCommand},
+    {"flushout",		&ONScripter::flushoutCommand},
 
     {"existspbtn",		&ONScripter::spbtnCommand},
     {"exec_dll",		&ONScripter::exec_dllCommand},

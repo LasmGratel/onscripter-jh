@@ -801,8 +801,8 @@ void ONScripter::flushDirect( SDL_Rect &rect, int refresh_mode )
         }
         else {
     #endif
-        SDL_RenderCopy(renderer, texture, &src_rect, &dst_rect);
-        SDL_RenderPresent(renderer);
+            SDL_RenderCopy(renderer, texture, &src_rect, &dst_rect);
+            SDL_RenderPresent(renderer);
     #ifdef ANDROID
         }
     #endif

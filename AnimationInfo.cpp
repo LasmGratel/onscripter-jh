@@ -36,7 +36,6 @@ parallel::ThreadPool parallel::threadPool;
 #ifdef USE_SIMD
 #include "simd/simd.h"
 #endif
-#include "Utils.h"
 #include "builtin_layer.h"
 
 

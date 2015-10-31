@@ -115,7 +115,7 @@ void optionVersion()
 {
     printf("Written by Ogapee <ogapee@aqua.dti2.ne.jp>\n\n");
     printf("Copyright (c) 2001-2015 Ogapee.\n\
-             		          (C) 2014-2015 jh10001<jh10001@live.cn>\n");
+                              (C) 2014-2015 jh10001<jh10001@live.cn>\n");
     printf("This is free software; see the source for copying conditions.\n");
     exit(0);
 }
@@ -135,13 +135,13 @@ extern "C"
 JNIEXPORT jint JNICALL 
 JAVA_EXPORT_NAME(ONScripter_nativeGetWidth) ( JNIEnv*  env, jobject thiz )
 {
-	return ons.getWidth();
+    return ons.getWidth();
 }
 
 JNIEXPORT jint JNICALL 
 JAVA_EXPORT_NAME(ONScripter_nativeGetHeight) ( JNIEnv*  env, jobject thiz )
 {
-	return ons.getHeight();
+    return ons.getHeight();
 }
 }
 #endif

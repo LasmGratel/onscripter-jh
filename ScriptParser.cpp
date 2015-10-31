@@ -52,7 +52,7 @@ void deleteLayerInfo() {
 
 ScriptParser::ScriptParser()
 {
-	debug_level = 0;
+    debug_level = 0;
     srand( time(NULL) );
     rand();
 
@@ -136,13 +136,13 @@ void ScriptParser::reset()
     labellog_flag = false;
     filelog_flag = false;
     kidokuskip_flag = false;
-	kidokumode_flag = true;
+    kidokumode_flag = true;
 
     rmode_flag = true;
     windowback_flag = false;
     usewheel_flag = false;
     useescspc_flag = false;
-	mode_wave_demo_flag = false;
+    mode_wave_demo_flag = false;
     mode_saya_flag = false;
     mode_ext_flag = false;
     sentence_font.rubyon_flag = false;
@@ -343,7 +343,7 @@ void ScriptParser::saveGlovalData()
     writeVariables( script_h.global_variable_border, script_h.variable_range, true );
 
     if (saveFileIOBuf( "gloval.sav" )){
-		utils::printError( "can't open gloval.sav for writing\n");
+        utils::printError( "can't open gloval.sav for writing\n");
         exit(-1);
     }
 }

@@ -588,7 +588,7 @@ void ScriptHandler::saveKidokuData()
     FILE *fp;
 
     if ( ( fp = fopen( "kidoku.dat", "wb", true ) ) == NULL ){
-		utils::printError("can't write kidoku.dat\n");
+        utils::printError("can't write kidoku.dat\n");
         return;
     }
 
@@ -907,7 +907,7 @@ void ScriptHandler::addStrAlias( const char *str1, const char *str2 )
 
 void ScriptHandler::errorAndExit( const char *str )
 {
-	utils::printError( " **** Script error, %s [%s] ***\n", str, string_buffer);
+    utils::printError( " **** Script error, %s [%s] ***\n", str, string_buffer);
     exit(-1);
 }
 
@@ -972,7 +972,7 @@ int ScriptHandler::readScript( char *path )
     }
 
     if (fp == NULL){
-		utils::printError( "can't open any of 0.txt, 00.txt, nscript.dat and nscript.___\n");
+        utils::printError( "can't open any of 0.txt, 00.txt, nscript.dat and nscript.___\n");
         return -1;
     }
     

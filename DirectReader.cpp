@@ -439,8 +439,8 @@ size_t DirectReader::decodeNBZ( FILE *fp, size_t offset, unsigned char *buf )
         else
             len = BZ2_bzRead( &err, bfp, buf, count );
         count -= len;
-		buf += len;
-	}
+        buf += len;
+    }
 
     BZ2_bzReadGetUnused(&err, bfp, &unused, &nunused );
     BZ2_bzReadClose( &err, bfp );

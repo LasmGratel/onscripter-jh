@@ -124,10 +124,10 @@ int ONScripter::playSound(const char *filename, int format, bool loop_flag, int 
     long length = script_h.cBR->getFileLength( filename );
     if (length == 0) return SOUND_NONE;
     if (!mode_wave_demo_flag &&
-		((skip_mode & SKIP_NORMAL) || ctrl_pressed_status) && (format & SOUND_CHUNK) &&
-		((channel < ONS_MIX_CHANNELS) || (channel == MIX_WAVE_CHANNEL))) {
+        ((skip_mode & SKIP_NORMAL) || ctrl_pressed_status) && (format & SOUND_CHUNK) &&
+        ((channel < ONS_MIX_CHANNELS) || (channel == MIX_WAVE_CHANNEL))) {
            return SOUND_NONE;
-	}
+    }
 
     unsigned char *buffer;
 
@@ -149,25 +149,25 @@ int ONScripter::playSound(const char *filename, int format, bool loop_flag, int 
 #if SDL_MIXER_MAJOR_VERSION >= 2
         music_info = Mix_LoadMUS_RW( SDL_RWFromMem( buffer, length ), 0);
 #else
-		music_info = Mix_LoadMUS_RW(SDL_RWFromMem(buffer, length));
+        music_info = Mix_LoadMUS_RW(SDL_RWFromMem(buffer, length));
 #endif
-		if (music_info == NULL) {
-			utils::printError("can't load music \"%s\": %s\n", filename, Mix_GetError());
-		}
+        if (music_info == NULL) {
+            utils::printError("can't load music \"%s\": %s\n", filename, Mix_GetError());
+        }
         Mix_VolumeMusic( music_volume );
         if ( Mix_PlayMusic( music_info, (music_play_loop_flag&&music_loopback_offset==0.0)?-1:0 ) == 0 ){
             music_buffer = buffer;
             music_buffer_length = length;
             return SOUND_MUSIC;
         }
-		Mix_HookMusicFinished(musicFinishCallback);
+        Mix_HookMusicFinished(musicFinishCallback);
     }
     
     if (format & SOUND_CHUNK){
         Mix_Chunk *chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer, length), 1);
-		if (chunk == NULL) {
-			utils::printError("can't load chunk \"%s\": %s\n", filename, Mix_GetError());
-		}
+        if (chunk == NULL) {
+            utils::printError("can't load chunk \"%s\": %s\n", filename, Mix_GetError());
+        }
         if (playWave(chunk, format, loop_flag, channel) == 0){
             delete[] buffer;
             return SOUND_CHUNK;
