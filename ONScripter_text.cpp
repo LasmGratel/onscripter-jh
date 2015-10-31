@@ -111,7 +111,7 @@ void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color 
     if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_ROTATION_REQUIRED(text) ) rotate_flag = true;    
     
 #if !SDL_VERSION_ATLEAST(2, 0, 0)
-	dst_rect.x = xy[0] + minx;
+    dst_rect.x = xy[0] + minx;
     dst_rect.y = xy[1] + TTF_FontAscent((TTF_Font*)info->ttf_font[0]) - maxy;
 #else
 	dst_rect.x = xy[0];
@@ -696,7 +696,7 @@ int ONScripter::textCommand()
 
     if (pretextgosub_label && 
         (!pagetag_flag || page_enter_status == 0) &&
-        line_enter_status == 0){
+        line_enter_status == 0){ // TODO: 在textgosub跳转时，line_enter_status数值错误
 
         if (current_page->tag) delete[] current_page->tag;
         if (end_offset > start_offset){
@@ -732,8 +732,8 @@ bool ONScripter::checkLineBreak(const char *buf, FontInfo *fi)
     if (!is_kinsoku) return false;
     
     // check start kinsoku
-    if (isStartKinsoku(buf + 2) ||
-      buf[2] == '_' && isStartKinsoku(buf + 3)) {
+    if (isStartKinsoku( buf+2 ) ||
+        buf[2]=='_' && isStartKinsoku( buf+3 )){
         const char *buf2 = buf;
         if (buf2[2] == '_') buf2++;
         int i = 2;

@@ -133,7 +133,7 @@ void ScriptHandler::reset()
 void ScriptHandler::setSaveDir(const char *path)
 {
     if (save_dir) delete[] save_dir;
-    save_dir = new char[ strlen(path) + 1 ];
+    save_dir = new char[ strlen(path)+1 ];
     strcpy(save_dir, path);
 }
 
@@ -202,8 +202,8 @@ const char *ScriptHandler::readToken()
 #endif             
              (!english_mode && ch == '>') ||
              ch == '!' || ch == '#' || ch == ',' || ch == '"'){ // text
-      bool ignore_clickstr_flag = false;
-        for(;;){
+        bool ignore_clickstr_flag = false;
+        while(1){
             if ( IS_TWO_BYTE(ch) ){
                 addStringBuffer( ch );
                 ch = *++buf;
@@ -211,12 +211,12 @@ const char *ScriptHandler::readToken()
                 addStringBuffer( ch );
                 buf++;
                 if (!wait_script && !ignore_clickstr_flag &&
-                  checkClickstr(buf - 2) > 0)
-                  wait_script = buf;
+                    checkClickstr(buf-2) > 0)
+                    wait_script = buf;
                 ignore_clickstr_flag = false;
             }
             else{
-              ignore_clickstr_flag = false;
+                ignore_clickstr_flag = false;
                 if (ch == '%' || ch == '?'){
                     addIntVariable(&buf);
                     SKIP_SPACE(buf);
@@ -799,18 +799,18 @@ int ScriptHandler::getStringFromInteger( char *buffer, int no, int num_column, b
     }
     else{
         for (i=0 ; i<num_space ; i++){
-          buffer[c++] = coding2utf16->space[0];
-          buffer[c++] = coding2utf16->space[1];
+            buffer[c++] = coding2utf16->space[0];
+            buffer[c++] = coding2utf16->space[1];
         }
     }
     if (num_minus == 1){
-      buffer[c++] = coding2utf16->minus[0];
-      buffer[c++] = coding2utf16->minus[1];
+        buffer[c++] = coding2utf16->minus[0];
+        buffer[c++] = coding2utf16->minus[1];
     }
     c = (num_column-1)*2;
     for (i=0 ; i<num_digit ; i++){
-      buffer[c] = coding2utf16->num_str[no % 10 * 2];
-      buffer[c + 1] = coding2utf16->num_str[no % 10 * 2 + 1];
+        buffer[c] = coding2utf16->num_str[no % 10 * 2];
+        buffer[c + 1] = coding2utf16->num_str[no % 10 * 2 + 1];
         no /= 10;
         c -= 2;
     }
@@ -1039,7 +1039,7 @@ int ScriptHandler::readScriptSub( FILE *fp, char **buf, int encrypt_mode )
         errorAndExit("readScriptSub: the EXE file must be specified with --key-exe option.");
 
     size_t len=0, count=0;
-    for (;;) {
+    while(1){
         if (len == count){
             len = fread(tmp_script_buf, 1, TMP_SCRIPT_BUF_LEN, fp);
             if (len == 0){
@@ -1198,7 +1198,7 @@ int ScriptHandler::labelScript()
                 buf++;
                 current_line++;
             }
-			SKIP_SPACE(buf);
+            SKIP_SPACE( buf );
             label_info[ label_counter ].start_address = buf;
         }
         else{
@@ -1333,7 +1333,7 @@ void ScriptHandler::parseStr( char **buf )
         int alias_buf_len = 0;
         bool first_flag = true;
         
-        for (;;) {
+        while(1){
             if ( alias_buf_len == 511 ) break;
             ch = **buf;
             
@@ -1403,7 +1403,7 @@ int ScriptHandler::parseInt( char **buf )
         bool num_alias_flag = false;
 
         char *buf_start = *buf;
-        for (;;) {
+        while( 1 ){
             ch = **buf;
             
             if ( (ch >= 'a' && ch <= 'z') || 
@@ -1472,7 +1472,7 @@ int ScriptHandler::parseIntExpression( char **buf )
     if ( op[0] == OP_INVALID )
         return num[0];
 
-    for (;;) {
+    while(1){
         readNextOp( buf, &op[1], &num[2] );
         if ( op[1] == OP_INVALID ) break;
 

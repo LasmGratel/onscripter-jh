@@ -83,8 +83,8 @@ int main( int argc, char **argv )
                 dir_name[j] = '\0';
 
                 /* If the directory does'nt exist, create it */
-                if (stat(dir_name, &file_stat) == -1 && errno == ENOENT)
-                  mkdir( dir_name, 00755 );
+                if ( stat ( dir_name, &file_stat ) == -1 && errno == ENOENT )
+                    mkdir( dir_name, 00755 );
             }
         }
     

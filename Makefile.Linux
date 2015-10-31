@@ -18,13 +18,13 @@ EXT_OBJS =
 
 # mandatory: SDL, SDL_ttf, SDL_image, SDL_mixer, bzip2, libjpeg
 DEFS = -DLINUX
-INCS = `sdl-config --cflags`
-LIBS = `sdl-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm
+INCS = `sdl2-config --cflags`
+LIBS = `sdl2-config --libs` -lSDL2_ttf -lSDL2_image -lSDL2_mixer -lbz2 -ljpeg -lm
 
 # recommended: smpeg
-DEFS += -DUSE_SMPEG
-INCS += `smpeg-config --cflags`
-LIBS += `smpeg-config --libs`
+#DEFS += -DUSE_SMPEG
+#INCS += `smpeg-config --cflags`
+#LIBS += `smpeg-config --libs`
 
 # recommended: fontconfig (to get default font)
 DEFS += -DUSE_FONTCONFIG
@@ -39,7 +39,7 @@ LIBS += -logg -lvorbis -lvorbisfile
 #LIBS += -lvorbisidec
 
 # optional: support CD audio
-DEFS += -DUSE_CDROM
+#DEFS += -DUSE_CDROM
 
 # optional: avifile
 DEFS += -DUSE_AVIFILE

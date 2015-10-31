@@ -151,7 +151,7 @@ int ONScripter::playSound(const char *filename, int format, bool loop_flag, int 
 #else
 		music_info = Mix_LoadMUS_RW(SDL_RWFromMem(buffer, length));
 #endif
-		if (music_info == nullptr) {
+		if (music_info == NULL) {
 			utils::printError("can't load music \"%s\": %s\n", filename, Mix_GetError());
 		}
         Mix_VolumeMusic( music_volume );
@@ -165,7 +165,7 @@ int ONScripter::playSound(const char *filename, int format, bool loop_flag, int 
     
     if (format & SOUND_CHUNK){
         Mix_Chunk *chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer, length), 1);
-		if (chunk == nullptr) {
+		if (chunk == NULL) {
 			utils::printError("can't load chunk \"%s\": %s\n", filename, Mix_GetError());
 		}
         if (playWave(chunk, format, loop_flag, channel) == 0){
@@ -321,11 +321,11 @@ int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag)
                          ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_SPACE ||
                          ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_ESCAPE )
                         done_flag = true;
-					if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_RCTRL)
-						ctrl_pressed_status &= ~0x01;
-
-					if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_LCTRL)
-						ctrl_pressed_status &= ~0x02;
+                    if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_RCTRL)
+                        ctrl_pressed_status &= ~0x01;
+                    
+                    if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_LCTRL)
+                        ctrl_pressed_status &= ~0x02;
                     break;
                   case SDL_QUIT:
                     ret = 1;
@@ -350,6 +350,7 @@ int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag)
 #else
     utils::printError( "mpegplay command is disabled.\n" );
 #endif
+
     return ret;
 }
 

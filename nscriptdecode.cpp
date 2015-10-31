@@ -11,7 +11,7 @@ int main(int argc,char *argv[]){
     for (int i = 0; i < lSize; ++i) {
       int ch = buffer[i];
       ch ^= 0x84;
-	  buffer[i] = ch;
+      buffer[i] = ch;
     }
     FILE *pOutFile = fopen(*(argv+2), "wb");
     fwrite(buffer, sizeof(char),lSize,pOutFile);

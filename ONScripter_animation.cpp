@@ -46,14 +46,14 @@ int ONScripter::calcDurationToNextAnimation()
     for (int i=MAX_SPRITE_NUM-1 ; i>=0 ; i--){
         AnimationInfo *anim = &sprite_info[i];
         if (anim->visible && anim->is_animatable){
-          if (min == -1 || min > anim->remaining_time)
-            min = anim->remaining_time;
+            if (min == -1 || min > anim->remaining_time)
+                min = anim->remaining_time;
         }
     }
 
     if (!textgosub_label &&
          (clickstr_state == CLICK_WAIT || clickstr_state == CLICK_NEWPAGE)){
-        AnimationInfo *anim = nullptr;
+        AnimationInfo *anim = NULL;
         if      (clickstr_state == CLICK_WAIT)
             anim = &cursor_info[0];
         else if (clickstr_state == CLICK_NEWPAGE)
@@ -133,7 +133,7 @@ void ONScripter::proceedAnimation()
 
     if (!textgosub_label &&
         (clickstr_state == CLICK_WAIT || clickstr_state == CLICK_NEWPAGE)){
-        AnimationInfo *anim = nullptr;
+        AnimationInfo *anim = NULL;
         if (clickstr_state == CLICK_WAIT)
             anim = &cursor_info[0];
         else if (clickstr_state == CLICK_NEWPAGE)
@@ -166,8 +166,8 @@ void ONScripter::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
     if (anim->trans_mode != AnimationInfo::TRANS_LAYER) 
 #endif
     {
-      anim->surface_name = new char[strlen(anim->file_name) + 1];
-      strcpy(anim->surface_name, anim->file_name);
+        anim->surface_name = new char[ strlen(anim->file_name) + 1 ];
+        strcpy( anim->surface_name, anim->file_name );
     }
 
     if (anim->mask_file_name){

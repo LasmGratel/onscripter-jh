@@ -271,9 +271,9 @@ int ONScripter::texthideCommand()
 
 int ONScripter::textcolorCommand()
 {
-  readColor(&sentence_font.color, script_h.readStr());
+    readColor( &sentence_font.color, script_h.readStr() );
 
-  return RET_CONTINUE;
+    return RET_CONTINUE;
 }
 
 int ONScripter::textclearCommand()
@@ -595,11 +595,11 @@ int ONScripter::spbtnCommand()
 
     int sprite_no = script_h.readInt();
     int no        = script_h.readInt();
-	if (no < 1 ||
-		sprite_no < 0 ||
-		sprite_no >= MAX_SPRITE_NUM ||
-		sprite_info[sprite_no].image_surface == NULL)
-		return RET_CONTINUE;
+    if (no < 1 || 
+        sprite_no < 0 ||
+        sprite_no >= MAX_SPRITE_NUM || 
+        sprite_info[sprite_no].image_surface == NULL)
+        return RET_CONTINUE;
 
     if ( cellcheck_flag ){
         if ( sprite_info[ sprite_no ].num_of_cells < 2 ) return RET_CONTINUE;
@@ -963,7 +963,7 @@ int ONScripter::savescreenshotCommand()
         if ( filename[i] == '/' || filename[i] == '\\' )
             filename[i] = DELIMITER;
 
-    if (screenshot_surface == nullptr) screenshot_surface = AnimationInfo::alloc32bitSurface(screen_device_width, screen_device_height, texture_format);
+    if (screenshot_surface == NULL) screenshot_surface = AnimationInfo::alloc32bitSurface(screen_device_width, screen_device_height, texture_format);
 
     SDL_Surface *surface = AnimationInfo::alloc32bitSurface( screenshot_w, screenshot_h, texture_format );
     resizeSurface( screenshot_surface, surface );
@@ -971,7 +971,7 @@ int ONScripter::savescreenshotCommand()
     SDL_FreeSurface( surface );
     if (delete_flag) {
       SDL_FreeSurface(screenshot_surface);
-      screenshot_surface = nullptr;
+      screenshot_surface = NULL;
     }
 
     return RET_CONTINUE;
@@ -1251,17 +1251,17 @@ int ONScripter::playCommand()
 int ONScripter::ofscopyCommand()
 {
 #ifdef USE_SDL_RENDERER
-  SDL_Surface *tmp_surface = AnimationInfo::alloc32bitSurface(screen_view_rect.w, screen_view_rect.h, texture_format);
-  SDL_LockSurface(tmp_surface);
-  SDL_RenderReadPixels(renderer, &screen_view_rect, tmp_surface->format->format, tmp_surface->pixels, tmp_surface->pitch);
-  SDL_UnlockSurface(tmp_surface);
-  resizeSurface(tmp_surface, accumulation_surface);
-  SDL_FreeSurface(tmp_surface);
+    SDL_Surface *tmp_surface = AnimationInfo::alloc32bitSurface(screen_view_rect.w, screen_view_rect.h, texture_format);
+    SDL_LockSurface(tmp_surface);
+    SDL_RenderReadPixels(renderer, &screen_view_rect, tmp_surface->format->format, tmp_surface->pixels, tmp_surface->pitch);
+    SDL_UnlockSurface(tmp_surface);
+    resizeSurface( tmp_surface, accumulation_surface );
+    SDL_FreeSurface(tmp_surface);
 #else
-  SDL_BlitSurface(screen_surface, NULL, accumulation_surface, NULL);
+    SDL_BlitSurface(screen_surface, NULL, accumulation_surface, NULL);
 #endif
 
-  return RET_CONTINUE;
+    return RET_CONTINUE;
 }
 
 int ONScripter::negaCommand()
@@ -1351,7 +1351,7 @@ int ONScripter::mp3stopCommand()
         mp3fadeout_duration_internal = mp3fadeout_duration;
         mp3fade_start = SDL_GetTicks();
         timer_bgmfade_id = SDL_AddTimer(20, bgmfadeCallback, 0);
-		setStr(&fadeout_music_file_name, music_file_name);
+        setStr(&fadeout_music_file_name, music_file_name);
 
         char *ext = NULL;
         if (music_file_name) ext = strrchr(music_file_name, '.');
@@ -1359,7 +1359,7 @@ int ONScripter::mp3stopCommand()
             // do not wait until fadout is finished when playing ogg
             event_mode = IDLE_EVENT_MODE;
             waitEvent(0);
-			setStr(&music_file_name, NULL); // to ensure not to play music during fadeout
+            setStr( &music_file_name, NULL ); // to ensure not to play music during fadeout
 
             return RET_CONTINUE;
         }
@@ -1555,13 +1555,13 @@ int ONScripter::monocroCommand()
 
 int ONScripter::menu_windowCommand()
 {
-	setFullScreen(false);
+    setFullScreen(false);
     return RET_CONTINUE;
 }
 
 int ONScripter::menu_fullCommand()
 {
-	setFullScreen(true);
+    setFullScreen(true);
     return RET_CONTINUE;
 }
 
@@ -2251,12 +2251,12 @@ int ONScripter::getscreenshotCommand()
     screenshot_w = w;
     screenshot_h = h;
 #ifdef USE_SDL_RENDERER
-    if (screenshot_surface == nullptr) screenshot_surface = AnimationInfo::alloc32bitSurface(screen_view_rect.w, screen_view_rect.h, texture_format);
+    if (screenshot_surface == NULL) screenshot_surface = AnimationInfo::alloc32bitSurface(screen_view_rect.w, screen_view_rect.h, texture_format);
     SDL_LockSurface(screenshot_surface);
     SDL_RenderReadPixels(renderer, &screen_view_rect, screenshot_surface->format->format, screenshot_surface->pixels, screenshot_surface->pitch);
     SDL_UnlockSurface(screenshot_surface);
 #else
-    if (screenshot_surface == nullptr) screenshot_surface = AnimationInfo::alloc32bitSurface(screen_device_width, screen_device_height, texture_format);
+    if (screenshot_surface == NULL) screenshot_surface = AnimationInfo::alloc32bitSurface(screen_device_width, screen_device_height, texture_format);
     SDL_BlitSurface(screen_surface, NULL, screenshot_surface, NULL);
 #endif
 
@@ -2583,23 +2583,23 @@ int ONScripter::gameCommand()
 
 int ONScripter::flushoutCommand()
 {
-	//Mion: flushout special effect
-	// not quite the same as NScr's, but looks good
-	// does a "flushout" in 30 stages while fading to white
-	tmp_effect.duration = script_h.readInt();
-	tmp_effect.effect = MAX_EFFECT_NUM + 3;
+    //Mion: flushout special effect
+    // not quite the same as NScr's, but looks good
+    // does a "flushout" in 30 stages while fading to white
+    tmp_effect.duration = script_h.readInt();
+    tmp_effect.effect = MAX_EFFECT_NUM + 3;
 
-	dirty_rect.fill(screen_width, screen_height);
+    dirty_rect.fill(screen_width, screen_height);
 
-	if (setEffect(&tmp_effect, false, false)) return RET_CONTINUE;
+    if (setEffect(&tmp_effect, false, false)) return RET_CONTINUE;
 
-	setStr(&bg_info.file_name, "white");
-	createBackground();
-	SDL_BlitSurface(bg_info.image_surface, NULL, effect_dst_surface, NULL);
+    setStr(&bg_info.file_name, "white");
+    createBackground();
+    SDL_BlitSurface(bg_info.image_surface, NULL, effect_dst_surface, NULL);
     SDL_BlitSurface(accumulation_surface, NULL, effect_tmp_surface, NULL);
-	while (doEffect(&tmp_effect));
+    while (doEffect(&tmp_effect));
 
-	return RET_CONTINUE;
+    return RET_CONTINUE;
 }
 
 int ONScripter::fileexistCommand()
@@ -2701,11 +2701,11 @@ int ONScripter::exbtnCommand()
         sprite_no = script_h.readInt();
         no = script_h.readInt();
 
-		if (no < 1 ||
-			sprite_no < 0 ||
-			sprite_no >= MAX_SPRITE_NUM ||
-			sprite_info[sprite_no].image_surface == NULL ||
-			(cellcheck_flag && sprite_info[sprite_no].num_of_cells < 2) ||
+        if (no < 1 || 
+            sprite_no < 0 ||
+            sprite_no >= MAX_SPRITE_NUM || 
+            sprite_info[sprite_no].image_surface == NULL ||
+            ( cellcheck_flag && sprite_info[ sprite_no ].num_of_cells < 2) ||
             (!cellcheck_flag && sprite_info[ sprite_no ].num_of_cells == 0)){
             script_h.readStr();
             return RET_CONTINUE;
@@ -2948,16 +2948,17 @@ int ONScripter::deletescreenshotCommand()
 {
   if (screenshot_surface) {
     SDL_FreeSurface(screenshot_surface);
-    screenshot_surface = nullptr;
+    screenshot_surface = NULL;
   }
   return RET_CONTINUE;
 }
 
 int ONScripter::delayCommand()
 {
-  int val = script_h.readInt();
-	if (skip_mode & SKIP_NORMAL || ctrl_pressed_status)
-		return RET_CONTINUE;
+    int val = script_h.readInt();
+    
+    if (skip_mode & SKIP_NORMAL || ctrl_pressed_status)
+        return RET_CONTINUE;
 
     event_mode = WAIT_TIMER_MODE | WAIT_INPUT_MODE;
     waitEvent( val );
@@ -3266,10 +3267,10 @@ int ONScripter::btnwaitCommand()
                 SDL_Rect check_dst_rect = {0, 0, 0, 0};
                 decodeExbtnControl( bl->exbtn_ctl[0], &check_src_rect, &check_dst_rect );
             }
-			else {
-				sprite_info[bl->sprite_no].visible = true;
-				sprite_info[bl->sprite_no].setCell(0);
-			}
+            else{
+                sprite_info[ bl->sprite_no ].visible = true;
+                sprite_info[ bl->sprite_no ].setCell(0);
+            }
         }
         else if ( bl->button_type == ButtonLink::TMP_SPRITE_BUTTON ){
             bl->show_flag = 1;
@@ -3292,9 +3293,9 @@ int ONScripter::btnwaitCommand()
         (skip_mode & SKIP_NORMAL || 
          (skip_mode & SKIP_TO_EOP && (textgosub_clickstr_state & 0x03) == CLICK_WAIT) || 
          ctrl_pressed_status) ){
-		waitEventSub(0); // for checking keyup event
+        waitEventSub(0); // for checking keyup event
         current_button_state.button = 0;
-		if (bexec_flag) current_button_state.button = -1;
+        if (bexec_flag) current_button_state.button = -1;
         if (skip_mode & SKIP_NORMAL || 
             (skip_mode & SKIP_TO_EOP && (textgosub_clickstr_state & 0x03) == CLICK_WAIT))
             sprintf(current_button_state.str, "SKIP");
@@ -3417,15 +3418,15 @@ int ONScripter::btndefCommand()
         const char *buf = script_h.readStr();
 
         btndef_info.remove();
-        if (blt_texture != nullptr) SDL_DestroyTexture(blt_texture);
+        if (blt_texture != NULL) SDL_DestroyTexture(blt_texture);
 
         if ( buf[0] != '\0' ){
             btndef_info.setImageName( buf );
             parseTaggedString( &btndef_info );
             btndef_info.trans_mode = AnimationInfo::TRANS_COPY;
             setupAnimationInfo( &btndef_info );
-#if SDL_VERSION_ATLEAST(2,0,0)
-			SDL_SetSurfaceBlendMode(btndef_info.image_surface, SDL_BLENDMODE_NONE);
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+            SDL_SetSurfaceBlendMode(btndef_info.image_surface, SDL_BLENDMODE_NONE);
 #else
             SDL_SetAlpha( btndef_info.image_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
 #endif
@@ -3517,17 +3518,17 @@ int ONScripter::brCommand()
 }
 
 inline static SDL_Texture* createMaximumTexture(SDL_Renderer *renderer, SDL_Rect &blt_rect, const SDL_Rect &src_rect, SDL_Surface *blt_surface,
-  Uint32 texture_format, int max_texture_width, int max_texture_height) {
-  if (src_rect.w > max_texture_width || src_rect.h > max_texture_height) utils::printInfo("Texture too large");
-  blt_rect.w = blt_surface->w - src_rect.x > max_texture_width ? max_texture_width : blt_surface->w - src_rect.x;
-  blt_rect.h = blt_surface->h - src_rect.y > max_texture_height ? max_texture_height : blt_surface->h - src_rect.y;
-  blt_rect.x = src_rect.x;
-  blt_rect.y = src_rect.y;
-  SDL_Surface *surface = AnimationInfo::alloc32bitSurface(blt_rect.w, blt_rect.h, texture_format);
-  SDL_BlitSurface(blt_surface, &blt_rect, surface, NULL);
-  SDL_Texture *blt_texture = SDL_CreateTextureFromSurface(renderer, surface);
-  SDL_FreeSurface(surface);
-  return blt_texture;
+    Uint32 texture_format, int max_texture_width, int max_texture_height) {
+    if (src_rect.w > max_texture_width || src_rect.h > max_texture_height) utils::printInfo("Texture too large");
+    blt_rect.w = blt_surface->w - src_rect.x > max_texture_width ? max_texture_width : blt_surface->w - src_rect.x;
+    blt_rect.h = blt_surface->h - src_rect.y > max_texture_height ? max_texture_height : blt_surface->h - src_rect.y;
+    blt_rect.x = src_rect.x;
+    blt_rect.y = src_rect.y;
+    SDL_Surface *surface = AnimationInfo::alloc32bitSurface(blt_rect.w, blt_rect.h, texture_format);
+    SDL_BlitSurface(blt_surface, &blt_rect, surface, NULL);
+    SDL_Texture *blt_texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
+    return blt_texture;
 }
 
 int ONScripter::bltCommand()
@@ -3551,7 +3552,7 @@ int ONScripter::bltCommand()
         SDL_Rect src_rect = {sx,sy,sw,sh};
         SDL_Rect dst_rect = {dx,dy,dw,dh};
 
-        if (blt_texture == nullptr) {
+        if (blt_texture == NULL) {
           if (btndef_info.image_surface->w > max_texture_width || btndef_info.image_surface->h > max_texture_height) {
             blt_texture = createMaximumTexture(renderer, blt_texture_src_rect, src_rect, btndef_info.image_surface,
               texture_format, max_texture_width, max_texture_height);
@@ -3631,9 +3632,9 @@ int ONScripter::bgCommand()
 
 int ONScripter::bdownCommand()
 {
-	btndown_flag = true;
+    btndown_flag = true;
 
-	return RET_CONTINUE;
+    return RET_CONTINUE;
 }
 
 int ONScripter::barclearCommand()

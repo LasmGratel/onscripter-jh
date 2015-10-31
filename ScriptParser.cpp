@@ -26,7 +26,7 @@
 #include "Utils.h"
 #ifdef USE_BUILTIN_LAYER_EFFECTS
 #include "builtin_layer.h"
-LayerInfo *layer_info = nullptr;
+LayerInfo *layer_info = NULL;
 
 void deleteLayerInfo() {
   while (layer_info) {
