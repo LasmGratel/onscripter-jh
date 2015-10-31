@@ -3485,9 +3485,15 @@ int ONScripter::btnCommand()
 int ONScripter::bspCommand()
 {
     int no = script_h.readInt();
-	if (no < 0 || no >= MAX_SPRITE_NUM ||
-		sprite_info[no].image_surface == NULL)
-		return RET_CONTINUE;
+    if (no < 0 || no >= MAX_SPRITE_NUM || 
+        sprite_info[no].image_surface == NULL)
+    {
+        for (int i=0 ; i<3 ; i++)
+            if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
+                script_h.readStr();
+        return RET_CONTINUE;
+    }
+        
 
     ButtonLink *bl = new ButtonLink();
     root_button_link.insert( bl );
