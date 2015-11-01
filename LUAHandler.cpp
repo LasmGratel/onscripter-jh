@@ -29,6 +29,7 @@
 
 #define ONS_LUA_HANDLER_PTR "ONS_LUA_HANDLER_PTR"
 #define INIT_SCRIPT "system.lua"
+#include <assert.h>
 
 static char cmd_buf[256];
 
@@ -692,12 +693,304 @@ int NSSp2Visible(lua_State *state)
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
     int no = luaL_checkint(state, 1);
-    int v = lua_toboolean(state, 2);
+    int v  = lua_toboolean(state, 2);
 
     sprintf(cmd_buf, "vsp2 %d, %d", no, v);
     lh->sh->enterExternalScript(cmd_buf);
     lh->ons->runScript();
     lh->sh->leaveExternalScript();
+
+    return 0;
+}
+
+//LuaªÊÕº√¸¡Ó  --jh10001
+int NSDBlt(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    int no = luaL_checkint(state, 1);
+    int dx = luaL_checkint(state, 2);
+    int dy = luaL_checkint(state, 3);
+    int w  = luaL_checkint(state, 4);
+    int h  = luaL_checkint(state, 5);
+    int sx = luaL_checkint(state, 6);
+    int sy = luaL_checkint(state, 7);
+
+    if (no < 0 || no >= MAX_TEXTURE_NUM) {
+        utils::printInfo("wrong texture number.\n");
+        return 0;
+    }
+    if (w <= 0 || h <= 0)
+        return 0;
+
+    lh->ons->directDraw.draw(no, dx, dy, w, h, sx, sy);
+
+    return 0;
+}
+
+int NSDClear(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    lh->ons->directDraw.clear();
+
+    return 0;
+}
+
+int NSDDelete(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    int no = luaL_checkint(state, 1);
+
+    if (no < 0 || no >= MAX_TEXTURE_NUM) {
+        utils::printInfo("wrong texture number.\n");
+        return 0;
+    }
+
+    lh->ons->directDraw.deleteTexture(no);
+
+    return 0;
+}
+
+inline int clamp(int num, int min, int max) {
+    assert(min < max);
+    if (num > max) return max;
+    if (num < min) return min;
+    return num;
+}
+
+int NSDFill(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    int lx = luaL_checkint(state, 1);
+    int ly = luaL_checkint(state, 2);
+    int rx = luaL_checkint(state, 3);
+    int ry = luaL_checkint(state, 4);
+    int r  = luaL_checkint(state, 5);
+    int g  = luaL_checkint(state, 6);
+    int b  = luaL_checkint(state, 7);
+
+    if (rx <= lx || ry <= ly)
+        return 0;
+
+    clamp(r, 0, 255);
+    clamp(g, 0, 255);
+    clamp(b, 0, 255);
+
+    lh->ons->directDraw.fill(lx, ly, rx, ry, r, g, b);
+
+    return 0;
+}
+
+int NSDGetSize(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    int no = luaL_checkint(state, 1);
+
+    if (no < 0 || no >= MAX_TEXTURE_NUM) {
+        utils::printInfo("wrong texture number.\n");
+        return 0;
+    }
+
+    int width = 0, height = 0;
+    lh->ons->directDraw.getTextureSize(no, width, height);
+
+    lua_pushinteger( state, width );
+    lua_pushinteger( state, height );
+
+    return 2;
+}
+
+int NSDLoad(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    int no = luaL_checkint(state, 1);
+    const char *filename = luaL_checkstring(state, 2);
+
+    if (no < 0 || no >= MAX_TEXTURE_NUM) {
+        utils::printInfo("wrong texture number.\n");
+        return 0;
+    }
+
+    lh->ons->directDraw.loadTexture(no, filename);
+
+    return 0;
+}
+
+int NSDPresent(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    lh->ons->directDraw.present();
+
+    return 0;
+}
+
+int NSDPresentRect(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    //TODO: Not Implemented.
+
+    return 0;
+}
+
+int NSDSetSprite(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    //TODO: Not Implemented.
+
+    return 0;
+}
+
+int NSDSp(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    int no = luaL_checkint(state, 1);
+    int dx = luaL_checkint(state, 2);
+    int dy = luaL_checkint(state, 3);
+    int w  = luaL_checkint(state, 4);
+    int h  = luaL_checkint(state, 5);
+    int sx = luaL_checkint(state, 6);
+    int sy = luaL_checkint(state, 7);
+    int a  = luaL_checkint(state, 8);
+
+    if (no < 0 || no >= MAX_TEXTURE_NUM) {
+        utils::printInfo("wrong texture number.\n");
+        return 0;
+    }
+    if (w <= 0 || h <= 0)
+        return 0;
+
+    clamp(a, 0, 255);
+
+    lh->ons->directDraw.draw(no, dx, dy, w, h, sx, sy, a);
+
+    return 0;
+}
+
+int NSDSp2(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    int no  = luaL_checkint(state, 1);
+    int dcx = luaL_checkint(state, 2);
+    int dcy = luaL_checkint(state, 3);
+    int sx  = luaL_checkint(state, 4);
+    int sy  = luaL_checkint(state, 5);
+    int w   = luaL_checkint(state, 6);
+    int h   = luaL_checkint(state, 7);
+    int xs  = luaL_checkint(state, 8);
+    int ys  = luaL_checkint(state, 9);
+    int rot = luaL_checkint(state, 10);
+    int a   = luaL_checkint(state, 11);
+
+    if (no < 0 || no >= MAX_TEXTURE_NUM) {
+        utils::printInfo("wrong texture number.\n");
+        return 0;
+    }
+    if (w <= 0 || h <= 0 || xs <= 0 || ys <= 0)
+        return 0;
+
+    clamp(a, 0, 255);
+
+    lh->ons->directDraw.draw2(no, dcx, dcy, sx, sy, w, h, xs, ys, rot, a);
+
+    return 0;
+}
+
+int NSDSpAdd(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    int no = luaL_checkint(state, 1);
+    int dx = luaL_checkint(state, 2);
+    int dy = luaL_checkint(state, 3);
+    int w  = luaL_checkint(state, 4);
+    int h  = luaL_checkint(state, 5);
+    int sx = luaL_checkint(state, 6);
+    int sy = luaL_checkint(state, 7);
+    int a  = luaL_checkint(state, 8);
+
+    if (no < 0 || no >= MAX_TEXTURE_NUM) {
+        utils::printInfo("wrong texture number.\n");
+        return 0;
+    }
+    if (w <= 0 || h <= 0)
+        return 0;
+
+    clamp(a, 0, 255);
+
+    lh->ons->directDraw.draw(no, dx, dy, w, h, sx, sy, a, true);
+
+    return 0;
+}
+
+int NSDSp2Add(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    int no  = luaL_checkint(state, 1);
+    int dcx = luaL_checkint(state, 2);
+    int dcy = luaL_checkint(state, 3);
+    int sx  = luaL_checkint(state, 4);
+    int sy  = luaL_checkint(state, 5);
+    int w   = luaL_checkint(state, 6);
+    int h   = luaL_checkint(state, 7);
+    int xs  = luaL_checkint(state, 8);
+    int ys  = luaL_checkint(state, 9);
+    int rot = luaL_checkint(state, 10);
+    int a   = luaL_checkint(state, 11);
+
+    if (no < 0 || no >= MAX_TEXTURE_NUM) {
+        utils::printInfo("wrong texture number.\n");
+        return 0;
+    }
+    if (w <= 0 || h <= 0 || xs <= 0 || ys <= 0)
+        return 0;
+
+    clamp(a, 0, 255);
+
+    lh->ons->directDraw.draw2(no, dcx, dcy, sx, sy, w, h, xs, ys, rot, a, true);
+
+    return 0;
+}
+
+int NSDTransition(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    //TODO: Not Implemented.
+
+    return 0;
+}
+
+int NSDTransitionF(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    //TODO: Not Implemented.
 
     return 0;
 }
@@ -744,6 +1037,25 @@ static const struct luaL_Reg lua_lut[] = {
     LUA_FUNC_LUT(NSSp2Load),
     LUA_FUNC_LUT(NSSp2Move),
     LUA_FUNC_LUT(NSSp2Visible),
+    LUA_FUNC_LUT(NSDBlt),
+    LUA_FUNC_LUT(NSDClear),
+    //LUA_FUNC_LUT(NSDCopyToBg),
+    LUA_FUNC_LUT(NSDDelete),
+    //LUA_FUNC_LUT(NSDefSpline),
+    LUA_FUNC_LUT(NSDFill),
+    LUA_FUNC_LUT(NSDGetSize),
+    LUA_FUNC_LUT(NSDLoad),
+    //LUA_FUNC_LUT(NSDoEvents),
+    //LUA_FUNC_LUT(NSDOffMode),
+    LUA_FUNC_LUT(NSDPresent),
+    //LUA_FUNC_LUT(NSDPresentRect),
+    //LUA_FUNC_LUT(NSDSetSprite),
+    LUA_FUNC_LUT(NSDSp),
+    LUA_FUNC_LUT(NSDSp2),
+    LUA_FUNC_LUT(NSDSpAdd),
+    LUA_FUNC_LUT(NSDSp2Add),
+    //LUA_FUNC_LUT(NSDTransition),
+    //LUA_FUNC_LUT(NSDTransitionF),
     {NULL, NULL}
 };
 

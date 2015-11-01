@@ -32,6 +32,7 @@
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
+#include "direct_draw.h"
 
 #define DEFAULT_VIDEO_SURFACE_FLAG (SDL_SWSURFACE)
 
@@ -57,7 +58,9 @@
 class ONScripter : public ScriptParser
 {
 public:
-    typedef AnimationInfo::ONSBuf ONSBuf;
+    friend class DirectDraw;
+    DirectDraw directDraw;
+    typedef AnimationInfo::ONSBuf ONSBuf;   
     
     struct ButtonState{
         unsigned int event_type;
