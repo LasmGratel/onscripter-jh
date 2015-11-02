@@ -739,6 +739,19 @@ int NSDClear(lua_State *state)
     return 0;
 }
 
+int NSDCopyToBg(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    sprintf(cmd_buf, "bgcpy");
+    lh->sh->enterExternalScript(cmd_buf);
+    lh->ons->runScript();
+    lh->sh->leaveExternalScript();
+
+    return 0;
+}
+
 int NSDDelete(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
@@ -779,9 +792,9 @@ int NSDFill(lua_State *state)
     if (rx <= lx || ry <= ly)
         return 0;
 
-    clamp(r, 0, 255);
-    clamp(g, 0, 255);
-    clamp(b, 0, 255);
+    r = clamp(r, 0, 255);
+    g = clamp(g, 0, 255);
+    b = clamp(b, 0, 255);
 
     lh->ons->directDraw.fill(lx, ly, rx, ry, r, g, b);
 
@@ -878,7 +891,7 @@ int NSDSp(lua_State *state)
     if (w <= 0 || h <= 0)
         return 0;
 
-    clamp(a, 0, 255);
+    a = clamp(a, 0, 255);
 
     lh->ons->directDraw.draw(no, dx, dy, w, h, sx, sy, a);
 
@@ -909,7 +922,7 @@ int NSDSp2(lua_State *state)
     if (w <= 0 || h <= 0 || xs <= 0 || ys <= 0)
         return 0;
 
-    clamp(a, 0, 255);
+    a = clamp(a, 0, 255);
 
     lh->ons->directDraw.draw2(no, dcx, dcy, sx, sy, w, h, xs, ys, rot, a);
 
@@ -937,7 +950,7 @@ int NSDSpAdd(lua_State *state)
     if (w <= 0 || h <= 0)
         return 0;
 
-    clamp(a, 0, 255);
+    a = clamp(a, 0, 255);
 
     lh->ons->directDraw.draw(no, dx, dy, w, h, sx, sy, a, true);
 
@@ -968,7 +981,7 @@ int NSDSp2Add(lua_State *state)
     if (w <= 0 || h <= 0 || xs <= 0 || ys <= 0)
         return 0;
 
-    clamp(a, 0, 255);
+    a = clamp(a, 0, 255);
 
     lh->ons->directDraw.draw2(no, dcx, dcy, sx, sy, w, h, xs, ys, rot, a, true);
 
@@ -1039,7 +1052,7 @@ static const struct luaL_Reg lua_lut[] = {
     LUA_FUNC_LUT(NSSp2Visible),
     LUA_FUNC_LUT(NSDBlt),
     LUA_FUNC_LUT(NSDClear),
-    //LUA_FUNC_LUT(NSDCopyToBg),
+    LUA_FUNC_LUT(NSDCopyToBg),
     LUA_FUNC_LUT(NSDDelete),
     //LUA_FUNC_LUT(NSDefSpline),
     LUA_FUNC_LUT(NSDFill),
