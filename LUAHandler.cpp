@@ -2,8 +2,8 @@
  *
  *  LUAHandler.cpp - LUA handler for ONScripter
  *
- *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
- *            (C) 2014-2015 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
+ *            (C) 2014-2016 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -222,8 +222,8 @@ int NSSetIntValue(lua_State *state)
     lua_getglobal( state, ONS_LUA_HANDLER_PTR );
     LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
 
-    int no  = luaL_checkint( state, 1 );
-    int val = luaL_checkint( state, 2 );
+    int no  = luaL_checkinteger( state, 1 );
+    int val = luaL_checkinteger( state, 2 );
     
     lh->sh->setNumVariable( no, val );
     
@@ -235,7 +235,7 @@ int NSSetStrValue(lua_State *state)
     lua_getglobal( state, ONS_LUA_HANDLER_PTR );
     LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
 
-    int no = luaL_checkint( state, 1 );
+    int no = luaL_checkinteger( state, 1 );
     const char *str = luaL_checkstring( state, 2 );
     
     if (lh->sh->getVariableData(no).str)
@@ -255,7 +255,7 @@ int NSGetIntValue(lua_State *state)
     lua_getglobal( state, ONS_LUA_HANDLER_PTR );
     LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
 
-    int no = luaL_checkint( state, 1 );
+    int no = luaL_checkinteger( state, 1 );
     
     lua_pushnumber( state, lh->sh->getVariableData(no).num );
     
@@ -267,7 +267,7 @@ int NSGetStrValue(lua_State *state)
     lua_getglobal( state, ONS_LUA_HANDLER_PTR );
     LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
 
-    int no = luaL_checkint( state, 1 );
+    int no = luaL_checkinteger( state, 1 );
     
     lua_pushstring( state, lh->sh->getVariableData(no).str );
     
@@ -476,7 +476,7 @@ int NSSleep(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int val = luaL_checkint( state, 1 );
+    int val = luaL_checkinteger( state, 1 );
 
     sprintf(cmd_buf, "wait %d", val);
     lh->sh->enterExternalScript(cmd_buf);
@@ -504,8 +504,8 @@ int NSSpCell(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint( state, 1 );
-    int cell = luaL_checkint( state, 2 );
+    int no = luaL_checkinteger( state, 1 );
+    int cell = luaL_checkinteger( state, 2 );
 
     sprintf(cmd_buf, "cell %d, %d", no, cell);
     lh->sh->enterExternalScript(cmd_buf);
@@ -520,7 +520,7 @@ int NSSpClear(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint( state, 1 );
+    int no = luaL_checkinteger( state, 1 );
 
     sprintf(cmd_buf, "csp %d", no);
     lh->sh->enterExternalScript(cmd_buf);
@@ -535,7 +535,7 @@ int NSSpGetInfo(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint( state, 1 );
+    int no = luaL_checkinteger( state, 1 );
 
     AnimationInfo *ai = lh->ons->getSpriteInfo(no);
 
@@ -551,7 +551,7 @@ int NSSpGetPos(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint( state, 1 );
+    int no = luaL_checkinteger( state, 1 );
 
     AnimationInfo *ai = lh->ons->getSpriteInfo(no);
 
@@ -567,7 +567,7 @@ int NSSpLoad(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint( state, 1 );
+    int no = luaL_checkinteger( state, 1 );
     const char *str = luaL_checkstring( state, 2 );
 
     sprintf(cmd_buf, "lsp %d, \"%s\", %d, 0", no, str, lh->ons->getWidth()+1);
@@ -583,10 +583,10 @@ int NSSpMove(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint( state, 1 );
-    int x  = luaL_checkint( state, 2 );
-    int y  = luaL_checkint( state, 3 );
-    int alpha = luaL_checkint( state, 4 );
+    int no = luaL_checkinteger( state, 1 );
+    int x  = luaL_checkinteger( state, 2 );
+    int y  = luaL_checkinteger( state, 3 );
+    int alpha = luaL_checkinteger( state, 4 );
 
     sprintf(cmd_buf, "amsp %d, %d, %d, %d", no, x, y, alpha);
     lh->sh->enterExternalScript(cmd_buf);
@@ -601,7 +601,7 @@ int NSSpVisible(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint( state, 1 );
+    int no = luaL_checkinteger( state, 1 );
     int v  = lua_toboolean( state, 2 );
 
     sprintf(cmd_buf, "vsp %d, %d", no, v);
@@ -617,7 +617,7 @@ int NSSp2GetInfo(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint( state, 1 );
+    int no = luaL_checkinteger( state, 1 );
 
     AnimationInfo *ai = lh->ons->getSprite2Info(no);
 
@@ -633,7 +633,7 @@ int NSSp2GetPos(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint( state, 1 );
+    int no = luaL_checkinteger( state, 1 );
 
     AnimationInfo *ai = lh->ons->getSprite2Info(no);
 
@@ -653,7 +653,7 @@ int NSSp2Load(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint( state, 1 );
+    int no = luaL_checkinteger( state, 1 );
     const char *str = luaL_checkstring( state, 2 );
 
     sprintf(cmd_buf, "lsp2 %d, \"%s\", %d, 0, 100, 100, 0", no, str, lh->ons->getWidth()*2);
@@ -669,14 +669,14 @@ int NSSp2Move(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint( state, 1 );
-    int x  = luaL_checkint( state, 2 );
-    int y  = luaL_checkint( state, 3 );
-    int sx = luaL_checkint( state, 4 );
-    int sy = luaL_checkint( state, 5 );
-    int r  = luaL_checkint( state, 6 );
-    int alpha = luaL_checkint( state, 7 );
-    int opt = luaL_checkint( state, 8 ); // opt is not handled properly yet
+    int no = luaL_checkinteger( state, 1 );
+    int x  = luaL_checkinteger( state, 2 );
+    int y  = luaL_checkinteger( state, 3 );
+    int sx = luaL_checkinteger( state, 4 );
+    int sy = luaL_checkinteger( state, 5 );
+    int r  = luaL_checkinteger( state, 6 );
+    int alpha = luaL_checkinteger( state, 7 );
+    int opt = luaL_checkinteger( state, 8 ); // opt is not handled properly yet
 
     sprintf(cmd_buf, "amsp2 %d, %d, %d, %d, %d, %d, %d", no, x, y, sx, sy, r, alpha);
     lh->sh->enterExternalScript(cmd_buf);
@@ -692,7 +692,7 @@ int NSSp2Visible(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint(state, 1);
+    int no = luaL_checkinteger(state, 1);
     int v  = lua_toboolean(state, 2);
 
     sprintf(cmd_buf, "vsp2 %d, %d", no, v);
@@ -709,13 +709,13 @@ int NSDBlt(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint(state, 1);
-    int dx = luaL_checkint(state, 2);
-    int dy = luaL_checkint(state, 3);
-    int w  = luaL_checkint(state, 4);
-    int h  = luaL_checkint(state, 5);
-    int sx = luaL_checkint(state, 6);
-    int sy = luaL_checkint(state, 7);
+    int no = luaL_checkinteger(state, 1);
+    int dx = luaL_checkinteger(state, 2);
+    int dy = luaL_checkinteger(state, 3);
+    int w  = luaL_checkinteger(state, 4);
+    int h  = luaL_checkinteger(state, 5);
+    int sx = luaL_checkinteger(state, 6);
+    int sy = luaL_checkinteger(state, 7);
 
     if (no < 0 || no >= MAX_TEXTURE_NUM) {
         utils::printInfo("wrong texture number.\n");
@@ -757,7 +757,7 @@ int NSDDelete(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint(state, 1);
+    int no = luaL_checkinteger(state, 1);
 
     if (no < 0 || no >= MAX_TEXTURE_NUM) {
         utils::printInfo("wrong texture number.\n");
@@ -781,13 +781,13 @@ int NSDFill(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int lx = luaL_checkint(state, 1);
-    int ly = luaL_checkint(state, 2);
-    int rx = luaL_checkint(state, 3);
-    int ry = luaL_checkint(state, 4);
-    int r  = luaL_checkint(state, 5);
-    int g  = luaL_checkint(state, 6);
-    int b  = luaL_checkint(state, 7);
+    int lx = luaL_checkinteger(state, 1);
+    int ly = luaL_checkinteger(state, 2);
+    int rx = luaL_checkinteger(state, 3);
+    int ry = luaL_checkinteger(state, 4);
+    int r  = luaL_checkinteger(state, 5);
+    int g  = luaL_checkinteger(state, 6);
+    int b  = luaL_checkinteger(state, 7);
 
     if (rx <= lx || ry <= ly)
         return 0;
@@ -806,7 +806,7 @@ int NSDGetSize(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint(state, 1);
+    int no = luaL_checkinteger(state, 1);
 
     if (no < 0 || no >= MAX_TEXTURE_NUM) {
         utils::printInfo("wrong texture number.\n");
@@ -827,7 +827,7 @@ int NSDLoad(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint(state, 1);
+    int no = luaL_checkinteger(state, 1);
     const char *filename = luaL_checkstring(state, 2);
 
     if (no < 0 || no >= MAX_TEXTURE_NUM) {
@@ -875,14 +875,14 @@ int NSDSp(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint(state, 1);
-    int dx = luaL_checkint(state, 2);
-    int dy = luaL_checkint(state, 3);
-    int w  = luaL_checkint(state, 4);
-    int h  = luaL_checkint(state, 5);
-    int sx = luaL_checkint(state, 6);
-    int sy = luaL_checkint(state, 7);
-    int a  = luaL_checkint(state, 8);
+    int no = luaL_checkinteger(state, 1);
+    int dx = luaL_checkinteger(state, 2);
+    int dy = luaL_checkinteger(state, 3);
+    int w  = luaL_checkinteger(state, 4);
+    int h  = luaL_checkinteger(state, 5);
+    int sx = luaL_checkinteger(state, 6);
+    int sy = luaL_checkinteger(state, 7);
+    int a  = luaL_checkinteger(state, 8);
 
     if (no < 0 || no >= MAX_TEXTURE_NUM) {
         utils::printInfo("wrong texture number.\n");
@@ -903,17 +903,17 @@ int NSDSp2(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no  = luaL_checkint(state, 1);
-    int dcx = luaL_checkint(state, 2);
-    int dcy = luaL_checkint(state, 3);
-    int sx  = luaL_checkint(state, 4);
-    int sy  = luaL_checkint(state, 5);
-    int w   = luaL_checkint(state, 6);
-    int h   = luaL_checkint(state, 7);
-    int xs  = luaL_checkint(state, 8);
-    int ys  = luaL_checkint(state, 9);
-    int rot = luaL_checkint(state, 10);
-    int a   = luaL_checkint(state, 11);
+    int no  = luaL_checkinteger(state, 1);
+    int dcx = luaL_checkinteger(state, 2);
+    int dcy = luaL_checkinteger(state, 3);
+    int sx  = luaL_checkinteger(state, 4);
+    int sy  = luaL_checkinteger(state, 5);
+    int w   = luaL_checkinteger(state, 6);
+    int h   = luaL_checkinteger(state, 7);
+    int xs  = luaL_checkinteger(state, 8);
+    int ys  = luaL_checkinteger(state, 9);
+    int rot = luaL_checkinteger(state, 10);
+    int a   = luaL_checkinteger(state, 11);
 
     if (no < 0 || no >= MAX_TEXTURE_NUM) {
         utils::printInfo("wrong texture number.\n");
@@ -934,14 +934,14 @@ int NSDSpAdd(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no = luaL_checkint(state, 1);
-    int dx = luaL_checkint(state, 2);
-    int dy = luaL_checkint(state, 3);
-    int w  = luaL_checkint(state, 4);
-    int h  = luaL_checkint(state, 5);
-    int sx = luaL_checkint(state, 6);
-    int sy = luaL_checkint(state, 7);
-    int a  = luaL_checkint(state, 8);
+    int no = luaL_checkinteger(state, 1);
+    int dx = luaL_checkinteger(state, 2);
+    int dy = luaL_checkinteger(state, 3);
+    int w  = luaL_checkinteger(state, 4);
+    int h  = luaL_checkinteger(state, 5);
+    int sx = luaL_checkinteger(state, 6);
+    int sy = luaL_checkinteger(state, 7);
+    int a  = luaL_checkinteger(state, 8);
 
     if (no < 0 || no >= MAX_TEXTURE_NUM) {
         utils::printInfo("wrong texture number.\n");
@@ -962,17 +962,17 @@ int NSDSp2Add(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
-    int no  = luaL_checkint(state, 1);
-    int dcx = luaL_checkint(state, 2);
-    int dcy = luaL_checkint(state, 3);
-    int sx  = luaL_checkint(state, 4);
-    int sy  = luaL_checkint(state, 5);
-    int w   = luaL_checkint(state, 6);
-    int h   = luaL_checkint(state, 7);
-    int xs  = luaL_checkint(state, 8);
-    int ys  = luaL_checkint(state, 9);
-    int rot = luaL_checkint(state, 10);
-    int a   = luaL_checkint(state, 11);
+    int no  = luaL_checkinteger(state, 1);
+    int dcx = luaL_checkinteger(state, 2);
+    int dcy = luaL_checkinteger(state, 3);
+    int sx  = luaL_checkinteger(state, 4);
+    int sy  = luaL_checkinteger(state, 5);
+    int w   = luaL_checkinteger(state, 6);
+    int h   = luaL_checkinteger(state, 7);
+    int xs  = luaL_checkinteger(state, 8);
+    int ys  = luaL_checkinteger(state, 9);
+    int rot = luaL_checkinteger(state, 10);
+    int a   = luaL_checkinteger(state, 11);
 
     if (no < 0 || no >= MAX_TEXTURE_NUM) {
         utils::printInfo("wrong texture number.\n");

@@ -3,7 +3,7 @@
  *  ONScripter.cpp - Execution block parser of ONScripter
  *
  *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
- *            (C) 2014-2015 jh10001 <jh10001@live.cn>
+ *            (C) 2014-2016 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -51,26 +51,28 @@ static void SDL_Quit_Wrapper()
 }
 #endif
 
-void ONScripter::calcViewRect() {
+void ONScripter::calcRenderRect() {
     int vieww, viewh;
-    int swdh = screen_width * device_height;
-    int dwsh = device_width * screen_height;
+    int renderw, renderh;
+    SDL_GetRendererOutputSize(renderer, &renderw, &renderh);
+    int swdh = screen_width * renderh;
+    int dwsh = renderw * screen_height;
     if (swdh == dwsh) {
-        vieww = device_width;
-        viewh = device_height;
+        vieww = renderw;
+        viewh = renderh;
     }
     else if (swdh > dwsh) {
-        vieww = device_width;
-        viewh = (int)ceil(screen_height * ((float)device_width / screen_width));
+        vieww = renderw;
+        viewh = (int)ceil(screen_height * ((float)renderw / screen_width));
     }
     else {
-        vieww = (int)ceil(screen_width * ((float)device_height / screen_height));
-        viewh = device_height;
+        vieww = (int)ceil(screen_width * ((float)renderh / screen_height));
+        viewh = renderh;
     }
-    screen_view_rect.x = (device_width - vieww) / 2;
-    screen_view_rect.y = (device_height - viewh) / 2;
-    screen_view_rect.w = vieww;
-    screen_view_rect.h = viewh;
+    render_view_rect.x = (renderw - vieww) / 2;
+    render_view_rect.y = (renderh - viewh) / 2;
+    render_view_rect.w = vieww;
+    render_view_rect.h = viewh;
 }
 
 void ONScripter::setCaption(const char *title, const char *iconstr) {
@@ -107,7 +109,7 @@ void ONScripter::initSDL()
 #endif
 
 #if !defined(IOS)
-#ifdef ANDROID && SDL_VERSION_ATLEAST(2, 0, 0)
+#if defined(ANDROID) && SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
 #endif
     if(SDL_InitSubSystem( SDL_INIT_JOYSTICK ) == 0 && SDL_JoystickOpen(0) != NULL)
@@ -176,6 +178,8 @@ void ONScripter::initSDL()
     screen_ratio2 = 1;
     screen_width  = script_h.screen_width;
     screen_height = script_h.screen_height;
+    screen_scale_ratio1 = (float)screen_width / screen_device_width;
+    screen_scale_ratio2 = (float)screen_height / screen_device_height;
 
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
@@ -192,7 +196,10 @@ void ONScripter::initSDL()
 #else
     int window_flag = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS;
 #endif //_WIN32
-#ifdef SDL_VERSION_ATLEAST(2,0,0)
+#if SDL_VERSION_ATLEAST(2,0,1)
+    window_flag |= SDL_WINDOW_ALLOW_HIGHDPI;
+#endif
+#if SDL_VERSION_ATLEAST(2,0,0)
     int window_x = SDL_WINDOWPOS_UNDEFINED, window_y = SDL_WINDOWPOS_UNDEFINED;
 #else
     int window_x = 0, window_y = 0;
@@ -203,12 +210,12 @@ void ONScripter::initSDL()
         exit(-1);
     }
     SDL_GetWindowSize(window, &device_width, &device_height);
-    calcViewRect();
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 #if SDL_VERSION_ATLEAST(2, 0, 0)
-    SDL_RenderSetLogicalSize(renderer, script_h.screen_width, script_h.screen_height);
+    SDL_RenderSetLogicalSize(renderer, screen_width, screen_height);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 #endif //SDL_VERSION_ATLEAST(2,0,0)
+    calcRenderRect();
     texture_format = SDL_PIXELFORMAT_ARGB8888;
     SDL_RendererInfo info;
     SDL_GetRendererInfo(renderer, &info);
@@ -779,27 +786,24 @@ void ONScripter::flushDirect( SDL_Rect &rect, int refresh_mode )
     //utils::printInfo("flush %d: %d %d %d %d\n", refresh_mode, rect.x, rect.y, rect.w, rect.h );
     
 #ifdef USE_SDL_RENDERER
-    SDL_Rect &src_rect = rect;
-    SDL_Rect &dst_rect = rect;
-    if (AnimationInfo::doClipping(&dst_rect, &screen_rect) || (dst_rect.w == 0 && dst_rect.h == 0)) return;
+    SDL_Rect dst_rect = rect;
+    --dst_rect.x; --dst_rect.y; dst_rect.w += 2; dst_rect.h += 2;
+    if (AnimationInfo::doClipping(&dst_rect, &screen_rect) || (dst_rect.w == 2 && dst_rect.h == 2)) return;
     refreshSurface(accumulation_surface, &rect, refresh_mode);
     SDL_LockSurface(accumulation_surface);
     SDL_UpdateTexture(texture, &rect, (unsigned char*)accumulation_surface->pixels+accumulation_surface->pitch*rect.y+rect.x*sizeof(ONSBuf), accumulation_surface->pitch);
     SDL_UnlockSurface(accumulation_surface);
 
-    #ifdef ANDROID
+    #ifdef ANDROID      
         if (compatibilityMode) {
             SDL_RenderClear(renderer);
-            SDL_RenderCopy(renderer, texture, NULL, NULL);
-            SDL_RenderPresent(renderer);
         }
-        else {
+        SDL_RenderCopy(renderer, texture, NULL, NULL);
+    #else
+        SDL_RenderCopy(renderer, texture, &dst_rect, &dst_rect);
     #endif
-            SDL_RenderCopy(renderer, texture, &src_rect, &dst_rect);
-            SDL_RenderPresent(renderer);
-    #ifdef ANDROID
-        }
-    #endif
+    SDL_RenderPresent(renderer);
+
 #else
     refreshSurface(accumulation_surface, &rect, refresh_mode);
     SDL_Rect dst_rect = rect;
@@ -939,7 +943,7 @@ void ONScripter::setFullScreen(bool fullscreen) {
 #if SDL_VERSION_ATLEAST(2,0,0)
         SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
         SDL_GetWindowSize(window, &device_width, &device_height);
-        calcViewRect();
+        calcRenderRect();
         flushDirect(screen_rect, refreshMode());
         fullscreen_mode = fullscreen;
 #else

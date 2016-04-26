@@ -3,7 +3,7 @@
  *  ONScripter_event.cpp - Event handler of ONScripter
  *
  *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
- *            (C) 2014-2015 jh10001 <jh10001@live.cn>
+ *            (C) 2014-2016 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -429,8 +429,8 @@ bool ONScripter::trapHandler()
  * **************************************** */
 bool ONScripter::mouseMoveEvent( SDL_MouseMotionEvent *event )
 {
-    current_button_state.x = event->x * screen_width / screen_device_width;
-    current_button_state.y = event->y * screen_width / screen_device_width;
+    current_button_state.x = event->x * screen_scale_ratio1;
+    current_button_state.y = event->y * screen_scale_ratio2;
 
     if ( event_mode & WAIT_BUTTON_MODE ){
         mouseOverCheck( current_button_state.x, current_button_state.y );
@@ -459,8 +459,8 @@ bool ONScripter::mousePressEvent( SDL_MouseButtonEvent *event )
         if (trapHandler()) return true;
     }
 
-    current_button_state.x = event->x * screen_width / screen_device_width;
-    current_button_state.y = event->y * screen_width / screen_device_width;
+    current_button_state.x = event->x * screen_scale_ratio1;
+    current_button_state.y = event->y * screen_scale_ratio2;
     current_button_state.down_flag = false;
     skip_mode &= ~SKIP_NORMAL;
 
@@ -555,8 +555,8 @@ bool ONScripter::mouseWheelEvent(SDL_MouseWheelEvent *event)
         return false;
     }
 
-    current_button_state.x = event->x * screen_width / screen_device_width;
-    current_button_state.y = event->y * screen_width / screen_device_width;
+    current_button_state.x = event->x * screen_scale_ratio1;
+    current_button_state.y = event->y * screen_scale_ratio2;
     current_button_state.down_flag = false;
     skip_mode &= ~SKIP_NORMAL;
 
@@ -1272,41 +1272,43 @@ void ONScripter::runEventLoop()
             convTouchKey(event.tfinger);
             tmp_event.motion.x = device_width * event.tfinger.x - (device_width - screen_device_width) / 2;
             tmp_event.motion.y = device_height * event.tfinger.y - (device_height - screen_device_height) / 2;
-            if (mouseMoveEvent( &tmp_event.motion )) return;
-        }
+            if (mouseMoveEvent( &tmp_event.motion )) return;       
             if ( btndown_flag ){
                 tmp_event.button.type = SDL_MOUSEBUTTONDOWN;
                 tmp_event.button.button = SDL_BUTTON_LEFT;
                 if (SDL_GetNumTouchFingers(event.tfinger.touchId) >= 2)
                     tmp_event.button.button = SDL_BUTTON_RIGHT;
-                tmp_event.motion.x = device_width * event.tfinger.x - (device_width - screen_device_width) / 2;
-                tmp_event.motion.y = device_height * event.tfinger.y - (device_height - screen_device_height) / 2;
+                tmp_event.button.x = device_width * event.tfinger.x - (device_width - screen_device_width) / 2;
+                tmp_event.button.y = device_height * event.tfinger.y - (device_height - screen_device_height) / 2;
                 ret = mousePressEvent( &tmp_event.button );
             }
             {
-                          num_fingers = SDL_GetNumTouchFingers(event.tfinger.touchId);
+                num_fingers = SDL_GetNumTouchFingers(event.tfinger.touchId);
                 if (num_fingers >= 3){
                     tmp_event.key.keysym.sym = SDLK_LCTRL;
                     ret |= keyDownEvent( &tmp_event.key );
                 }
             }
             if (ret) return;
+        }
             break;
         case SDL_FINGERUP:
+        {
             if (num_fingers == 0) break;
             {
                 tmp_event.button.type = SDL_MOUSEBUTTONUP;
                 tmp_event.button.button = SDL_BUTTON_LEFT;
-                if (SDL_GetNumTouchFingers(event.tfinger.touchId) >= 1)
+                if (num_fingers == 2)
                     tmp_event.button.button = SDL_BUTTON_RIGHT;
-                tmp_event.motion.x = device_width * event.tfinger.x - (device_width - screen_device_width) / 2;
-                tmp_event.motion.y = device_height * event.tfinger.y - (device_height - screen_device_height) / 2;
+                tmp_event.button.x = device_width * event.tfinger.x - (device_width - screen_device_width) / 2;
+                tmp_event.button.y = device_height * event.tfinger.y - (device_height - screen_device_height) / 2;
                 ret = mousePressEvent( &tmp_event.button );
             }
             tmp_event.key.keysym.sym = SDLK_LCTRL;
             keyUpEvent( &tmp_event.key );
             num_fingers = 0;
             if (ret) return;
+        }
             break;
 #else
           case SDL_FINGERMOTION:
@@ -1328,12 +1330,12 @@ void ONScripter::runEventLoop()
             }
             break;
           case SDL_FINGERDOWN:
-          {
+            {
                 SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
                 tmp_event.motion.x = device_width *event.tfinger.x/touch->xres - (device_width -screen_device_width)/2;
                 tmp_event.motion.y = device_height*event.tfinger.y/touch->yres - (device_height-screen_device_height)/2;
                 if (mouseMoveEvent( &tmp_event.motion )) return;
-          }
+            }
             if ( btndown_flag ){
                 SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
                 tmp_event.button.type = SDL_MOUSEBUTTONDOWN;
@@ -1373,7 +1375,7 @@ void ONScripter::runEventLoop()
             break;
 #endif //SDL_VERSION_ATLEAST(2,0,0)
 #endif
-#if !defined(ANDROID) && SDL_VERSION_ATLEAST(2,0,0)
+#if !defined(ANDROID) && !defined(IOS) && !defined(WINRT) && SDL_VERSION_ATLEAST(2,0,0)
           case SDL_MOUSEMOTION:
             if (mouseMoveEvent( &event.motion )) return;
             if (btndown_flag){
@@ -1385,10 +1387,6 @@ void ONScripter::runEventLoop()
                     break;
 
                 tmp_event.button.type = SDL_MOUSEBUTTONDOWN;
-#if defined(IOS) || defined(ANDROID) || defined(WINRT)
-                tmp_event.button.x = device_width * event.motion.x - (device_width - screen_device_width) / 2;;
-                tmp_event.button.y = device_width * event.motion.y - (device_width - screen_device_width) / 2;
-#endif
                 ret = mousePressEvent( &tmp_event.button );
                 if (ret) return;
             }
@@ -1399,20 +1397,12 @@ void ONScripter::runEventLoop()
             current_button_state.event_button = event.button.button;
             if ( !btndown_flag ) break;
           case SDL_MOUSEBUTTONUP:
-#if defined(IOS) || defined(ANDROID) || defined(WINRT)
-            event.button.x = device_width * event.button.x - (device_width - screen_device_width) / 2;;
-            event.button.y = device_width * event.button.y - (device_width - screen_device_width) / 2;
-#endif
             current_button_state.event_type = event.type;
             current_button_state.event_button = event.button.button;
             ret = mousePressEvent( &event.button );
             if (ret) return;
             break;
           case SDL_MOUSEWHEEL:
-#if defined(IOS) || defined(ANDROID) || defined(WINRT)
-              event.wheel.x = device_width * event.wheel.x - (device_width - screen_device_width) / 2;;
-              event.wheel.y = device_width * event.wheel.y - (device_width - screen_device_width) / 2;
-#endif
             ret = mouseWheelEvent(&event.wheel);
             if (ret) return;
             break;

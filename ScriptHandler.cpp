@@ -2,8 +2,8 @@
  *
  *  ScriptHandler.cpp - Script manipulation class
  *
- *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
- *            (C) 2014-2015 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
+ *            (C) 2014-2016 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -230,7 +230,7 @@ const char *ScriptHandler::readToken()
                     addStringBuffer( ch );
                     buf++;
                     if (ch == '_') ignore_clickstr_flag = true;
-                    if (!wait_script && ch == '@') wait_script = buf;
+                    if (!wait_script && (ch == '@' || ch == '\\')) wait_script = buf;
                 }
             }
             ch = *buf;

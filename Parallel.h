@@ -2,7 +2,7 @@
  *
  *  Parallel.h
  *
- *  Copyright (C) 2014-2015 jh10001 <jh10001@live.cn>
+ *  Copyright (C) 2014-2016 jh10001 <jh10001@live.cn>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -111,7 +111,7 @@ namespace parallel {
 
   extern ThreadPool threadPool;
 #endif
-  inline static int thread_clamp(int threadnum) {
+  static int thread_clamp(int threadnum) {
     if (threadnum > thread_num) threadnum = thread_num;
     if (threadnum < 1) threadnum = 1;
     return threadnum;

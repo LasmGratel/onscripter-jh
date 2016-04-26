@@ -3,7 +3,7 @@
  *  ScriptParser.h - Define block parser of ONScripter
  *
  *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
- *            (C) 2014-2015 jh10001 <jh10001@live.cn>
+ *            (C) 2014-2016 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -248,7 +248,7 @@ protected:
     bool windowback_flag;
     bool usewheel_flag;
     bool useescspc_flag;
-	bool mode_wave_demo_flag;
+    bool mode_wave_demo_flag;
     bool mode_saya_flag;
     bool mode_ext_flag;
     bool force_button_shortcut_flag;
@@ -272,8 +272,9 @@ protected:
     int screen_width, screen_height;
     int screen_device_width, screen_device_height;
     int device_width, device_height;
+    float screen_scale_ratio1, screen_scale_ratio2;
     SDL_Rect screen_rect;
-    SDL_Rect screen_view_rect;
+    SDL_Rect render_view_rect;
     int screen_bpp;
     char *version_str;
     int underline_value;

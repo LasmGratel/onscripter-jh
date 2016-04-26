@@ -2,8 +2,8 @@
  *
  *  ONScripter.h - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
- *            (C) 2014-2015 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
+ *            (C) 2014-2016 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -175,6 +175,7 @@ public:
     int okcancelboxCommand();
     int ofscopyCommand();
     int negaCommand();
+    int nextcselCommand();
     int mspCommand();
     int mpegplayCommand();
     int mp3volCommand();
@@ -389,7 +390,7 @@ private:
     int  shortcut_mouse_line;
 
     void initSDL();
-    void calcViewRect();
+    void calcRenderRect();
     void openAudio();
     void reset(); // called on definereset
     void resetSub(); // called on reset
@@ -542,7 +543,8 @@ private:
     char *readSaveStrFromFile( int no );
     int  loadSaveFile( int no );
     void saveMagicNumber( bool output_flag );
-    int  saveSaveFile( bool write_to_disk, int no=0, const char *savestr=NULL );
+    void storeSaveFile();
+    int  writeSaveFile(int no = 0, const char *savestr = NULL);
 
     int  loadSaveFile2( int file_version );
     void saveSaveFile2( bool output_flag );

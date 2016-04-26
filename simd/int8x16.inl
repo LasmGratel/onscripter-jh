@@ -2,7 +2,7 @@
 *
 *  int8x16.inl
 *
-*  Copyright (C) 2015 jh10001 <jh10001@live.cn>
+*  Copyright (C) 2015-2016 jh10001 <jh10001@live.cn>
 *
 *  This program is free software; you can redistribute it and/or modify
 *  it under the terms of the GNU General Public License as published by
@@ -102,7 +102,7 @@ namespace simd {
   //Swizzle
   inline uint16x8 widen_hi(uint8x16 a, uint8x16 b) {
 #ifdef USE_SIMD_X86_SSE2
-	return _mm_unpackhi_epi8(a, b);
+    return _mm_unpackhi_epi8(a, b);
 #elif USE_SIMD_ARM_NEON
     return vmovl_u8(vget_high_u8(a));
 #endif

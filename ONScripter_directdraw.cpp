@@ -2,7 +2,7 @@
 * 
 *  ONScripter_directdraw.cpp
 *
-*  Copyright (C) 2015 jh10001 <jh10001@live.cn>
+*  Copyright (C) 2015-2016 jh10001 <jh10001@live.cn>
 *
 *  This program is free software; you can redistribute it and/or modify
 *  it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ void DirectDraw::draw2(int no, int dcx, int dcy, int sx, int sy, int w, int h, f
     SDL_SetTextureBlendMode(texture_info[no], add ? SDL_BLENDMODE_ADD : SDL_BLENDMODE_BLEND);
     SDL_SetTextureAlphaMod(texture_info[no], alpha);
     int dx = dcx-w/2*xs, dy = dcy-h/2*ys;
-    SDL_Rect src_rect = {sx, sy, w, h}, dst_rect = {dx, dy, w*xs, h*ys};
+    SDL_Rect src_rect = {sx, sy, w, h}, dst_rect = {dx, dy, (int)(w*xs), (int)(h*ys)};
     SDL_RenderCopyEx(ons.renderer, texture_info[no], &src_rect, &dst_rect, rot, NULL, SDL_FLIP_NONE);
 }
 

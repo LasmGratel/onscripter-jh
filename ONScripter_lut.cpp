@@ -2,8 +2,8 @@
  * 
  *  ONScripter_lut.cpp - command lookup-table for ONScripter
  *
- *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
- *            (C) 2014-2015 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
+ *            (C) 2014-2016 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -151,6 +151,8 @@ static ONScripter::FuncLUT func_lut[] = {
     {"ns3",				&ONScripter::nsaCommand},
     {"ns2",				&ONScripter::nsaCommand},
     {"nega",			&ONScripter::negaCommand},
+    {"nextcsel",		&ONScripter::nextcselCommand},
+
 
     {"mul",				&ONScripter::mulCommand},
     {"msp2",			&ONScripter::mspCommand},
