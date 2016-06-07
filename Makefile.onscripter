@@ -19,14 +19,20 @@ GUI_OBJS = ONScripter$(OBJSUFFIX) \
 	AnimationInfo$(OBJSUFFIX) \
 	FontInfo$(OBJSUFFIX) \
 	DirtyRect$(OBJSUFFIX) \
-	resize_image$(OBJSUFFIX)
+	resize_image$(OBJSUFFIX) \
+	ONScripter_directdraw$(OBJSUFFIX) \
+	builtin_dll/layer_snow$(OBJSUFFIX) \
+	builtin_dll/ONScripter_effect_cascade$(OBJSUFFIX) \
+	builtin_dll/ONScripter_effect_trig$(OBJSUFFIX) \
+	builtin_dll/layer_oldmovie$(OBJSUFFIX)
 
 DECODER_OBJS = DirectReader$(OBJSUFFIX) \
 	SarReader$(OBJSUFFIX) \
 	NsaReader$(OBJSUFFIX) \
-	coding2utf16$(OBJSUFFIX) \
-	gbk2utf16$(OBJSUFFIX) \
 	sjis2utf16$(OBJSUFFIX) \
+	coding2utf16$(OBJSUFFIX) \
+	gbk2utf16$(OBJSUFFIX)
+	
 
 SARDEC_OBJS  = sardec$(OBJSUFFIX) \
 	DirectReader$(OBJSUFFIX) \
@@ -87,14 +93,15 @@ simple_aviplay$(EXESUFFIX): simple_aviplay$(OBJSUFFIX) AVIWrapper$(OBJSUFFIX)
 	$(LD) $(LDOUT)$@ simple_aviplay$(OBJSUFFIX) AVIWrapper$(OBJSUFFIX) $(LIBS)
 
 onscripter$(EXESUFFIX): $(ONSCRIPTER_OBJS)
-	$(LD) $(LDOUT)$@ $(ONSCRIPTER_OBJS) $(LIBS)
+	$(LD) $< $(ONSCRIPTER_OBJS) $(LIBS) $(EXT_FLAGS) -o onscripter$(EXESUFFIX)
 
 clean:
 	-$(RM) $(TARGET)
 	-$(RM) *$(OBJSUFFIX)
+	-$(RM) builtin_dll/*$(OBJSUFFIX)
 
 .cpp$(OBJSUFFIX):
-	$(CC) $(CFLAGS) $<
+	$(CC) $(CFLAGS) -o $@ $<
 
 SarReader$(OBJSUFFIX):    BaseReader.h SarReader.h 
 NsaReader$(OBJSUFFIX):    BaseReader.h SarReader.h NsaReader.h 
