@@ -706,7 +706,7 @@ void ONScripter::resetSub()
     internal_saveon_flag = true;
 
     is_kinsoku = true;
-    textgosub_clickstr_state = CLICK_NONE;
+
     indent_offset = 0;
     line_enter_status = 0;
     page_enter_status = 0;

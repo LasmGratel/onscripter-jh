@@ -748,7 +748,6 @@ private:
     int erase_text_window_mode;
     bool text_on_flag; // suppress the effect of erase_text_window_mode
     bool draw_cursor_flag;
-    int  textgosub_clickstr_state;
     int  indent_offset;
 
     void setwindowCore();

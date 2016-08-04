@@ -2,7 +2,7 @@
  * 
  *  ScriptHandler.h - Script manipulation class
  *
- *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -123,7 +123,7 @@ public:
     // function for direct manipulation of script address 
     inline char *getCurrent(bool use_script=false){ return (use_script && internal_current_script)?internal_current_script:current_script; };
     inline char *getNext(){ return next_script; };
-    inline char *getWait(){ return wait_script; };
+    inline char *getWait(){ return wait_script?wait_script:next_script; };
     void setCurrent(char *pos);
     void pushCurrent( char *pos );
     void popCurrent();

@@ -2,8 +2,8 @@
  * 
  *  ONScripter_sound.cpp - Methods for playing sound
  *
- *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
- *            (C) 2014-2015 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
+ *            (C) 2014-2016 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -40,6 +40,7 @@ extern "C"
 static JavaVM *jniVM = NULL;
 static jobject JavaONScripter = NULL;
 static jmethodID JavaPlayVideo = NULL;
+static jmethodID JavaGetFD = NULL;
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 {
@@ -64,6 +65,7 @@ JNIEXPORT jint JNICALL JAVA_EXPORT_NAME(ONScripter_nativeInitJavaCallbacks) (JNI
     JavaONScripter = jniEnv->NewGlobalRef(thiz);
     jclass JavaONScripterClass = jniEnv->GetObjectClass(JavaONScripter);
     JavaPlayVideo = jniEnv->GetMethodID(JavaONScripterClass, "playVideo", "([C)V");
+    JavaGetFD = jniEnv->GetMethodID(JavaONScripterClass, "getFD", "([CI)I");
 }
 }
 
@@ -83,7 +85,32 @@ void playVideoAndroid(const char *filename)
     jcharArray jca = jniEnv->NewCharArray(strlen(filename));
     jniEnv->SetCharArrayRegion(jca, 0, strlen(filename), jc);
     jniEnv->CallVoidMethod( JavaONScripter, JavaPlayVideo, jca );
+    jniEnv->DeleteLocalRef(jca);
     delete[] jc;
+}
+
+FILE *fopen(const char *path, const char *mode)
+{
+    JNIEnv * jniEnv = NULL;
+    jniVM->AttachCurrentThread(&jniEnv, NULL);
+
+    if (!jniEnv){
+        __android_log_print(ANDROID_LOG_ERROR, "ONS", "ONScripter::getFD: Java VM AttachCurrentThread() failed");
+        return NULL;
+    }
+
+    jchar *jc = new jchar[strlen(path)];
+    for (int i=0 ; i<strlen(path) ; i++)
+        jc[i] = path[i];
+    jcharArray jca = jniEnv->NewCharArray(strlen(path));
+    jniEnv->SetCharArrayRegion(jca, 0, strlen(path), jc);
+    int mode2 = 0;
+    if (mode[0] == 'w') mode2 = 1;
+    int fd = jniEnv->CallIntMethod( JavaONScripter, JavaGetFD, jca, mode2 );
+    jniEnv->DeleteLocalRef(jca);
+    delete[] jc;
+
+    return fdopen(fd, mode);
 }
 #endif
 

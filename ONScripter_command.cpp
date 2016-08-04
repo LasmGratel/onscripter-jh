@@ -955,25 +955,24 @@ int ONScripter::savescreenshotCommand()
 {
     bool delete_flag = true;
     if      ( script_h.isName( "savescreenshot2" ) ){
-      delete_flag = false;
-    }
+        delete_flag = false;
+    }       
 
-    const char *buf = script_h.readStr();
-    char filename[256];
-    sprintf( filename, "%s%s", archive_path, buf );
-    for ( unsigned int i=0 ; i<strlen( filename ) ; i++ )
-        if ( filename[i] == '/' || filename[i] == '\\' )
-            filename[i] = DELIMITER;
-
-    if (screenshot_surface == NULL) screenshot_surface = AnimationInfo::alloc32bitSurface(screen_device_width, screen_device_height, texture_format);
+    if (screenshot_surface == NULL)
+        screenshot_surface = AnimationInfo::alloc32bitSurface(screen_device_width, screen_device_height, texture_format);
 
     SDL_Surface *surface = AnimationInfo::alloc32bitSurface( screenshot_w, screenshot_h, texture_format );
     resizeSurface( screenshot_surface, surface );
-    if (SDL_SaveBMP(surface, filename) != 0) utils::printError("Save screenshot failed: %s", SDL_GetError());
+
+    const char *buf = script_h.readStr();
+    FILE *fp = fopen(buf, "wb");
+    SDL_RWops *rwops = SDL_RWFromFP(fp, SDL_TRUE);
+    if (SDL_SaveBMP_RW(surface, rwops, 1) != 0)
+        utils::printError("Save screenshot failed: %s", SDL_GetError());
     SDL_FreeSurface( surface );
     if (delete_flag) {
-      SDL_FreeSurface(screenshot_surface);
-      screenshot_surface = NULL;
+        SDL_FreeSurface(screenshot_surface);
+        screenshot_surface = NULL;
     }
 
     return RET_CONTINUE;

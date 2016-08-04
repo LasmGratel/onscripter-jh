@@ -2,8 +2,8 @@
  *
  *  ScriptParser_command.cpp - Define command executer of ONScripter
  *
- *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
- *            (C) 2014-2015 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
+ *            (C) 2014-2016 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -440,19 +440,14 @@ int ScriptParser::returnCommand()
         setCurrentLabel( label+1 );
 
     bool textgosub_flag = last_nest_info->textgosub_flag;
-    char *wait_script = last_nest_info->wait_script;
 
     last_nest_info = last_nest_info->previous;
     delete last_nest_info->next;
     last_nest_info->next = NULL;
     
-    if (textgosub_flag){
-        if (wait_script && label[0] != '*'){
-            script_h.setCurrent(wait_script);
-            return RET_CONTINUE;
-        }
-
-        // if this is the end of the line, pretext becomes enabled
+    // if this is the end of the line, pretext becomes enabled
+    if (textgosub_flag &&
+        (textgosub_clickstr_state & (CLICK_NEWPAGE | CLICK_EOL))){
         line_enter_status = 0;
         page_enter_status = 0;
     }
@@ -1034,10 +1029,7 @@ void ScriptParser::gosubReal( const char *label, char *next_script, bool textgos
     last_nest_info = last_nest_info->next;
     last_nest_info->next_script = next_script;
 
-    if (textgosub_flag){
-        last_nest_info->textgosub_flag = true;
-        last_nest_info->wait_script = script_h.getWait();
-    }
+    last_nest_info->textgosub_flag = textgosub_flag;
 
     setCurrentLabel( label );
 }
