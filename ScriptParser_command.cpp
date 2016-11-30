@@ -25,6 +25,9 @@
 #include "ScriptParser.h"
 #include "Utils.h"
 #include <math.h>
+#if defined(LINUX) || defined(MACOSX) || defined(IOS)
+#include <sys/stat.h>
+#endif
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -245,44 +248,43 @@ int ScriptParser::shadedistanceCommand()
 
 int ScriptParser::setlayerCommand()
 {
-  if (current_mode != DEFINE_MODE)
-    errorAndExit("setlayer: not in the define section");
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "setlayer: not in the define section" );
 
-  int no = script_h.readInt();
-  int interval = script_h.readInt();
-  const char *dll = script_h.readStr();
+    int no = script_h.readInt();
+    int interval = script_h.readInt();
+    const char *dll = script_h.readStr();
 
-#ifndef USE_BUILTIN_LAYER_EFFECTS
-  utils::printError("setlayer: layer effect support not available (%d,%d,'%s')",
-    no, interval, dll);
-  return RET_CONTINUE;
-#else
-  Layer *handler = NULL;
-  const char *bslash = strrchr(dll, '\\');
-  if ((bslash && !strncmp(bslash + 1, "oldmovie.dll", 12)) ||
-    !strncmp(dll, "oldmovie.dll", 12)) {
-    handler = new OldMovieLayer(screen_width, screen_height);
-  } else if ((bslash && !strncmp(bslash + 1, "snow.dll", 8)) ||
-    !strncmp(dll, "snow.dll", 8)) {
-    handler = new FuruLayer(screen_width, screen_height, false, script_h.cBR);
-  } else if ((bslash && !strncmp(bslash + 1, "hana.dll", 8)) ||
-    !strncmp(dll, "hana.dll", 8)) {
-    handler = new FuruLayer(screen_width, screen_height, true, script_h.cBR);
-  } else {
-    utils::printError("setlayer: layer effect '%s' is not implemented.", dll);
+    #ifndef USE_BUILTIN_LAYER_EFFECTS
+    utils::printError("setlayer: layer effect support not available (%d,%d,'%s')",
+        no, interval, dll);
     return RET_CONTINUE;
-  }
+    #else
+    LayerInfo *layer = &layer_info[no];
+    layer->interval = interval;
+    if (layer->handler) delete layer->handler;
+    layer->handler = NULL;
+    Layer *handler = NULL;
+    const char *bslash = strrchr(dll, '\\');
+    if ((bslash && !strncmp(bslash + 1, "oldmovie.dll", 12)) ||
+        !strncmp(dll, "oldmovie.dll", 12)) {
+        handler = new OldMovieLayer(screen_width, screen_height);
+    } else if ((bslash && !strncmp(bslash + 1, "snow.dll", 8)) ||
+        !strncmp(dll, "snow.dll", 8)) {
+        handler = new FuruLayer(screen_width, screen_height, false, script_h.cBR);
+    } else if ((bslash && !strncmp(bslash + 1, "hana.dll", 8)) ||
+        !strncmp(dll, "hana.dll", 8)) {
+        handler = new FuruLayer(screen_width, screen_height, true, script_h.cBR);
+    } else {
+        utils::printError("setlayer: layer effect '%s' is not implemented.", dll);
+        return RET_CONTINUE;
+    }
 
-  utils::printInfo("Setup layer effect for '%s'.\n", dll);
-  LayerInfo *layer = new LayerInfo();
-  layer->num = no;
-  layer->interval = interval;
-  layer->handler = handler;
-  layer->next = layer_info;
-  layer_info = layer;
-#endif // ndef USE_BUILTIN_LAYER_EFFECTS
+    utils::printInfo("Setup layer effect for '%s'.\n", dll);
+    layer->handler = handler;
+    #endif // ndef USE_BUILTIN_LAYER_EFFECTS
 
-  return RET_CONTINUE;
+    return RET_CONTINUE;
 }
 
 int ScriptParser::setkinsokuCommand()
@@ -352,6 +354,18 @@ int ScriptParser::savedirCommand()
         // a workaround not to overwrite save_dir given in command line options
         save_dir = new char[ strlen(archive_path) + strlen(path) + 2 ];
         sprintf( save_dir, "%s%s%c", archive_path, path, DELIMITER );
+
+#if defined(LINUX) || defined(MACOSX) || defined(IOS)
+        struct stat buf;
+        if ( stat( save_dir, &buf ) != 0 ){
+            fprintf(stderr, "savedir: %s doesn't exist.\n", save_dir);
+            delete[] save_dir;
+            save_dir = NULL;
+        
+            return RET_CONTINUE;
+        }
+#endif
+        
         script_h.setSaveDir(save_dir);
         setStr(&save_dir_envdata, path);
     }
@@ -899,7 +913,7 @@ int ScriptParser::ifCommand()
     bool if_flag = true;
     if ( script_h.isName( "notif" ) ) if_flag = false;
 
-    for (;;) {
+    while(1){
         if (script_h.compareString("fchk")){
             script_h.readLabel();
             buf = script_h.readStr();
@@ -1028,7 +1042,6 @@ void ScriptParser::gosubReal( const char *label, char *next_script, bool textgos
 
     last_nest_info = last_nest_info->next;
     last_nest_info->next_script = next_script;
-
     last_nest_info->textgosub_flag = textgosub_flag;
 
     setCurrentLabel( label );
@@ -1396,6 +1409,16 @@ int ScriptParser::breakCommand()
     else{
         break_flag = true;
     }
+    
+    return RET_CONTINUE;
+}
+
+int ScriptParser::autosaveoffCommand()
+{
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "autosaveoff: not in the define section" );
+
+    autosaveoff_flag = true;
     
     return RET_CONTINUE;
 }

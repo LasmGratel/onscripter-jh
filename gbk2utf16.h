@@ -28,7 +28,7 @@ class GBK2UTF16 : public Coding2UTF16 {
 public:
   void init() final;
   uint16_t conv2UTF16(uint16_t) const final;
-  ~GBK2UTF16();
+  uint16_t convUTF162Coding(uint16_t) const final;
 };
 
 #endif

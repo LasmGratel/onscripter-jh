@@ -52,13 +52,13 @@ public:
     void loadInitScript();
     void addCallback(const char *label);
 
-    int  callFunction(bool is_callback, const char *cmd);
+    int  callFunction(bool is_callback, const char *cmd, void *data=NULL);
 
     bool isCallbackEnabled(int val);
 
     bool is_animatable;
     int duration_time;
-    int remaining_time;
+    int next_time;
     
     //private:
     ONScripter *ons;

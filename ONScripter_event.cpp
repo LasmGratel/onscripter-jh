@@ -2,7 +2,7 @@
  * 
  *  ONScripter_event.cpp - Event handler of ONScripter
  *
- *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
  *            (C) 2014-2016 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
@@ -365,7 +365,7 @@ void ONScripter::removeBGMFadeEvent()
 
 void ONScripter::waitEventSub(int count)
 {
-    remaining_time = count;
+    next_time = count;
     timerEvent();
 
     runEventLoop();
@@ -374,6 +374,8 @@ void ONScripter::waitEventSub(int count)
 
 bool ONScripter::waitEvent( int count )
 {
+    if (count > 0) count += SDL_GetTicks();
+    
     while(1){
         waitEventSub( count );
         if ( system_menu_mode == SYSTEM_NULL ) break;
@@ -991,6 +993,7 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
                   (usewheel_flag && !getcursor_flag && event_mode & WAIT_BUTTON_MODE) || 
                   system_menu_mode == SYSTEM_LOOKBACK)){
             current_button_state.button = -2;
+            sprintf(current_button_state.str, "WHEELUP");
             if (event_mode & WAIT_TEXT_MODE) system_menu_mode = SYSTEM_LOOKBACK;
         }
         else if (((!getcursor_flag && event->keysym.sym == SDLK_RIGHT) ||
@@ -1002,6 +1005,7 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
                 current_button_state.button = 0;
             else
                 current_button_state.button = -3;
+            sprintf(current_button_state.str, "WHEELDOWN");
         }
         else if (((!getcursor_flag && event->keysym.sym == SDLK_UP) ||
                   event->keysym.sym == SDLK_k ||
@@ -1160,6 +1164,13 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
 
 void ONScripter::timerEvent()
 {
+    int current_time = SDL_GetTicks();
+    int remaining_time = next_time;
+    if (next_time > 0){
+        remaining_time -= current_time;
+        if (remaining_time < 0) remaining_time = 0;
+    }
+        
     if (remaining_time == 0){
         SDL_Event event;
         event.type = ONS_BREAK_EVENT;
@@ -1169,26 +1180,21 @@ void ONScripter::timerEvent()
     
     int duration = 0;
     if (event_mode & WAIT_TIMER_MODE){
-        proceedAnimation();
-        duration = calcDurationToNextAnimation();
+        proceedAnimation(current_time);
+        duration = calcDurationToNextAnimation() - current_time;
+        if (duration < 0) duration = 0;
     }
-            
+
     if (duration > 0){
-        if (remaining_time > duration){
-            remaining_time -= duration;
-        }
-        else if (remaining_time > 0){
+        if (duration > remaining_time && remaining_time > 0)
             duration = remaining_time;
-            remaining_time = 0;
-        }
-        stepAnimation(duration);
+
         if (timer_id) SDL_RemoveTimer(timer_id);
         timer_id = SDL_AddTimer(duration, timerCallback, NULL);
     }
     else if (remaining_time > 0){
         if (timer_id) SDL_RemoveTimer(timer_id);
         timer_id = SDL_AddTimer(remaining_time, timerCallback, NULL);
-        remaining_time = 0;
     }
 }
 
@@ -1231,6 +1237,11 @@ void ONScripter::runEventLoop()
     SDL_Event event, tmp_event;
 
     while ( SDL_WaitEvent(&event) ) {
+#if defined(USE_SMPEG)
+        // required to repeat the movie
+        if (layer_smpeg_sample)
+            SMPEG_status(layer_smpeg_sample);
+#endif    
         bool ret = false;
         // ignore continous SDL_MOUSEMOTION
         while (event.type == SDL_MOUSEMOTION || event.type == SDL_FINGERMOTION) {
@@ -1330,12 +1341,12 @@ void ONScripter::runEventLoop()
             }
             break;
           case SDL_FINGERDOWN:
-            {
+          {
                 SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
                 tmp_event.motion.x = device_width *event.tfinger.x/touch->xres - (device_width -screen_device_width)/2;
                 tmp_event.motion.y = device_height*event.tfinger.y/touch->yres - (device_height-screen_device_height)/2;
                 if (mouseMoveEvent( &tmp_event.motion )) return;
-            }
+          }
             if ( btndown_flag ){
                 SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
                 tmp_event.button.type = SDL_MOUSEBUTTONDOWN;
@@ -1472,7 +1483,7 @@ void ONScripter::runEventLoop()
 
           case ONS_BREAK_EVENT:
             if (event_mode & WAIT_VOICE_MODE && wave_sample[0]){
-                remaining_time = -1;
+                next_time = -1;
                 timerEvent();
                 break;
             }
@@ -1534,6 +1545,7 @@ void ONScripter::runEventLoop()
 #ifdef ANDROID
             if (event.active.state == SDL_APPACTIVE){
                 screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
+                SDL_SetSurfaceBlendMode(screen_surface, SDL_BLENDMODE_NONE);
                 repaintCommand();
                 break;
             }

@@ -26,14 +26,15 @@
 #include "Utils.h"
 #ifdef USE_BUILTIN_LAYER_EFFECTS
 #include "builtin_layer.h"
-LayerInfo *layer_info = NULL;
+LayerInfo layer_info[MAX_LAYER_NUM];
 
 void deleteLayerInfo() {
-  while (layer_info) {
-    LayerInfo *tmp = layer_info;
-    layer_info = layer_info->next;
-    delete tmp;
-  }
+    for (int i=0; i<MAX_LAYER_NUM; ++i) {
+        if (layer_info[i].handler) {
+            delete layer_info[i].handler;
+            layer_info[i].handler = NULL;
+        }
+    }
 }
 #endif
 
@@ -137,6 +138,7 @@ void ScriptParser::reset()
     filelog_flag = false;
     kidokuskip_flag = false;
     kidokumode_flag = true;
+    autosaveoff_flag = false;
 
     rmode_flag = true;
     windowback_flag = false;
@@ -343,10 +345,8 @@ void ScriptParser::saveGlovalData()
     allocFileIOBuf();
     writeVariables( script_h.global_variable_border, script_h.variable_range, true );
 
-    if (saveFileIOBuf( "gloval.sav" )){
-        utils::printError( "can't open gloval.sav for writing\n");
-        exit(-1);
-    }
+    if (saveFileIOBuf( "gloval.sav" ))
+        errorAndExit("can't open gloval.sav for writing.");
 }
 
 void ScriptParser::allocFileIOBuf()
@@ -720,17 +720,7 @@ ScriptParser::EffectLink *ScriptParser::parseEffect(bool init_flag)
 
 FILE *ScriptParser::fopen(const char *path, const char *mode, bool use_save_dir)
 {
-    char filename[256];
-    if (use_save_dir && save_dir)
-        sprintf( filename, "%s%s", save_dir, path );
-    else
-        sprintf( filename, "%s%s", archive_path, path );
-
-    for ( unsigned int i=0 ; i<strlen( filename ) ; i++ )
-        if ( filename[i] == '/' || filename[i] == '\\' )
-            filename[i] = DELIMITER;
-
-    return ::fopen( filename, mode );
+    return script_h.fopen(path, mode, use_save_dir);
 }
 
 void ScriptParser::createKeyTable( const char *key_exe )

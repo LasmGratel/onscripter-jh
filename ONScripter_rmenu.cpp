@@ -376,6 +376,13 @@ bool ONScripter::executeSystemLoad()
 
             flushEvent();
 
+#ifdef USE_LUA
+            if (lua_handler.isCallbackEnabled(LUAHandler::LUA_LOAD)){
+                if (lua_handler.callFunction(true, "load", &file_no))
+                    errorAndExit( lua_handler.error_str );
+            }
+#endif
+
             if (loadgosub_label)
                 gosubReal( loadgosub_label, script_h.getCurrent() );
 

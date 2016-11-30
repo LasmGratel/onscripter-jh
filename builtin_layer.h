@@ -3,7 +3,7 @@
 *  builtin_layer.h
 *
 *  Copyright (c) 2009 "Uncle" Mion Sonozaki
-*            (C) 2015 jh10001 <jh10001@live.cn>
+*            (C) 2015-2016 jh10001 <jh10001@live.cn>
 *
 *  UncleMion@gmail.com
 *
@@ -26,6 +26,8 @@
 #include "BaseReader.h"
 #include "AnimationInfo.h"
 
+#define MAX_LAYER_NUM 32
+
 struct Layer {
   BaseReader *reader;
   AnimationInfo *sprite_info, *sprite;
@@ -43,24 +45,23 @@ struct Layer {
 };
 
 struct LayerInfo {
-  struct LayerInfo *next;
   Layer *handler;
-  int num;
+  int sprite_num;
   Uint32 interval;
   Uint32 last_update;
   LayerInfo(){
-    num = -1;
+    sprite_num = -1;
     interval = last_update = 0;
     handler = nullptr;
-    next = nullptr;
   }
   ~LayerInfo(){
     if (handler) {
       delete handler;
+      handler = nullptr;
     }
   }
 };
-extern LayerInfo *layer_info;
+extern LayerInfo layer_info[MAX_LAYER_NUM];
 
 class OldMovieLayer : public Layer {
 public:
@@ -108,7 +109,7 @@ private:
   // message parameters
   int interval; // 1 ~ 10000; # frames between a new element release
   int fall_velocity; // 1 ~ screen_height; pix/frame
-  int wind; // -screen_width/2 ~ screen_width/2; pix/frame 
+  int wind; // -screen_width/2 ~ screen_width/2; pix/frame
   int amplitude; // 0 ~ screen_width/2; pix/frame
   int freq; // 0 ~ 359; degree/frame
   int angle;

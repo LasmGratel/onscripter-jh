@@ -3,7 +3,7 @@
  *  SarReader.cpp - Reader from a SAR archive
  *
  *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
- *            (C) 2014 jh10001 <jh10001@live.cn>
+ *            (C) 2014-2016 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -86,7 +86,7 @@ void SarReader::readArchive( ArchiveInfo *ai, int archive_type, unsigned int off
         ai->num_of_files = 0;
         long unsigned int cur_offset = offset + 4;
         // there's an extra byte at the end of the header, not sure what for
-        for (;;) {
+        while(1){
             unsigned char ch = key_table[fgetc( ai->file_handle )];
             if (ch != '"') break;
             cur_offset++;

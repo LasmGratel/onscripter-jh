@@ -2,7 +2,7 @@
  *
  *  ONScripter.cpp - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
  *            (C) 2014-2016 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
@@ -282,12 +282,13 @@ void ONScripter::initSDL()
     setCaption(wm_title_string, wm_icon_string);
 }
 
-void ONScripter::openAudio()
+void ONScripter::openAudio(int freq)
 {
+    Mix_CloseAudio();
 #if (defined(PDA_WIDTH) || defined(PDA_AUTOSIZE)) && !defined(PSP) && !defined(IPHONE) && !defined(IOS) && !defined(PANDORA)
-    if ( Mix_OpenAudio( 22050, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
+    if ( Mix_OpenAudio( (freq<0)?22050:freq, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
 #else        
-    if ( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
+    if ( Mix_OpenAudio( (freq<0)?44100:freq, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
 #endif        
         utils::printError("Couldn't open audio device!\n"
             "  reason: [%s].\n", SDL_GetError());
@@ -333,6 +334,8 @@ ONScripter::ONScripter()
     window_mode = false;
     sprite_info  = new AnimationInfo[MAX_SPRITE_NUM];
     sprite2_info = new AnimationInfo[MAX_SPRITE2_NUM];
+    texture_info = new AnimationInfo[MAX_TEXTURE_NUM];
+    smpeg_info = NULL;
     current_button_state.down_flag = false;
     compatibilityMode = false;
 
@@ -572,6 +575,12 @@ int ONScripter::init()
     music_buffer = NULL;
     music_info = NULL;
 
+    layer_smpeg_buffer = NULL;
+    layer_smpeg_loop_flag = false;
+#if defined(USE_SMPEG)
+    layer_smpeg_sample = NULL;
+#endif
+
     loop_bgm_name[0] = NULL;
     loop_bgm_name[1] = NULL;
 
@@ -723,6 +732,8 @@ void ONScripter::resetSub()
     stopAllDWAVE();
     setStr(&loop_bgm_name[1], NULL);
 
+    stopSMPEG();
+
     // ----------------------------------------
     // reset AnimationInfo
     btndef_info.reset();
@@ -732,6 +743,8 @@ void ONScripter::resetSub()
     for (i=0 ; i<3 ; i++) tachi_info[i].reset();
     for (i=0 ; i<MAX_SPRITE_NUM ; i++) sprite_info[i].reset();
     for (i=0 ; i<MAX_SPRITE2_NUM ; i++) sprite2_info[i].reset();
+    for (i=0; i<MAX_TEXTURE_NUM; i++) texture_info[i].reset();
+    smpeg_info = NULL;
     barclearCommand();
     prnumclearCommand();
     for (i=0 ; i<2 ; i++) cursor_info[i].reset();
@@ -762,8 +775,8 @@ void ONScripter::resetSentenceFont()
     sentence_font_info.scalePosXY( screen_ratio1, screen_ratio2 );
     sentence_font_info.scalePosWH( screen_ratio1, screen_ratio2 );
 
-    sentence_font.old_xy[0] = sentence_font.x();
-    sentence_font.old_xy[1] = sentence_font.y();
+    sentence_font.old_xy[0] = sentence_font.x(false);
+    sentence_font.old_xy[1] = sentence_font.y(false);
 }
 
 void ONScripter::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_flag, bool direct_flag )
@@ -812,6 +825,20 @@ void ONScripter::flushDirect( SDL_Rect &rect, int refresh_mode )
     SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
 #endif
 }
+
+#ifdef USE_SMPEG
+void ONScripter::flushDirectYUV(SDL_Overlay *overlay)
+{
+#ifdef USE_SDL_RENDERER
+    SDL_Rect dst_rect = {(device_width -screen_device_width )/2, 
+                         (device_height-screen_device_height)/2,
+                         screen_device_width, screen_device_height};
+    SDL_UpdateTexture(texture, &screen_rect, overlay->pixels[0], overlay->pitches[0]);
+    SDL_RenderCopy(renderer, texture, &screen_rect, &dst_rect);
+    SDL_RenderPresent(renderer);
+#endif    
+}
+#endif
 
 void ONScripter::mouseOverCheck( int x, int y )
 {

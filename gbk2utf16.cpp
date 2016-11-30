@@ -23,6 +23,9 @@
 #include <string.h>
 
 static const uint16_t CODINGLEFT = 0x8140, CODINGRIGHT = 0xfefe;
+
+static unsigned short *utf16_2_gbk_4e;
+
 static uint16_t *gbk_2_utf16 = nullptr;
 static uint16_t gbk_2_utf16_org[][2] = {
   {0x8140,0x4e02},
@@ -23969,36 +23972,49 @@ static uint16_t gbk_2_utf16_org[][2] = {
 };
 
 void GBK2UTF16::init() {
-  strcpy(space, "　");
-  strcpy(minus, "－");
-  strcpy(num_str, "０１２３４５６７８９");
-  strcpy(DEFAULT_START_KINSOKU, "」』）］｝、。，．。？！ヽヾゝゞ々ー");
-  strcpy(DEFAULT_END_KINSOKU, "「『（［｛");
-  strcpy(DEFAULT_SAVE_MENU_NAME, "＜保存＞");
-  strcpy(DEFAULT_LOAD_MENU_NAME, "＜载入＞");
-  strcpy(DEFAULT_SAVE_ITEM_NAME, "书签"); 
-  strcpy(MESSAGE_SAVE_EXIST, "%s%s　%s月%s日%s时%s分");
-  strcpy(MESSAGE_SAVE_EMPTY, "%s%s　————————————");
-  strcpy(MESSAGE_SAVE_CONFIRM, "保存在%s%s？");
-  strcpy(MESSAGE_LOAD_CONFIRM, "读取%s%s？");
-  strcpy(MESSAGE_RESET_CONFIRM, "返回标题？");
-  strcpy(MESSAGE_END_CONFIRM, "退出游戏？");
-  strcpy(MESSAGE_YES, "是");
-  strcpy(MESSAGE_NO, "否");
-  strcpy(MESSAGE_OK, "确定");
-  strcpy(MESSAGE_CANCEL, "取消");
-  gbk_2_utf16 = new uint16_t[CODINGRIGHT - CODINGLEFT + 1];
-  int i=0;
-  while(gbk_2_utf16_org[i][0]){
-    gbk_2_utf16[gbk_2_utf16_org[i][0] - CODINGLEFT] = gbk_2_utf16_org[i][1];
-    ++i;
-  }
+	strcpy(space, "　");
+	strcpy(minus, "－");
+	strcpy(bracket,"【】");
+	strcpy(num_str, "０１２３４５６７８９");
+	strcpy(DEFAULT_START_KINSOKU, "」』）］｝、。，．。？！ヽヾゝゞ々ー");
+	strcpy(DEFAULT_END_KINSOKU, "「『（［｛");
+	strcpy(DEFAULT_SAVE_MENU_NAME, "＜保存＞");
+	strcpy(DEFAULT_LOAD_MENU_NAME, "＜载入＞");
+	strcpy(DEFAULT_SAVE_ITEM_NAME, "书签");
+	strcpy(MESSAGE_SAVE_EXIST, "%s%s　%s月%s日%s时%s分");
+	strcpy(MESSAGE_SAVE_EMPTY, "%s%s　————————————");
+	strcpy(MESSAGE_SAVE_CONFIRM, "保存在%s%s？");
+	strcpy(MESSAGE_LOAD_CONFIRM, "读取%s%s？");
+	strcpy(MESSAGE_RESET_CONFIRM, "返回标题？");
+	strcpy(MESSAGE_END_CONFIRM, "退出游戏？");
+	strcpy(MESSAGE_YES, "是");
+	strcpy(MESSAGE_NO, "否");
+	strcpy(MESSAGE_OK, "确定");
+	strcpy(MESSAGE_CANCEL, "取消");
+
+	gbk_2_utf16 = new uint16_t[CODINGRIGHT - CODINGLEFT + 1];
+	utf16_2_gbk_4e = new uint16_t[0x9fA5-0x4E00+1];
+
+	int i = 0;
+
+	while (gbk_2_utf16_org[i][0]) {
+		unsigned short sjis  = gbk_2_utf16_org[i][0];
+		unsigned short utf16 = gbk_2_utf16_org[i][1];
+		gbk_2_utf16[sjis - CODINGLEFT] = utf16;
+
+		if (utf16 >= 0x4E00 && utf16 <= 0x9FA5) // 0x4E00-0x9FA5
+			utf16_2_gbk_4e[utf16-0x4E00] = sjis;
+		++i;
+	}
 }
 
-uint16_t GBK2UTF16::conv2UTF16(uint16_t in) const{
-  return gbk_2_utf16[in-CODINGLEFT];
+uint16_t GBK2UTF16::conv2UTF16(uint16_t in) const {
+	return gbk_2_utf16[in-CODINGLEFT];
 }
 
-GBK2UTF16::~GBK2UTF16(){
-  delete[] gbk_2_utf16;
+uint16_t GBK2UTF16::convUTF162Coding(uint16_t in) const {
+	if (in >= 0x4E00 && in <= 0x9FA5) // 0x4E00-0x9FA5
+		return utf16_2_gbk_4e[in-0x4E00];
+
+	return 0x0000;
 }

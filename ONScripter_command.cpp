@@ -32,7 +32,8 @@
 
 extern SDL_TimerID timer_bgmfade_id;
 extern "C" Uint32 SDLCALL bgmfadeCallback( Uint32 interval, void *param );
-
+extern "C" void smpegCallback();
+    
 #define CONTINUOUS_PLAY
 
 int ONScripter::yesnoboxCommand()
@@ -688,8 +689,8 @@ void ONScripter::setwindowCore()
         sentence_font.window_color[0] = sentence_font.window_color[1] = sentence_font.window_color[2] = 0xff;
     }
 
-    sentence_font.old_xy[0] = sentence_font.x();
-    sentence_font.old_xy[1] = sentence_font.y();
+    sentence_font.old_xy[0] = sentence_font.x(false);
+    sentence_font.old_xy[1] = sentence_font.y(false);
 }
 
 int ONScripter::setwindow3Command()
@@ -966,30 +967,38 @@ int ONScripter::savescreenshotCommand()
 
     const char *buf = script_h.readStr();
     FILE *fp = fopen(buf, "wb");
-    SDL_RWops *rwops = SDL_RWFromFP(fp, SDL_TRUE);
-    if (SDL_SaveBMP_RW(surface, rwops, 1) != 0)
-        utils::printError("Save screenshot failed: %s", SDL_GetError());
-    SDL_FreeSurface( surface );
-    if (delete_flag) {
-        SDL_FreeSurface(screenshot_surface);
-        screenshot_surface = NULL;
+    if (fp){
+        SDL_RWops *rwops = SDL_RWFromFP(fp, SDL_TRUE);
+        if (SDL_SaveBMP_RW(surface, rwops, 1) != 0)
+            utils::printError("Save screenshot failed: %s", SDL_GetError());
     }
+    SDL_FreeSurface(surface);
+
+    return RET_CONTINUE;
+}
+
+int ONScripter::savepointCommand()
+{
+    storeSaveFile();
 
     return RET_CONTINUE;
 }
 
 int ONScripter::saveonCommand()
 {
-    saveon_flag = true;
+    if (!autosaveoff_flag)
+        saveon_flag = true;
 
     return RET_CONTINUE;
 }
 
 int ONScripter::saveoffCommand()
 {
-    if (saveon_flag && internal_saveon_flag) storeSaveFile();
+    if (!autosaveoff_flag){
+        if (saveon_flag && internal_saveon_flag) storeSaveFile();
     
-    saveon_flag = false;
+        saveon_flag = false;
+    }
 
     return RET_CONTINUE;
 }
@@ -1670,17 +1679,16 @@ int ONScripter::lspCommand()
     ai->visible = v;
     
     const char *buf = script_h.readStr();
-    ai->setImageName( buf );
-
+    ai->setImageName(buf);
     ai->orig_pos.x = script_h.readInt();
     ai->orig_pos.y = script_h.readInt();
-    ai->scalePosXY( screen_ratio1, screen_ratio2 );
+    ai->scalePosXY(screen_ratio1, screen_ratio2);
 
-    if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
+    if (script_h.getEndStatus() & ScriptHandler::END_COMMA)
         ai->trans = script_h.readInt();
     else
         ai->trans = -1;
-
+    
     parseTaggedString( ai );
     setupAnimationInfo( ai );
 
@@ -1848,6 +1856,13 @@ int ONScripter::loadgameCommand()
 
         flushEvent();
 
+#ifdef USE_LUA
+        if (lua_handler.isCallbackEnabled(LUAHandler::LUA_LOAD)){
+            if (lua_handler.callFunction(true, "load", &no))
+                errorAndExit( lua_handler.error_str );
+        }
+#endif
+
         if (loadgosub_label)
             gosubReal( loadgosub_label, script_h.getCurrent() );
     }
@@ -1893,6 +1908,25 @@ int ONScripter::ldCommand()
 
     return RET_CONTINUE;
 }
+#if defined(USE_SMPEG)
+static void smpeg_filter_callback( SDL_Overlay * dst, SDL_Overlay * src, SDL_Rect * region, SMPEG_FilterInfo * filter_info, void * data )
+{
+    if (dst){
+        dst->w = 0;
+        dst->h = 0;
+    }
+
+    ONScripter *ons = (ONScripter*)data;
+    AnimationInfo *ai = ons->getSMPEGInfo();
+    if (!ai) return;
+
+    ai->convertFromYUV(src);
+}
+
+static void smpeg_filter_destroy( struct SMPEG_Filter * filter )
+{
+}
+#endif
 
 #ifdef USE_BUILTIN_LAYER_EFFECTS
 #include "builtin_layer.h"
@@ -1907,19 +1941,16 @@ int ONScripter::layermessageCommand()
   utils::printInfo("layermessage: layer effect support not available (%d,'%s')\n", no, message);
   return RET_CONTINUE;
 #else
-  LayerInfo *tmp = layer_info;
-  while (tmp) {
-    if (tmp->num == no) break;
-    tmp = tmp->next;
-  }
-  if (tmp) {
+  LayerInfo *tmp = &layer_info[no];
+  if (tmp->handler) {
     getret_str = tmp->handler->message(message, getret_int);
-    //printf("layermessage returned: '%s', %d\n", getret_str, getret_int);
+    //utils::printInfo("layermessage returned: '%s', %d\n", getret_str, getret_int);
   }
 #endif // ndef NO_LAYER_EFFECTS
 
   return RET_CONTINUE;
 }
+
 
 int ONScripter::kinsokuCommand()
 {
@@ -2172,7 +2203,7 @@ int ONScripter::gettagCommand()
         if ( script_h.pushed_variable.type & ScriptHandler::VAR_INT ||
              script_h.pushed_variable.type & ScriptHandler::VAR_ARRAY ){
             if (buf)
-                script_h.setInt( &script_h.pushed_variable, script_h.parseIntExpression(&buf));
+                script_h.setInt( &script_h.pushed_variable, script_h.parseInt(&buf));
             else
                 script_h.setInt( &script_h.pushed_variable, 0);
         }
@@ -2437,6 +2468,11 @@ int ONScripter::getmouseoverCommand()
 
 int ONScripter::getlogCommand()
 {
+    bool getlogtext_flag=false;
+    
+    if ( script_h.isName( "getlogtext" ) )
+        getlogtext_flag = true;
+
     script_h.readVariable();
     script_h.pushVariable();
 
@@ -2450,8 +2486,30 @@ int ONScripter::getlogCommand()
 
     if (page_no > 0)
         setStr( &script_h.getVariableData(script_h.pushed_variable.var_no).str, NULL );
-    else
-        setStr( &script_h.getVariableData(script_h.pushed_variable.var_no).str, page->text, page->text_count );
+    else{
+        char *buf = page->text;
+        int count = page->text_count;
+        if (getlogtext_flag){
+            char *p = page->text;
+            char *p2 = buf = new char[page->text_count];
+            count = 0;
+            for (int i=0 ; i<page->text_count ; i++){
+                if (IS_TWO_BYTE(*p)){
+                    p2[count++] = *p++;
+                    p2[count++] = *p++;
+                    i++;
+                }
+                else if (*p != 0x0a)
+                    p2[count++] = *p++;
+                else
+                    p++;
+            }
+        }
+    
+        setStr( &script_h.getVariableData(script_h.pushed_variable.var_no).str, buf, count );
+
+        if (getlogtext_flag) delete[] buf;
+    }
 
     return RET_CONTINUE;
 }
@@ -2649,11 +2707,9 @@ int ONScripter::exec_dllCommand()
     }
     dll_name[c] = '\0';
 
-    utils::printInfo("  reading %s for %s\n", dll_file, dll_name );
-
     FILE *fp;
     if ( ( fp = fopen( dll_file, "r" ) ) == NULL ){
-        utils::printError("Cannot open file [%s]\n", dll_file );
+        utils::printError( "Cannot open file [%s] while reading %s\n", dll_file, dll_name );
         return RET_CONTINUE;
     }
 
@@ -2766,6 +2822,7 @@ int ONScripter::erasetextwindowCommand()
 int ONScripter::endCommand()
 {
     quit();
+    stopSMPEG();
     exit(0);
     return RET_CONTINUE; // dummy
 }
@@ -3361,10 +3418,9 @@ int ONScripter::btnwaitCommand()
                     }
                     //current_button_state.button = 0;
                 }
-                else if (autoclick_time > 0)
-                    if (t == -1 || t > autoclick_time){
+                else if (autoclick_time > 0 &&
+                         (t == -1 || t > autoclick_time))
                     t = autoclick_time;
-                }
             }
         }
 
@@ -3517,7 +3573,6 @@ int ONScripter::bspCommand()
                 script_h.readStr();
         return RET_CONTINUE;
     }
-        
 
     ButtonLink *bl = new ButtonLink();
     root_button_link.insert( bl );
@@ -3709,8 +3764,9 @@ int ONScripter::barCommand()
     const char *buf = script_h.readStr();
     readColor( &ai->color, buf );
 
-    int w = ai->max_width * ai->param / ai->max_param;
-    if ( ai->max_width > 0 && w > 0 ) ai->orig_pos.w = w;
+    int w = 0;
+    if (ai->max_param != 0) w = ai->max_width * ai->param / ai->max_param;
+    if (ai->max_width > 0 && w > 0) ai->orig_pos.w = w;
 
     ai->scalePosWH( screen_ratio1, screen_ratio2 );
     ai->allocImage( ai->pos.w, ai->pos.h, texture_format );
@@ -3853,3 +3909,206 @@ int ONScripter::allsphideCommand()
     return RET_CONTINUE;
 }
 
+void ONScripter::NSDCallCommand(int texnum, const char *str1, int proc, const char *str2)
+{
+    if (texnum < 0 || texnum >= MAX_TEXTURE_NUM) return;
+
+    NSDLoadCommand(texnum, str1);
+
+    if (proc == 1){ // deffontd.dll, Font
+        FontInfo f_info = sentence_font;
+        f_info.rubyon_flag = false;
+        f_info.setTateyokoMode(0);
+        f_info.top_xy[0] = f_info.top_xy[1] = 0;
+        f_info.clear();
+            
+        f_info.ttf_font[0] = NULL;
+        f_info.ttf_font[1] = NULL;
+        
+        RubyStruct rs_old = ruby_struct;
+        ruby_struct.font_name = NULL;
+
+        const char *start[8];
+        start[0] = str2;
+        int i=0, num_param=1;
+        while(str2[i] && num_param<8) if (str2[i++]==',') start[num_param++] = str2+i;
+        switch(num_param){
+          case 8: case 7:
+            for (i=0 ; i<2 ; i++){
+                int j=0;
+                ruby_struct.font_size_xy[i] = 0;
+                while(start[4+i][j]>='0' && start[4+i][j]<='9')
+                    ruby_struct.font_size_xy[i] = ruby_struct.font_size_xy[i]*10 + start[4+i][j++] - '0';
+            }
+          case 5:
+            i=0;
+            while(start[3][i] != ',' && start[3][i] != 0){
+                if (start[3][i++] == 'r'){
+                    f_info.rubyon_flag = true;
+                    break;
+                }
+            }
+          case 4: case 3:
+            for (i=0 ; i<2 ; i++){
+                int j=0;
+                f_info.font_size_xy[i] = 0;
+                while(start[i][j]>='0' && start[i][j]<='9')
+                    f_info.font_size_xy[i] = f_info.font_size_xy[i]*10 + start[i][j++] - '0';
+            }
+            f_info.font_size_xy[0] *= 2;
+            f_info.pitch_xy[0] = f_info.font_size_xy[0];
+            f_info.pitch_xy[1] = f_info.font_size_xy[1];
+        }
+        uchar3 color = {0xff, 0xff, 0xff};
+        char *p = (char*)start[num_param-1], *p2 = (char*)start[num_param-1];
+        while(*p){
+            if (IS_TWO_BYTE(*p)){
+                *p2++ = *p++;
+                *p2++ = *p++;
+            }
+            else if (*p == '%'){
+                p++;
+                if (*p == '%' || *p == '(' || *p == ')') // fix me later
+                    *p2++ = *p++;
+                else if (*p == '#'){
+                    readColor( &color, p );
+                    p += 7;
+                }
+            }
+            else{
+                *p2++ = *p++;
+            }
+        }
+        *p2 = 0;
+
+        drawString(start[num_param-1], color, &f_info, false, NULL, NULL, &texture_info[texnum], false);
+
+        ruby_struct = rs_old;
+    }
+}
+
+void ONScripter::NSDDeleteCommand(int texnum)
+{
+    if (texnum < 0 || texnum >= MAX_TEXTURE_NUM) return;
+
+    texture_info[texnum].remove();
+}
+
+void ONScripter::NSDLoadCommand(int texnum, const char *str)
+{
+    if (texnum < 0 || texnum >= MAX_TEXTURE_NUM) return;
+
+    AnimationInfo *ai = &texture_info[texnum];
+    if (str[0] != '*'){
+        ai->setImageName( str );
+        ai->trans = -1;
+    }
+    else{
+        int c=1, n=0, val[6]={0}; // val[6] = {width, height, R, G, B, alpha}
+
+        while(str[c] != 0 && n<6){
+            if (str[c] >= '0' && str[c] <= '9')
+                val[n] = val[n]*10 + str[c] - '0';
+            if (str[c] == ',') n++;
+            c++;
+        }
+
+        char buf[32];
+        sprintf(buf, ">%d,%d,#%02x%02x%02x", val[0], val[1], val[2], val[3], val[4]);
+        ai->setImageName( buf );
+        ai->default_alpha = val[5];
+    }
+
+    ai->visible = true;
+    parseTaggedString( ai );
+    ai->trans_mode = AnimationInfo::TRANS_ALPHA;
+    setupAnimationInfo( ai );
+}
+
+void ONScripter::NSDPresentRectCommand(int x1, int y1, int x2, int y2)
+{
+    SDL_Rect clip_src;
+    clip_src.x = x1;
+    clip_src.y = y1;
+    clip_src.w = x2-x1+1;
+    clip_src.h = y2-y1+1;
+    
+    SDL_Rect clip;
+    clip.x = clip.y = 0;
+    clip.w = accumulation_surface->w;
+    clip.h = accumulation_surface->h;
+    if ( AnimationInfo::doClipping( &clip, &clip_src ) ) return;
+
+    for (int i=MAX_TEXTURE_NUM-1 ; i>0 ; i--)
+        if (texture_info[i].image_surface && texture_info[i].visible)
+            drawTaggedSurface( accumulation_surface, &texture_info[i], clip );
+
+    flushDirect(clip, REFRESH_NONE_MODE);
+}
+
+void ONScripter::NSDSp2Command(int texnum, int dcx, int dcy, int sx, int sy, int w, int h,
+                               int xs, int ys, int rot, int alpha)
+{
+    if (texnum < 0 || texnum >= MAX_TEXTURE_NUM) return;
+
+    AnimationInfo *ai = &texture_info[texnum];
+    ai->orig_pos.x = dcx;
+    ai->orig_pos.y = dcy;
+    ai->scalePosXY( screen_ratio1, screen_ratio2 );
+    ai->scale_x = xs;
+    ai->scale_y = ys;
+    ai->rot     = rot;
+    ai->trans = alpha;
+
+    ai->affine_pos.x = sx*screen_ratio1/screen_ratio2;
+    ai->affine_pos.y = sy*screen_ratio1/screen_ratio2;
+    ai->affine_pos.w =  w*screen_ratio1/screen_ratio2;
+    ai->affine_pos.h =  h*screen_ratio1/screen_ratio2;
+    ai->calcAffineMatrix();
+    ai->affine_flag = true;
+}
+
+void ONScripter::NSDSetSpriteCommand(int spnum, int texnum, const char *tag)
+{
+    if (spnum < 0 || spnum >= MAX_SPRITE_NUM) return;
+    if (texnum < 0 || texnum >= MAX_TEXTURE_NUM) return;
+
+    AnimationInfo *ais = &sprite_info[spnum];
+    AnimationInfo *ait = &texture_info[texnum];
+    *ais = *ait;
+    ais->visible = true;
+
+    char buf[256];
+    if (tag)
+        sprintf(buf, "%s%s", tag, ait->file_name);
+    else
+        sprintf(buf, ":a;%s", ait->file_name);
+    ais->setImageName(buf);
+    parseTaggedString(ais);
+
+    if (ais->affine_flag){
+        ais->orig_pos.x = ait->orig_pos.x;
+        if (ait->num_of_cells > 0)
+            ais->orig_pos.x -= ait->orig_pos.w/ait->num_of_cells/2;
+        else
+            ais->orig_pos.x -= ait->orig_pos.w/2;
+        ais->orig_pos.y = ait->orig_pos.y - ait->orig_pos.h/2;
+        ais->scalePosXY( screen_ratio1, screen_ratio2 );
+        ais->affine_flag = false;
+    }
+}
+
+void ONScripter::stopSMPEG()
+{
+#if defined(USE_SMPEG)
+    if (layer_smpeg_sample){
+        SMPEG_stop( layer_smpeg_sample );
+        SMPEG_delete( layer_smpeg_sample );
+        layer_smpeg_sample = NULL;
+    }
+    if (layer_smpeg_buffer){
+        delete[] layer_smpeg_buffer;
+        layer_smpeg_buffer = NULL;
+    }
+#endif        
+}

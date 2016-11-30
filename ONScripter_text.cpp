@@ -72,7 +72,7 @@ void ONScripter::shiftHalfPixelY(SDL_Surface *surface)
     SDL_UnlockSurface( surface );
 }
 
-void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char* text, int xy[2], bool shadow_flag, AnimationInfo *cache_info, SDL_Rect *clip, SDL_Rect &dst_rect )
+void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char* text, int xy[2], AnimationInfo *cache_info, SDL_Rect *clip, SDL_Rect &dst_rect )
 {
     unsigned short unicode;
     if (IS_TWO_BYTE(text[0])){
@@ -98,8 +98,16 @@ void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color 
     static SDL_Color fcol={0xff, 0xff, 0xff}, bcol={0, 0, 0};
     SDL_Surface *tmp_surface = TTF_RenderGlyph_Shaded((TTF_Font*)info->ttf_font[0], unicode, fcol, bcol);
     
+    SDL_Color scolor = {0, 0, 0};
     SDL_Surface *tmp_surface_s = tmp_surface;
-    if (shadow_flag && render_font_outline){
+    if (info->is_shadow && render_font_outline){
+        unsigned char max_color = color.r;
+        if (max_color < color.g) max_color = color.g;
+        if (max_color < color.b) max_color = color.b;
+        if (max_color < 0x80) scolor.r = 0xff;
+        else                  scolor.r = 0;
+        scolor.g = scolor.b = scolor.r;
+
         tmp_surface_s = TTF_RenderGlyph_Shaded((TTF_Font*)info->ttf_font[1], unicode, fcol, bcol);
         if (tmp_surface && tmp_surface_s){
             if ((tmp_surface_s->w-tmp_surface->w) & 1) shiftHalfPixelX(tmp_surface_s);
@@ -108,7 +116,7 @@ void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color 
     }
 
     bool rotate_flag = false;
-    if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_ROTATION_REQUIRED(text) ) rotate_flag = true;    
+    if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_ROTATION_REQUIRED(text) ) rotate_flag = true;
     
 #if !SDL_VERSION_ATLEAST(2, 0, 0)
     dst_rect.x = xy[0] + minx;
@@ -126,7 +134,7 @@ void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color 
         dst_rect.y -= info->font_size_xy[0]/2;
     }
 
-    if (shadow_flag && tmp_surface_s){
+    if (info->is_shadow && tmp_surface_s){
         SDL_Rect dst_rect_s = dst_rect;
         if (render_font_outline){
             dst_rect_s.x -= (tmp_surface_s->w - tmp_surface->w)/2;
@@ -147,10 +155,10 @@ void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color 
         }
 
         if (cache_info)
-            cache_info->blendText( tmp_surface_s, dst_rect_s.x, dst_rect_s.y, bcol, clip, rotate_flag );
+            cache_info->blendText( tmp_surface_s, dst_rect_s.x, dst_rect_s.y, scolor, clip, rotate_flag );
         
         if (dst_surface)
-            alphaBlendText( dst_surface, dst_rect_s, tmp_surface_s, bcol, clip, rotate_flag );
+            alphaBlendText( dst_surface, dst_rect_s, tmp_surface_s, scolor, clip, rotate_flag );
     }
 
     if ( tmp_surface ){
@@ -203,8 +211,8 @@ void ONScripter::drawChar( char* text, FontInfo *info, bool flush_flag, bool loo
         }
     }
 
-    info->old_xy[0] = info->x();
-    info->old_xy[1] = info->y();
+    info->old_xy[0] = info->x(false);
+    info->old_xy[1] = info->y(false);
 
     char text2[2] = {text[0], 0};
     if (IS_TWO_BYTE(text[0])) text2[1] = text[1];
@@ -216,7 +224,7 @@ void ONScripter::drawChar( char* text, FontInfo *info, bool flush_flag, bool loo
     
         SDL_Color color = {info->color[0], info->color[1], info->color[2]};
         SDL_Rect dst_rect;
-        drawGlyph( surface, info, color, text2, xy, info->is_shadow, cache_info, clip, dst_rect );
+        drawGlyph( surface, info, color, text2, xy, cache_info, clip, dst_rect );
 
         if ( surface == accumulation_surface &&
              !flush_flag &&
@@ -248,7 +256,7 @@ void ONScripter::drawChar( char* text, FontInfo *info, bool flush_flag, bool loo
     }
 }
 
-void ONScripter::drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect, AnimationInfo *cache_info )
+void ONScripter::drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect, AnimationInfo *cache_info, bool pack_hankaku)
 {
     int i;
 
@@ -329,8 +337,8 @@ void ONScripter::drawString( const char *str, uchar3 color, FontInfo *info, bool
         }
         else if (*str){
             text[0] = *str++;
-            if (*str && *str != 0x0a) text[1] = *str++;
-            else                      text[1] = 0;
+            if (*str && *str != 0x0a && pack_hankaku) text[1] = *str++;
+            else                                      text[1] = 0;
             drawChar( text, info, false, false, surface, cache_info );
         }
     }
@@ -667,8 +675,8 @@ int ONScripter::textCommand()
     if (buf[string_buffer_offset] == '[')
         string_buffer_offset++;
     else if (zenkakko_flag && 
-             buf[string_buffer_offset  ] == "【"[0] && 
-             buf[string_buffer_offset+1] == "【"[1])
+             buf[string_buffer_offset  ] == coding2utf16->bracket[0] &&
+             buf[string_buffer_offset+1] == coding2utf16->bracket[1])
         string_buffer_offset += 2;
     else
         tag_flag = false;
@@ -677,8 +685,8 @@ int ONScripter::textCommand()
     int end_offset = start_offset;
     while (tag_flag && buf[string_buffer_offset]){
         if (zenkakko_flag && 
-            buf[string_buffer_offset  ] == "】"[0] && 
-            buf[string_buffer_offset+1] == "】"[1]){
+            buf[string_buffer_offset  ] == coding2utf16->bracket[2] && 
+            buf[string_buffer_offset+1] == coding2utf16->bracket[3]){
             end_offset = string_buffer_offset;
             string_buffer_offset += 2;
             break;
@@ -696,7 +704,7 @@ int ONScripter::textCommand()
 
     if (pretextgosub_label && 
         (!pagetag_flag || page_enter_status == 0) &&
-        line_enter_status == 0){ // TODO: 在textgosub跳转时，line_enter_status数值错误
+        line_enter_status == 0){
 
         if (current_page->tag) delete[] current_page->tag;
         if (end_offset > start_offset){
@@ -719,9 +727,15 @@ int ONScripter::textCommand()
 
     enterTextDisplayMode();
 
-    line_enter_status = 2;
-    if (pagetag_flag) page_enter_status = 1;
-
+#ifdef USE_LUA
+    if (lua_handler.isCallbackEnabled(LUAHandler::LUA_TEXT))
+    {
+        if (lua_handler.callFunction(true, "text"))
+            errorAndExit( lua_handler.error_str );
+        processEOT();
+    }
+    else
+#endif    
     while(processText());
 
     return RET_CONTINUE;
@@ -733,7 +747,7 @@ bool ONScripter::checkLineBreak(const char *buf, FontInfo *fi)
     
     // check start kinsoku
     if (isStartKinsoku( buf+2 ) ||
-        buf[2]=='_' && isStartKinsoku( buf+3 )){
+        (buf[2]=='_' && isStartKinsoku( buf+3 ))){
         const char *buf2 = buf;
         if (buf2[2] == '_') buf2++;
         int i = 2;
@@ -777,7 +791,7 @@ void ONScripter::processEOT()
         sentence_font.newLine();
     }
 
-    if (!new_line_skip_flag && !pagetag_flag) line_enter_status = 0;
+    if (!new_line_skip_flag && !pagetag_flag && line_enter_status == 2) line_enter_status = 0;
 }
 
 bool ONScripter::processText()
@@ -795,6 +809,9 @@ bool ONScripter::processText()
         processEOT();
         return false;
     }
+
+    line_enter_status = 2;
+    if (pagetag_flag) page_enter_status = 1;
 
     new_line_skip_flag = false;
     

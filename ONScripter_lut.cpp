@@ -90,7 +90,7 @@ static ONScripter::FuncLUT func_lut[] = {
     {"setwindow3",		&ONScripter::setwindow3Command},
     {"setwindow2",		&ONScripter::setwindow2Command},
     {"setwindow",		&ONScripter::setwindowCommand},
-    {"setlayer",        &ONScripter::setlayerCommand},
+    {"setlayer",		&ONScripter::setlayerCommand},
     {"setkinsoku",		&ONScripter::setkinsokuCommand},
     {"setcursor",		&ONScripter::setcursorCommand},
     {"selnum",			&ONScripter::selectCommand},
@@ -102,6 +102,7 @@ static ONScripter::FuncLUT func_lut[] = {
     {"savetime",		&ONScripter::savetimeCommand},
     {"savescreenshot2",	&ONScripter::savescreenshotCommand},
     {"savescreenshot",	&ONScripter::savescreenshotCommand},
+    {"savepoint",		&ONScripter::savepointCommand},
     {"saveon",			&ONScripter::saveonCommand},
     {"saveoff",			&ONScripter::saveoffCommand},
     {"savenumber",		&ONScripter::savenumberCommand},
@@ -152,7 +153,6 @@ static ONScripter::FuncLUT func_lut[] = {
     {"ns2",				&ONScripter::nsaCommand},
     {"nega",			&ONScripter::negaCommand},
     {"nextcsel",		&ONScripter::nextcselCommand},
-
 
     {"mul",				&ONScripter::mulCommand},
     {"msp2",			&ONScripter::mspCommand},
@@ -220,7 +220,7 @@ static ONScripter::FuncLUT func_lut[] = {
     {"linepage",		&ONScripter::linepageCommand},
     {"len",				&ONScripter::lenCommand},
     {"ld",				&ONScripter::ldCommand},
-    {"layermessage",    &ONScripter::layermessageCommand},
+    {"layermessage",	&ONScripter::layermessageCommand},
     {"labellog",		&ONScripter::labellogCommand},
 
     {"kinsoku",			&ONScripter::kinsokuCommand},
@@ -273,6 +273,7 @@ static ONScripter::FuncLUT func_lut[] = {
     {"getmousepos",		&ONScripter::getmouseposCommand},
     {"getmouseover",	&ONScripter::getmouseoverCommand},
     {"getmclick",		&ONScripter::getmclickCommand},
+    {"getlogtext",		&ONScripter::getlogCommand},
     {"getlog",			&ONScripter::getlogCommand},
     {"getinsert",		&ONScripter::getinsertCommand},
     {"getfunction",		&ONScripter::getfunctionCommand},
@@ -381,6 +382,7 @@ static ONScripter::FuncLUT func_lut[] = {
     {"bar",				&ONScripter::barCommand},
 
     {"avi",				&ONScripter::aviCommand},
+    {"autosaveoff",		&ONScripter::autosaveoffCommand},
     {"automode_time",	&ONScripter::automode_timeCommand},
     {"automode",		&ONScripter::mode_extCommand},
     {"autoclick",		&ONScripter::autoclickCommand},

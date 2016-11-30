@@ -2,7 +2,8 @@
 /*
  *  DirectReader.h - Reader from independent files
  *
- *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
+ *            (C) 2014-2016 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -48,6 +49,7 @@ public:
 
     static void convertCodingToEUC( char *buf );
     static void convertCodingToUTF8( char *dst_buf, const char *src_buf );
+    static void convertFromUTF8ToCoding( char *dst_buf, const char *src_buf );
     
 protected:
     char *file_full_path;

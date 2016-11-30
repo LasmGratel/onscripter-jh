@@ -2,7 +2,7 @@
  * 
  *  ScriptParser.h - Define block parser of ONScripter
  *
- *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
  *            (C) 2014-2016 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
@@ -40,6 +40,9 @@
 #include "LUAHandler.h"
 #endif
 #include "coding2utf16.h"
+#ifdef USE_BUILTIN_LAYER_EFFECTS
+#include "builtin_layer.h"
+#endif
 
 extern Coding2UTF16 *coding2utf16;
 
@@ -70,6 +73,7 @@ public:
     int  openScript();
     void setCurrentLabel( const char *label );
     void gosubReal( const char *label, char *next_script, bool textgosub_flag=false );
+    int getStringBufferOffset(){return string_buffer_offset;};
 
     FILE *fopen(const char *path, const char *mode, bool use_save_dir=false);
     void saveGlovalData();
@@ -163,6 +167,7 @@ public:
     int clickvoiceCommand();
     int clickstrCommand();
     int breakCommand();
+    int autosaveoffCommand();
     int atoiCommand();
     int arcCommand();
     int addkinsokuCommand();
@@ -240,6 +245,7 @@ protected:
     bool filelog_flag;
     bool kidokuskip_flag;
     bool kidokumode_flag;
+    bool autosaveoff_flag;
 
     int z_order;
     bool rmode_flag;
@@ -282,7 +288,7 @@ protected:
     void setStr( char **dst, const char *src, int num=-1 );
     
     void readToken();
-
+    
     /* ---------------------------------------- */
     /* Effect related variables */
     struct EffectLink{

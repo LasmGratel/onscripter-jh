@@ -2,8 +2,8 @@
  *
  *  BaseReader.h - Base class of archive reader
  *
- *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
- *            (C) 2014 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
+ *            (C) 2014-2016 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -26,6 +26,10 @@
 #define __BASE_READER_H__
 
 #include <stdio.h>
+#ifdef ANDROID
+extern "C" FILE *fopen_ons(const char *str, const char *mode);
+#define fopen fopen_ons
+#endif
 
 #ifndef SEEK_END
 #define SEEK_END 2

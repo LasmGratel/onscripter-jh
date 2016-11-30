@@ -2,7 +2,7 @@
 *
 *  sjis2utf16.h
 *
-*  Copyright (C) 2014 jh10001 <jh10001@live.cn>
+*  Copyright (C) 2014-2016 jh10001 <jh10001@live.cn>
 *
 *  This program is free software; you can redistribute it and/or modify
 *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ class SJIS2UTF16 : public Coding2UTF16 {
 public:
   void init() final;
   uint16_t conv2UTF16(uint16_t) const final;
-  ~SJIS2UTF16();
+  uint16_t convUTF162Coding(uint16_t) const final;
 };
 
 #endif

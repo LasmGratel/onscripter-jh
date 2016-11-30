@@ -28,6 +28,7 @@ class Coding2UTF16{
 public:
   static char space[4];
   static char minus[4];
+  static char bracket[8];
   static char num_str[24];
   static char DEFAULT_START_KINSOKU[40];
   static char DEFAULT_END_KINSOKU[12];
@@ -46,9 +47,10 @@ public:
   static char MESSAGE_CANCEL[12];
   virtual void init() = 0;
   virtual uint16_t conv2UTF16(uint16_t) const = 0;
+  virtual uint16_t convUTF162Coding(uint16_t) const = 0;
   int convUTF16ToUTF8(unsigned char*,uint16_t) const;
+  unsigned short convUTF8ToUTF16(const char**);
   virtual ~Coding2UTF16() {};
 };
 
 #endif
-
