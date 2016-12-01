@@ -189,7 +189,7 @@ void ONScripter::initSDL()
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(WIN32)
     int window_flag = SDL_WINDOW_SHOWN;
 #elif defined(MACOSX) || (defined(LINUX) && !defined(ANDROID))
     int window_flag = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;

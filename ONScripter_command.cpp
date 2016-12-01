@@ -3284,7 +3284,7 @@ int ONScripter::captionCommand()
     char *buf2 = new char[len*3+1];
 #if defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208) || SDL_VERSION_ATLEAST(2,0,0)
     DirectReader::convertCodingToUTF8(buf2, buf);
-#elif defined(LINUX) || (defined(_WIN32) && defined(UTF8_CAPTION))
+#elif defined(LINUX) || ((defined(WIN32) || defined(_WIN32)) && defined(UTF8_CAPTION))
 #if defined(UTF8_CAPTION)
     DirectReader::convertCodingToUTF8(buf2, buf);
 #else

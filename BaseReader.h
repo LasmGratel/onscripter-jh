@@ -37,7 +37,7 @@ extern "C" FILE *fopen_ons(const char *str, const char *mode);
 
 #if defined(LINUX) || defined(MACOSX)
 #define DELIMITER '/'
-#elif defined(WIN32)
+#elif defined(WIN32) || defined(_WIN32)
 #define DELIMITER '\\'
 #elif defined(MACOS9)
 #define DELIMITER ':'

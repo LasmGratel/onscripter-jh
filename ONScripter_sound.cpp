@@ -360,7 +360,12 @@ int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag)
     SDL_DestroyMutex(oi.mutex);
     texture = SDL_CreateTextureFromSurface(renderer, accumulation_surface);
 #elif !defined(WINRT) && (defined(WIN32) || defined(_WIN32))
-    system(filename);
+    char filename2[256];
+    strcpy(filename2, filename);
+    for (unsigned int i=0; i<strlen(filename2); i++)
+        if (filename2[i] == '/' || filename2[i] == '\\')
+            filename2[i] = DELIMITER;
+    system(filename2);
 #elif !defined(IOS)
     utils::printError( "mpegplay command is disabled.\n" );
 #endif
