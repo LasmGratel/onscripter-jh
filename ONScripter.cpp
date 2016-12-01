@@ -690,6 +690,7 @@ void ONScripter::reset()
     
     resetSub();
     if (blt_texture != NULL) SDL_DestroyTexture(blt_texture);
+    blt_texture = NULL;
 }
 
 void ONScripter::resetSub()

@@ -470,7 +470,7 @@ int NSOggFade(lua_State *state)
     if (flag)
         sprintf(cmd_buf, "_dwavestop %d", no);
     else
-        sprintf(cmd_buf, "_chvol %d %d", no, endvol);
+        sprintf(cmd_buf, "_chvol %d %d", no, (endvol+10000)/100);
     lh->sh->enterExternalScript(cmd_buf);
     lh->ons->runScript();
     lh->sh->leaveExternalScript();
@@ -521,7 +521,7 @@ int NSOggVolume(lua_State *state)
     int no = luaL_checkinteger( state, 1 );
     int val = luaL_checkinteger( state, 2 );
 
-    sprintf(cmd_buf, "_chvol %d %d", no, val);
+    sprintf(cmd_buf, "_chvol %d %d", no, (val+10000)/100);
     lh->sh->enterExternalScript(cmd_buf);
     lh->ons->runScript();
     lh->sh->leaveExternalScript();

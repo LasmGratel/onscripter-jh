@@ -3500,6 +3500,7 @@ int ONScripter::btndefCommand()
 
         btndef_info.remove();
         if (blt_texture != NULL) SDL_DestroyTexture(blt_texture);
+        blt_texture = NULL;
 
         if ( buf[0] != '\0' ){
             btndef_info.setImageName( buf );
@@ -3619,7 +3620,7 @@ static SDL_Texture* createMaximumTexture(SDL_Renderer *renderer, SDL_Rect &blt_r
 int ONScripter::bltCommand()
 {
     Sint16 dx,dy,sx,sy;
-    Uint16 dw,dh,sw,sh;
+    Sint16 dw,dh,sw,sh;
 
     dx = script_h.readInt() * screen_ratio1 / screen_ratio2;
     dy = script_h.readInt() * screen_ratio1 / screen_ratio2;
@@ -3633,7 +3634,13 @@ int ONScripter::bltCommand()
     if (btndef_info.image_surface == NULL) return RET_CONTINUE;
     if (dw == 0 || dh == 0 || sw == 0 || sh == 0) return RET_CONTINUE;
     
-    if (sx >= 0 && sy >= 0 && sw >= 0 && sh >= 0 && sx + sw <= btndef_info.image_surface->w && sy + sh <= btndef_info.image_surface->h) {
+    if (sx >= 0 && sy >= 0 && sw > 0 && sh > 0) {
+        if (sx + sw > btndef_info.image_surface->w) sw = btndef_info.image_surface->w - sx;
+        if (sy + sh > btndef_info.image_surface->h) sh = btndef_info.image_surface->h - sy;
+        if (dx + dw > screen_width) dw = screen_width - dx;
+        else if (dx + dw < 0) dx = -dx;
+        if (dy + dh > screen_height) dh = screen_height - dy;
+        else if (dy + dh < 0) dh = -dy;
         SDL_Rect src_rect = {sx,sy,sw,sh};
         SDL_Rect dst_rect = {dx,dy,dw,dh};
 

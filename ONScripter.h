@@ -553,7 +553,7 @@ private:
     bool keyDownEvent( SDL_KeyboardEvent *event );
     void keyUpEvent( SDL_KeyboardEvent *event );
     bool keyPressEvent( SDL_KeyboardEvent *event );
-    void timerEvent();
+    void timerEvent(bool init_flag);
 #if (defined(IOS) || defined(ANDROID) || defined(WINRT)) && SDL_VERSION_ATLEAST(2, 0, 0)
     bool convTouchKey(SDL_TouchFingerEvent &finger);
 #endif

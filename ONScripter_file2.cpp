@@ -323,6 +323,8 @@ int ONScripter::loadSaveFile2( int file_version )
     readInt(); // 0
     readInt(); // 1
     btndef_info.remove();
+    if (blt_texture != NULL) SDL_DestroyTexture(blt_texture);
+    blt_texture = NULL;
     readStr( &btndef_info.image_name );
     if ( btndef_info.image_name && btndef_info.image_name[0] != '\0' ){
         parseTaggedString( &btndef_info );
