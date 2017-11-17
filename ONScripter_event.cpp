@@ -48,11 +48,7 @@ static SDL_TimerID timer_id = NULL;
 SDL_TimerID timer_cdaudio_id = NULL;
 SDL_TimerID timer_bgmfade_id = NULL;
 
-#if SDL_VERSION_ATLEAST(2,0,0)
 typedef SDL_Keycode ONS_Key;
-#else
-typedef SDLKey ONS_Key;
-#endif
 
 bool ext_music_play_once_flag = false;
 
@@ -351,11 +347,8 @@ void ONScripter::flushEvent()
 void ONScripter::removeEvent(int type)
 {
     SDL_Event event;
-#if SDL_VERSION_ATLEAST(1, 3, 0)
+
     while(SDL_PeepEvents( &event, 1, SDL_GETEVENT, type, type) > 0);
-#else
-    while(SDL_PeepEvents( &event, 1, SDL_GETEVENT, SDL_EVENTMASK(type) ) > 0 );
-#endif
 }
 
 void ONScripter::removeBGMFadeEvent()
@@ -507,28 +500,6 @@ bool ONScripter::mousePressEvent( SDL_MouseButtonEvent *event )
         if ( event->type == SDL_MOUSEBUTTONDOWN )
             current_button_state.down_flag = true;
     }
-#if SDL_VERSION_ATLEAST(1, 2, 5) && !SDL_VERSION_ATLEAST(2, 0, 0)
-    else if (event->button == SDL_BUTTON_WHEELUP &&
-             (bexec_flag ||
-              (event_mode & WAIT_TEXT_MODE) ||
-              (usewheel_flag && event_mode & WAIT_BUTTON_MODE) || 
-              system_menu_mode == SYSTEM_LOOKBACK)){
-        current_button_state.button = -2;
-        sprintf(current_button_state.str, "WHEELUP");
-        if (event_mode & WAIT_TEXT_MODE) system_menu_mode = SYSTEM_LOOKBACK;
-    }
-    else if ( event->button == SDL_BUTTON_WHEELDOWN &&
-              (bexec_flag ||
-               (enable_wheeldown_advance_flag && event_mode & WAIT_TEXT_MODE) ||
-               (usewheel_flag && event_mode & WAIT_BUTTON_MODE) || 
-               system_menu_mode == SYSTEM_LOOKBACK ) ){
-        if (event_mode & WAIT_TEXT_MODE)
-            current_button_state.button = 0;
-        else
-            current_button_state.button = -3;
-        sprintf(current_button_state.str, "WHEELDOWN");
-    }
-#endif
     else if ( getmclick_flag && event->button == SDL_BUTTON_MIDDLE ){
         current_button_state.button = -70;
         sprintf(current_button_state.str, "MCLICK");
@@ -547,7 +518,6 @@ bool ONScripter::mousePressEvent( SDL_MouseButtonEvent *event )
     return false;
 }
 
-#if SDL_VERSION_ATLEAST(2,0,0)
 bool ONScripter::mouseWheelEvent(SDL_MouseWheelEvent *event)
 {
     if (variable_edit_mode) return false;
@@ -594,7 +564,6 @@ bool ONScripter::mouseWheelEvent(SDL_MouseWheelEvent *event)
 
     return false;
 }
-#endif
 
 void ONScripter::variableEditMode( SDL_KeyboardEvent *event )
 {
@@ -626,9 +595,7 @@ void ONScripter::variableEditMode( SDL_KeyboardEvent *event )
         variable_edit_mode = EDIT_VARIABLE_INDEX_MODE;
         variable_edit_num = 0;
         break;
-#if !SDL_VERSION_ATLEAST(2,0,0)
-#define SDLK_KP_ SDLK_KP
-#endif
+
         enum {
             ONS_KP_0 = SDLK_KP_0,
             ONS_KP_1 = SDLK_KP_1,
@@ -641,9 +608,7 @@ void ONScripter::variableEditMode( SDL_KeyboardEvent *event )
             ONS_KP_8 = SDLK_KP_8,
             ONS_KP_9 = SDLK_KP_9
         };
-#if !SDL_VERSION_ATLEAST(2,0,0)
-#undef SDLK_KP_
-#endif
+
       case SDLK_9: case ONS_KP_9: variable_edit_num = variable_edit_num * 10 + 9; break;
       case SDLK_8: case ONS_KP_8: variable_edit_num = variable_edit_num * 10 + 8; break;
       case SDLK_7: case ONS_KP_7: variable_edit_num = variable_edit_num * 10 + 7; break;
@@ -1207,7 +1172,7 @@ void ONScripter::timerEvent(bool init_flag)
     }
 }
 
-#if (defined(IOS) || defined(ANDROID) || defined(WINRT)) && SDL_VERSION_ATLEAST(2, 0, 0)
+#if (defined(IOS) || defined(ANDROID) || defined(WINRT))
 //TODO: ÉÏÏÂ×óÓÒ¼üÄ£Äâ
 SDL_MouseWheelEvent transTouchKey(SDL_TouchFingerEvent &finger) {
     static struct FingerPoint {
@@ -1254,21 +1219,15 @@ void ONScripter::runEventLoop()
         bool ret = false;
         // ignore continous SDL_MOUSEMOTION
         while (event.type == SDL_MOUSEMOTION || event.type == SDL_FINGERMOTION) {
-#if SDL_VERSION_ATLEAST(1, 3, 0)
             if ( SDL_PeepEvents( &tmp_event, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT ) == 0 ) break;
             if (tmp_event.type != SDL_MOUSEMOTION && tmp_event.type != SDL_FINGERMOTION) break;
             SDL_PeepEvents( &tmp_event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT );
-#else
-            if ( SDL_PeepEvents( &tmp_event, 1, SDL_PEEKEVENT, SDL_ALLEVENTS ) == 0 ) break;
-            if (tmp_event.type != SDL_MOUSEMOTION) break;
-            SDL_PeepEvents( &tmp_event, 1, SDL_GETEVENT, SDL_ALLEVENTS );
-#endif
+
             event = tmp_event;
         }
 
         switch (event.type) {
 #if defined(IOS) || defined(ANDROID) || defined(WINRT)
-#if SDL_VERSION_ATLEAST(2, 0, 0)
         case SDL_FINGERMOTION:
         {
             if (!btndown_flag && convTouchKey(event.tfinger)) return;
@@ -1330,72 +1289,8 @@ void ONScripter::runEventLoop()
             if (ret) return;
         }
             break;
-#else
-          case SDL_FINGERMOTION:
-            {
-                SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
-                tmp_event.motion.x = device_width *event.tfinger.x/touch->xres - (device_width -screen_device_width)/2;
-                tmp_event.motion.y = device_height*event.tfinger.y/touch->yres - (device_height-screen_device_height)/2;
-                if (mouseMoveEvent( &tmp_event.motion )) return;
-                if (btndown_flag){
-                    event.button.type = SDL_MOUSEBUTTONDOWN;
-                    event.button.button = SDL_BUTTON_LEFT;
-                    if (touch->num_fingers >= 2)
-                        event.button.button = SDL_BUTTON_RIGHT;
-                    event.button.x = tmp_event.motion.x;
-                    event.button.y = tmp_event.motion.y;
-                    ret = mousePressEvent( &event.button );
-                    if (ret) return;
-                }
-            }
-            break;
-          case SDL_FINGERDOWN:
-          {
-                SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
-                tmp_event.motion.x = device_width *event.tfinger.x/touch->xres - (device_width -screen_device_width)/2;
-                tmp_event.motion.y = device_height*event.tfinger.y/touch->yres - (device_height-screen_device_height)/2;
-                if (mouseMoveEvent( &tmp_event.motion )) return;
-          }
-            if ( btndown_flag ){
-                SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
-                tmp_event.button.type = SDL_MOUSEBUTTONDOWN;
-                tmp_event.button.button = SDL_BUTTON_LEFT;
-                if (touch->num_fingers >= 2)
-                    tmp_event.button.button = SDL_BUTTON_RIGHT;
-                tmp_event.button.x = device_width *event.tfinger.x/touch->xres - (device_width -screen_device_width)/2;
-                tmp_event.button.y = device_height*event.tfinger.y/touch->yres - (device_height-screen_device_height)/2;
-                ret = mousePressEvent( &tmp_event.button );
-            }
-            {
-                SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
-                num_fingers = touch->num_fingers;
-                if (num_fingers >= 3){
-                    tmp_event.key.keysym.sym = SDLK_LCTRL;
-                    ret |= keyDownEvent( &tmp_event.key );
-                }
-            }
-            if (ret) return;
-            break;
-          case SDL_FINGERUP:
-            if (num_fingers == 0) break;
-            {
-                SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
-                tmp_event.button.type = SDL_MOUSEBUTTONUP;
-                tmp_event.button.button = SDL_BUTTON_LEFT;
-                if (touch->num_fingers >= 1)
-                    tmp_event.button.button = SDL_BUTTON_RIGHT;
-                tmp_event.button.x = device_width *event.tfinger.x/touch->xres - (device_width -screen_device_width)/2;
-                tmp_event.button.y = device_height*event.tfinger.y/touch->yres - (device_height-screen_device_height)/2;
-                ret = mousePressEvent( &tmp_event.button );
-            }
-            tmp_event.key.keysym.sym = SDLK_LCTRL;
-            keyUpEvent( &tmp_event.key );
-            num_fingers = 0;
-            if (ret) return;
-            break;
-#endif //SDL_VERSION_ATLEAST(2,0,0)
 #endif
-#if !defined(ANDROID) && !defined(IOS) && !defined(WINRT) && SDL_VERSION_ATLEAST(2,0,0)
+#if !defined(ANDROID) && !defined(IOS) && !defined(WINRT)
           case SDL_MOUSEMOTION:
             if (mouseMoveEvent( &event.motion )) return;
             if (btndown_flag){
@@ -1516,7 +1411,6 @@ void ONScripter::runEventLoop()
             }
 
             return;
-#if SDL_VERSION_ATLEAST(2,0,0)
           case SDL_WINDOWEVENT:  
               switch (event.window.event) {
               case SDL_WINDOWEVENT_EXPOSED: SDL_RenderPresent(renderer); break;
@@ -1541,32 +1435,6 @@ void ONScripter::runEventLoop()
               }
               //SDL_RenderPresent(renderer);
               break;
-#else
-          case SDL_ACTIVEEVENT:
-            if ( !event.active.gain ){
-                // the mouse cursor leaves the window
-                SDL_MouseMotionEvent mevent;
-                mevent.x = screen_device_width;
-                mevent.y = screen_device_height;
-                mouseMoveEvent( &mevent );
-                break;
-            }
-#ifdef ANDROID
-            if (event.active.state == SDL_APPACTIVE){
-                screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
-                SDL_SetSurfaceBlendMode(screen_surface, SDL_BLENDMODE_NONE);
-                repaintCommand();
-                break;
-            }
-#endif
-          case SDL_VIDEOEXPOSE:
-#ifdef USE_SDL_RENDERER
-            SDL_RenderPresent(renderer);
-#else
-            SDL_UpdateRect( screen_surface, 0, 0, screen_width, screen_height );
-#endif
-            break;
-#endif
           case SDL_QUIT:
             endCommand();
             break;

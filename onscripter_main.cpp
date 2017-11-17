@@ -2,8 +2,8 @@
  * 
  *  onscripter_main.cpp -- main function of ONScripter
  *
- *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
- *            (C) 2014-2016 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2017 Ogapee. All rights reserved.
+ *            (C) 2014-2017 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -191,8 +191,11 @@ void playVideoAndroid(const char *filename)
 #undef fopen
 FILE *fopen_ons(const char *path, const char *mode)
 {
+    int mode2 = 0;
+    if (mode[0] == 'w') mode2 = 1;
+
     FILE *fp = fopen(path, mode);
-    if (fp) return fp;
+    if (fp || mode2 ==0) return fp;
     
     JNIEnv * jniEnv = NULL;
     jniVM->AttachCurrentThread(&jniEnv, NULL);
@@ -207,8 +210,6 @@ FILE *fopen_ons(const char *path, const char *mode)
         jc[i] = path[i];
     jcharArray jca = jniEnv->NewCharArray(strlen(path));
     jniEnv->SetCharArrayRegion(jca, 0, strlen(path), jc);
-    int mode2 = 0;
-    if (mode[0] == 'w') mode2 = 1;
     int fd = jniEnv->CallIntMethod( JavaONScripter, JavaGetFD, jca, mode2 );
     jniEnv->DeleteLocalRef(jca);
     delete[] jc;
@@ -300,19 +301,10 @@ void parseOption(int argc, char *argv[]) {
             else if (!strcmp(argv[0]+1, "-fontcache")){
                 ons.setFontCache();
             }
-#if defined(ANDROID) 
-#if SDL_VERSION_ATLEAST(2,0,0)
+#if defined(ANDROID)
             else if ( !strcmp(argv[0]+1, "-compatible") ){
                 ons.setCompatibilityMode();
             }
-#else
-            else if ( !strcmp( argv[0]+1, "-open-only" ) ){
-                argc--;
-                argv++;
-                if (ons.openScript()) exit(-1);
-                return 0;
-            }
-#endif //SDL_VERSION_ATLEAST(2,0,0)
             else if ( !strcmp(argv[0] + 1, "-save-dir") ){
                 argc--;
                 argv++;
@@ -331,13 +323,7 @@ void parseOption(int argc, char *argv[]) {
     }
 }
 
-#if (defined(QWS) || defined(ANDROID)) && !SDL_VERSION_ATLEAST(2,0,0)
-int SDL_main(int argc, char **argv)
-#elif defined(PSP)
-extern "C" int main(int argc, char **argv)
-#else
 int main(int argc, char *argv[])
-#endif
 {
     utils::printInfo("ONScripter-Jh version %s (%s, %d.%02d)\n", ONS_JH_VERSION, ONS_VERSION, NSC_VERSION / 100, NSC_VERSION % 100);
 

@@ -76,11 +76,7 @@ void ONScripter::calcRenderRect() {
 }
 
 void ONScripter::setCaption(const char *title, const char *iconstr) {
-#if SDL_VERSION_ATLEAST(2,0,0)
     SDL_SetWindowTitle(window, title);
-#else
-    SDL_WM_SetCaption(title, iconstr);
-#endif
 }
 
 void ONScripter::setDebugLevel(int debug) {
@@ -97,10 +93,6 @@ void ONScripter::initSDL()
         exit(-1);
     }
 
-#ifdef __OS2__
-    atexit(SDL_Quit_Wrapper); // work-around for OS/2
-#endif
-
 #ifdef USE_CDROM
     if( cdaudio_flag && SDL_InitSubSystem( SDL_INIT_CDROM ) < 0 ){
         utils::printError("Couldn't initialize CD-ROM: %s\n", SDL_GetError());
@@ -109,15 +101,11 @@ void ONScripter::initSDL()
 #endif
 
 #if !defined(IOS)
-#if defined(ANDROID) && SDL_VERSION_ATLEAST(2, 0, 0)
+#if defined(ANDROID)
     SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
 #endif
     if(SDL_InitSubSystem( SDL_INIT_JOYSTICK ) == 0 && SDL_JoystickOpen(0) != NULL)
         utils::printInfo("Initialize JOYSTICK\n");
-#endif
-    
-#if defined(PSP) || defined(IPODLINUX) || defined(GP2X) || defined(WINCE)
-    SDL_ShowCursor(SDL_DISABLE);
 #endif
 
     /* ---------------------------------------- */
@@ -127,17 +115,9 @@ void ONScripter::initSDL()
         exit(-1);
     }
 
-#if defined(BPP16)
-    screen_bpp = 16;
-#else
     screen_bpp = 32;
-#endif
     
-#if defined(PDA_WIDTH)
-    screen_ratio1 = PDA_WIDTH;
-    screen_ratio2 = script_h.screen_width;
-    screen_width  = PDA_WIDTH;
-#elif SDL_VERSION_ATLEAST(2, 0, 0) && (defined(IOS) || defined(ANDROID) || defined(WINRT))
+#if (defined(IOS) || defined(ANDROID) || defined(WINRT))
     SDL_DisplayMode mode;
     SDL_GetDisplayMode(0, 0, &mode);
     int width;
@@ -146,33 +126,13 @@ void ONScripter::initSDL()
     else
         width = mode.w;
     screen_width = width;
-#elif defined(PDA_AUTOSIZE)
-    SDL_Rect **modes;
-    modes = SDL_ListModes(NULL, SDL_FULLSCREEN);
-    if (modes == (SDL_Rect **)0) {
-        utils::printError("No Video mode available.\n");
-        exit(-1);
-    }
-    else if (modes == (SDL_Rect **)-1){
-        // no restriction
-    }
-    else{
-        int width;
-        if (modes[0]->w * screen_height > modes[0]->h * screen_width)
-            width = (modes[0]->h*screen_width/screen_height) & (~0x01); // to be 2 bytes aligned
-        else
-            width = modes[0]->w;
-        screen_ratio1 = width;
-        screen_ratio2 = script_h.screen_width;
-        screen_width  = width;
-    }
 #endif
 
     screen_height = screen_width*script_h.screen_height/script_h.screen_width;
 
     screen_device_width  = screen_width;
     screen_device_height = screen_height;
-#if defined(USE_SDL_RENDERER)
+
     // use hardware scaling
     screen_ratio1 = 1;
     screen_ratio2 = 1;
@@ -199,11 +159,9 @@ void ONScripter::initSDL()
 #if SDL_VERSION_ATLEAST(2,0,1)
     window_flag |= SDL_WINDOW_ALLOW_HIGHDPI;
 #endif
-#if SDL_VERSION_ATLEAST(2,0,0)
+
     int window_x = SDL_WINDOWPOS_UNDEFINED, window_y = SDL_WINDOWPOS_UNDEFINED;
-#else
-    int window_x = 0, window_y = 0;
-#endif //SDL_VERSION_ATLEAST(2,0,0)
+
     window = SDL_CreateWindow(NULL, window_x, window_y, screen_device_width, screen_device_height, window_flag);
     if (window == NULL) {
         utils::printError("Could not create window: %s\n", SDL_GetError());
@@ -211,10 +169,10 @@ void ONScripter::initSDL()
     }
     SDL_GetWindowSize(window, &device_width, &device_height);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-#if SDL_VERSION_ATLEAST(2, 0, 0)
+
     SDL_RenderSetLogicalSize(renderer, screen_width, screen_height);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-#endif //SDL_VERSION_ATLEAST(2,0,0)
+
     calcRenderRect();
     texture_format = SDL_PIXELFORMAT_ARGB8888;
     SDL_RendererInfo info;
@@ -224,48 +182,9 @@ void ONScripter::initSDL()
     max_texture_width = info.max_texture_width;
     max_texture_height = info.max_texture_height;
     SDL_RenderClear(renderer);
-#else
-#if defined(ANDROID)
-    // use hardware scaling
-    screen_ratio1 = 1;
-    screen_ratio2 = 1;
-    screen_width  = script_h.screen_width;
-    screen_height = script_h.screen_height;
-#endif
-    screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
-#ifdef BPP16
-    texture_format = SDL_PIXELFORMAT_RGB565;
-#else
-#if defined(ANDROID) && !SDL_VERSION_ATLEAST(2,0,0)
-    SDL_SetSurfaceBlendMode(screen_surface, SDL_BLENDMODE_NONE);
-    texture_format = SDL_PIXELFORMAT_ABGR8888;
-#else
-    texture_format = SDL_PIXELFORMAT_ARGB8888;
-#endif
-#endif //BPP16
-#endif //defined(USE_SDL_RENDERER)
 
-    /* ---------------------------------------- */
-    /* Check if VGA screen is available. */
-#if !defined(USE_SDL_RENDERER) && (PDA_WIDTH==640)
-    if ( screen_surface == NULL ){
-        screen_ratio1 /= 2;
-        screen_width  /= 2;
-        screen_height /= 2;
-        screen_device_width  = screen_width;
-        screen_device_height = screen_height;
-        screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
-    }
-#endif
     underline_value = script_h.screen_height;
 
-#ifndef USE_SDL_RENDERER
-    if ( screen_surface == NULL ) {
-        utils::printError("Couldn't set %dx%dx%d video mode: %s\n",
-            screen_width, screen_height, screen_bpp, SDL_GetError());
-        exit(-1);
-    }
-#endif
     utils::printInfo("Display: %d x %d (%d bpp)\n", screen_width, screen_height, screen_bpp);
     dirty_rect.setDimension(screen_width, screen_height);
     
@@ -285,11 +204,8 @@ void ONScripter::initSDL()
 void ONScripter::openAudio(int freq)
 {
     Mix_CloseAudio();
-#if (defined(PDA_WIDTH) || defined(PDA_AUTOSIZE)) && !defined(PSP) && !defined(IPHONE) && !defined(IOS) && !defined(PANDORA)
-    if ( Mix_OpenAudio( (freq<0)?22050:freq, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
-#else        
-    if ( Mix_OpenAudio( (freq<0)?44100:freq, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
-#endif        
+
+    if ( Mix_OpenAudio( (freq<0)?44100:freq, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){      
         utils::printError("Couldn't open audio device!\n"
             "  reason: [%s].\n", SDL_GetError());
         audio_open_flag = false;
@@ -489,13 +405,7 @@ int ONScripter::init()
     screenshot_w = screen_width;
     screenshot_h = screen_height;
 
-#ifdef USE_SDL_RENDERER
-#if SDL_VERSION_ATLEAST(2,0,0)
-    texture = SDL_CreateTexture(renderer, texture_format, SDL_TEXTUREACCESS_STREAMING, accumulation_surface->w, accumulation_surface->h);
-#else
-    texture = SDL_CreateTextureFromSurface(renderer, accumulation_surface);
-#endif //SDL_VERSION_ATLEAST(2,0,0)
-#endif //USE_SDL_RENDERER  
+    texture = SDL_CreateTexture(renderer, texture_format, SDL_TEXTUREACCESS_STREAMING, accumulation_surface->w, accumulation_surface->h); 
 
     effect_tmp = 0;
     tmp_image_buf = NULL;
@@ -799,7 +709,6 @@ void ONScripter::flushDirect( SDL_Rect &rect, int refresh_mode )
 {
     //utils::printInfo("flush %d: %d %d %d %d\n", refresh_mode, rect.x, rect.y, rect.w, rect.h );
     
-#ifdef USE_SDL_RENDERER
     SDL_Rect dst_rect = rect;
     --dst_rect.x; --dst_rect.y; dst_rect.w += 2; dst_rect.h += 2;
     if (AnimationInfo::doClipping(&dst_rect, &screen_rect) || (dst_rect.w == 2 && dst_rect.h == 2)) return;
@@ -817,27 +726,17 @@ void ONScripter::flushDirect( SDL_Rect &rect, int refresh_mode )
         SDL_RenderCopy(renderer, texture, &dst_rect, &dst_rect);
     #endif
     SDL_RenderPresent(renderer);
-
-#else
-    refreshSurface(accumulation_surface, &rect, refresh_mode);
-    SDL_Rect dst_rect = rect;
-    if (AnimationInfo::doClipping(&dst_rect, &screen_rect) || (dst_rect.w==0 && dst_rect.h==0)) return;
-    SDL_BlitSurface( accumulation_surface, &dst_rect, screen_surface, &dst_rect );
-    SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
-#endif
 }
 
 #ifdef USE_SMPEG
 void ONScripter::flushDirectYUV(SDL_Overlay *overlay)
 {
-#ifdef USE_SDL_RENDERER
     SDL_Rect dst_rect = {(device_width -screen_device_width )/2, 
                          (device_height-screen_device_height)/2,
                          screen_device_width, screen_device_height};
     SDL_UpdateTexture(texture, &screen_rect, overlay->pixels[0], overlay->pitches[0]);
     SDL_RenderCopy(renderer, texture, &screen_rect, &dst_rect);
-    SDL_RenderPresent(renderer);
-#endif    
+    SDL_RenderPresent(renderer);  
 }
 #endif
 
@@ -959,33 +858,16 @@ void ONScripter::mouseOverCheck( int x, int y )
 }
 
 void ONScripter::warpMouse(int x, int y) {
-#if SDL_VERSION_ATLEAST(2,0,0)
     SDL_WarpMouseInWindow(NULL, x, y);
-#else
-    SDL_WarpMouse(x, y);
-#endif
 }
 
 void ONScripter::setFullScreen(bool fullscreen) {
     if (fullscreen != fullscreen_mode) {
-#if SDL_VERSION_ATLEAST(2,0,0)
         SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
         SDL_GetWindowSize(window, &device_width, &device_height);
         calcRenderRect();
         flushDirect(screen_rect, refreshMode());
         fullscreen_mode = fullscreen;
-#else
-#if !defined(PSP)
-        if (!SDL_WM_ToggleFullScreen(screen_surface)) {
-            screen_surface = SDL_SetVideoMode(screen_device_width, screen_device_height, screen_bpp,
-                fullscreen ? DEFAULT_VIDEO_SURFACE_FLAG | SDL_FULLSCREEN
-                : DEFAULT_VIDEO_SURFACE_FLAG);
-            flushDirect(screen_rect, refreshMode());
-        }
-#else
-        fullscreen_mode = fullscreen;
-#endif
-#endif
     }
 }
 

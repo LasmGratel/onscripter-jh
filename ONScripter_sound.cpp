@@ -216,7 +216,7 @@ int ONScripter::playMIDI(bool loop_flag)
     return 0;
 }
 
-#if defined(USE_SMPEG) && defined(USE_SDL_RENDERER)
+#if defined(USE_SMPEG)
 struct OverlayInfo{
     SDL_Overlay overlay;
     SDL_mutex *mutex;
@@ -386,29 +386,7 @@ int ONScripter::playAVI( const char *filename, bool click_flag )
     return 0;
 #endif
 
-#if defined(USE_AVIFILE) && !defined(USE_SDL_RENDERER)
-    char *absolute_filename = new char[ strlen(archive_path) + strlen(filename) + 1 ];
-    sprintf( absolute_filename, "%s%s", archive_path, filename );
-    for ( unsigned int i=0 ; i<strlen( absolute_filename ) ; i++ )
-        if ( absolute_filename[i] == '/' ||
-             absolute_filename[i] == '\\' )
-            absolute_filename[i] = DELIMITER;
-
-    if ( audio_open_flag ) Mix_CloseAudio();
-
-    AVIWrapper *avi = new AVIWrapper();
-    if ( avi->init( absolute_filename, false ) == 0 &&
-         avi->initAV( screen_surface, audio_open_flag ) == 0 ){
-        if (avi->play( click_flag )) return 1;
-    }
-    delete avi;
-    delete[] absolute_filename;
-
-    if ( audio_open_flag ){
-        Mix_CloseAudio();
-        openAudio();
-    }
-#elif !defined(WINRT) && (defined(WIN32) || defined(_WIN32))
+#if !defined(WINRT) && (defined(WIN32) || defined(_WIN32))
     system(filename);
 #else
     utils::printError( "avi command is disabled.\n" );

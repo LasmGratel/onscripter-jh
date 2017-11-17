@@ -2,8 +2,8 @@
  * 
  *  ONScripter_command.cpp - Command executer of ONScripter
  *
- *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
- *            (C) 2014-2016 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2017 Ogapee. All rights reserved.
+ *            (C) 2014-2017 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -292,7 +292,7 @@ int ONScripter::texecCommand()
         page_enter_status = 0;
     }
 
-    saveonCommand();
+    saveon_flag = true;
     
     return RET_CONTINUE;
 }
@@ -785,7 +785,8 @@ int ONScripter::selectCommand()
 
     bool comma_flag = true;
     if ( select_mode == SELECT_CSEL_MODE ){
-        saveoffCommand();
+        if (saveon_flag && internal_saveon_flag) storeSaveFile();
+        saveon_flag = false;
     }
     shortcut_mouse_line = -1;
 
@@ -1260,16 +1261,12 @@ int ONScripter::playCommand()
 
 int ONScripter::ofscopyCommand()
 {
-#ifdef USE_SDL_RENDERER
     SDL_Surface *tmp_surface = AnimationInfo::alloc32bitSurface(render_view_rect.w, render_view_rect.h, texture_format);
     SDL_LockSurface(tmp_surface);
     SDL_RenderReadPixels(renderer, &render_view_rect, tmp_surface->format->format, tmp_surface->pixels, tmp_surface->pitch);
     SDL_UnlockSurface(tmp_surface);
     resizeSurface( tmp_surface, accumulation_surface );
     SDL_FreeSurface(tmp_surface);
-#else
-    SDL_BlitSurface(screen_surface, NULL, accumulation_surface, NULL);
-#endif
 
     return RET_CONTINUE;
 }
@@ -2306,15 +2303,11 @@ int ONScripter::getscreenshotCommand()
 
     screenshot_w = w;
     screenshot_h = h;
-#ifdef USE_SDL_RENDERER
+
     if (screenshot_surface == NULL) screenshot_surface = AnimationInfo::alloc32bitSurface(render_view_rect.w, render_view_rect.h, texture_format);
     SDL_LockSurface(screenshot_surface);
     SDL_RenderReadPixels(renderer, &render_view_rect, screenshot_surface->format->format, screenshot_surface->pixels, screenshot_surface->pitch);
     SDL_UnlockSurface(screenshot_surface);
-#else
-    if (screenshot_surface == NULL) screenshot_surface = AnimationInfo::alloc32bitSurface(screen_device_width, screen_device_height, texture_format);
-    SDL_BlitSurface(screen_surface, NULL, screenshot_surface, NULL);
-#endif
 
     return RET_CONTINUE;
 }
@@ -3282,18 +3275,8 @@ int ONScripter::captionCommand()
     size_t len = strlen(buf);
 
     char *buf2 = new char[len*3+1];
-#if defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208) || SDL_VERSION_ATLEAST(2,0,0)
+
     DirectReader::convertCodingToUTF8(buf2, buf);
-#elif defined(LINUX) || ((defined(WIN32) || defined(_WIN32)) && defined(UTF8_CAPTION))
-#if defined(UTF8_CAPTION)
-    DirectReader::convertCodingToUTF8(buf2, buf);
-#else
-    strcpy(buf2, buf);
-    DirectReader::convertCodingToEUC(buf2);
-#endif
-#else
-    strcpy(buf2, buf);
-#endif
     
     setStr( &wm_title_string, buf2 );
     setStr( &wm_icon_string,  buf2 );
@@ -3507,11 +3490,8 @@ int ONScripter::btndefCommand()
             parseTaggedString( &btndef_info );
             btndef_info.trans_mode = AnimationInfo::TRANS_COPY;
             setupAnimationInfo( &btndef_info );
-#if SDL_VERSION_ATLEAST(2, 0, 0)
+
             SDL_SetSurfaceBlendMode(btndef_info.image_surface, SDL_BLENDMODE_NONE);
-#else
-            SDL_SetAlpha( btndef_info.image_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-#endif
         }
     }
     

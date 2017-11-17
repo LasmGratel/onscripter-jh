@@ -28,21 +28,11 @@
 #include <SDL.h>
 #include <string.h>
 
-#ifndef _SDL_pixels_h
-#define SDL_PIXELFORMAT_RGB565   0
-#define SDL_PIXELFORMAT_ABGR8888 1
-#define SDL_PIXELFORMAT_ARGB8888 2
-#endif
-
 typedef unsigned char uchar3[3];
 
 class AnimationInfo{
 public:
-#if defined(BPP16)
-    typedef Uint16 ONSBuf;
-#else
     typedef Uint32 ONSBuf;
-#endif    
     enum { TRANS_ALPHA          = 1,
            TRANS_TOPLEFT        = 2,
            TRANS_COPY           = 3,

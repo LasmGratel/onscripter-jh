@@ -545,16 +545,16 @@ private:
     bool trapHandler();
     bool mouseMoveEvent( SDL_MouseMotionEvent *event );
     bool mousePressEvent( SDL_MouseButtonEvent *event );
-#if SDL_VERSION_ATLEAST(2,0,0)
+
     bool mouseWheelEvent(SDL_MouseWheelEvent *event);
-#endif
+
     void variableEditMode( SDL_KeyboardEvent *event );
     void shiftCursorOnButton( int diff );
     bool keyDownEvent( SDL_KeyboardEvent *event );
     void keyUpEvent( SDL_KeyboardEvent *event );
     bool keyPressEvent( SDL_KeyboardEvent *event );
     void timerEvent(bool init_flag);
-#if (defined(IOS) || defined(ANDROID) || defined(WINRT)) && SDL_VERSION_ATLEAST(2, 0, 0)
+#if (defined(IOS) || defined(ANDROID) || defined(WINRT))
     bool convTouchKey(SDL_TouchFingerEvent &finger);
 #endif
     void runEventLoop();
@@ -587,11 +587,10 @@ private:
     };
     int  refresh_shadow_text_mode;
 
-#ifdef USE_SDL_RENDERER
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Texture *texture;
-#endif
+
     void setCaption(const char *title, const char *iconstr = NULL);
     // format = SDL_PIXELFORMAT_ABGR8888 for OpenGL ES 1.x, OpenGL ES 2.x (Android, iOS)
     // format = SDL_PIXELFORMAT_ARGB8888 for OpenGL, Direct3D (Windows, Linux, MacOSX) or for any 32bit surface without SDL_Renderer
