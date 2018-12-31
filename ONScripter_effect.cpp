@@ -2,8 +2,8 @@
  * 
  *  ONScripter_effect.cpp - Effect executer of ONScripter
  *
- *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
- *            (C) 2014 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2018 Ogapee. All rights reserved.
+ *            (C) 2014-2018 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -29,31 +29,34 @@
 #define EFFECT_STRIPE_CURTAIN_WIDTH (24 * screen_ratio1 / screen_ratio2)
 #define EFFECT_QUAKE_AMP (12 * screen_ratio1 / screen_ratio2)
 
-bool ONScripter::setEffect( EffectLink *effect, bool generate_effect_dst, bool update_backup_surface )
+void ONScripter::updateEffectDst()
+{
+    update_effect_dst = true;
+    dirty_rect.fill( screen_width, screen_height );
+};
+
+void ONScripter::generateEffectDst(int effect_no)
+{
+    int refresh_mode = refreshMode();
+
+    if (effect_no == 1)
+        refreshSurface( effect_dst_surface, &dirty_rect.bounding_box, refresh_mode );
+    else
+        refreshSurface( effect_dst_surface, NULL, refresh_mode );
+}
+
+bool ONScripter::setEffect( EffectLink *effect )
 {
     if ( effect->effect == 0 ) return true;
-
-    if (update_backup_surface)
-        refreshSurface(backup_surface, &dirty_rect.bounding_box, REFRESH_NORMAL_MODE);
     
     int effect_no = effect->effect;
     if (effect_cut_flag && (skip_mode & SKIP_NORMAL || ctrl_pressed_status)) 
         effect_no = 1;
 
     SDL_BlitSurface( accumulation_surface, NULL, effect_src_surface, NULL );
-        
-    if (generate_effect_dst){
-        int refresh_mode = refreshMode();
-        if (update_backup_surface && refresh_mode == REFRESH_NORMAL_MODE){
-            SDL_BlitSurface( backup_surface, &dirty_rect.bounding_box, effect_dst_surface, &dirty_rect.bounding_box );
-        }
-        else{
-            if (effect_no == 1)
-                refreshSurface( effect_dst_surface, &dirty_rect.bounding_box, refresh_mode );
-            else
-                refreshSurface( effect_dst_surface, NULL, refresh_mode );
-        }
-    }
+
+    generateEffectDst(effect_no);
+    update_effect_dst = false;
     
     /* Load mask image */
     if ( effect_no == 15 || effect_no == 18 ){
@@ -114,7 +117,12 @@ bool ONScripter::doEffect( EffectLink *effect, bool clear_dirty_region )
     int effect_no = effect->effect;
     if (effect_cut_flag && (skip_mode & SKIP_NORMAL || ctrl_pressed_status)) 
         effect_no = 1;
-
+    
+    if (update_effect_dst){
+        generateEffectDst(effect_no);
+        update_effect_dst = false;
+    }
+    
     int i, amp;
     int width, width2;
     int height, height2;

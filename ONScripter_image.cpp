@@ -3,7 +3,7 @@
  *  ONScripter_image.cpp - Image processing in ONScripter
  *
  *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
- *            (C) 2014-2016 jh10001 <jh10001@live.cn>
+ *            (C) 2014-2019 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -240,8 +240,27 @@ int ONScripter::resizeSurface( SDL_Surface *src, SDL_Surface *dst )
 //    Uint32 mask_g  = (((*src1_buffer & 0x00ff00) * mask1 +
 //                       (*src2_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00;
 #ifdef USE_SIMD
-inline static void alphaBlendCore32(Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *dst_buffer,
-    simd::uint16x8 m_lo, simd::uint16x8 m_hi, simd::uint8x16 zero) {
+#ifdef USE_SIMD_X86_AVX2
+static void alphaBlend8Core32(Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *dst_buffer,
+    simd::uint16x16 m_lo, simd::uint16x16 m_hi, simd::uint8x32 zero, simd::uint8x32 amask) {
+    using namespace simd;
+    uint8x32 src1 = load256_u(src1_buffer), src2 = load256_u(src2_buffer);
+    uint16x16 src1u = widen_lo(src1, zero);
+    uint16x16 r1 = widen_lo(src2, zero);
+    r1 -= src1u;
+    src1u = widen_hi(src1, zero);
+    uint16x16 r2 = widen_hi(src2, zero);
+    r2 -= src1u;
+    r1 = (r1 * m_lo) >> immint<8>();
+    r2 = (r2 * m_hi) >> immint<8>();
+    uint8x32 r = pack_hz(r1, r2);
+    r = (r + src1) | amask;
+    store256_u(dst_buffer, r);
+}
+#endif
+
+static void alphaBlendCore32(Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *dst_buffer,
+    simd::uint16x8 m_lo, simd::uint16x8 m_hi, simd::uint8x16 zero, simd::uint8x16 amask) {
     using namespace simd;
     uint8x16 src1 = load_u(src1_buffer), src2 = load_u(src2_buffer);
     uint16x8 src1u = widen_lo(src1, zero);
@@ -253,18 +272,11 @@ inline static void alphaBlendCore32(Uint32 *src1_buffer, Uint32 *src2_buffer, Ui
     r1 = (r1 * m_lo) >> immint<8>();
     r2 = (r2 * m_hi) >> immint<8>();
     uint8x16 r = pack_hz(r1, r2);
-    r += src1;
-    uint8x16 amask =
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN
-        uint8x16::set(0, 0, 0, 0xFF);
-#else
-        uint8x16::set(0xFF, 0, 0, 0);
-#endif
-    r |= amask;
+    r = (r + src1) | amask;
     store_u(dst_buffer, r);
 }
 
-inline static void alphaBlendPixelCore32(Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *dst_buffer, Uint8 mask, simd::ivec128 zero) {
+static void alphaBlendPixelCore32(Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *dst_buffer, Uint8 mask, simd::ivec128 zero) {
     using namespace simd;
     uint8x4 src1 = load(src1_buffer), src2 = load(src2_buffer);
     uint16x4 r1 = widen(src2, zero);
@@ -279,39 +291,64 @@ inline static void alphaBlendPixelCore32(Uint32 *src1_buffer, Uint32 *src2_buffe
 }
 #endif
 
-inline static void alphaBlend32(Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *dst_buffer, const Uint32 *mask_buffer,
+static void alphaBlend32(Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *dst_buffer, const Uint32 *mask_buffer,
     Uint32 mask_value, Uint32 overflow_mask, Uint32 mask_surface_w, int rect_x, int rect_w) {
     int j2 = rect_x;
 #ifdef USE_SIMD
     using namespace simd;
-    uint16x8 m_lo, m_hi;
-    ivec128 zero = ivec128::zero();
-    while (rect_w >= 4) {
-        Uint32 mask2[4] = {0};
-        for (int i = 0; i < 4; ++i) {
-            Uint32 mask = *(mask_buffer + j2) & 0xFF;
-            if (mask_value > mask) {
-                mask2[i] = mask_value - mask;
-                if (mask2[i] & overflow_mask) mask2[i] = 0xFF;
-            }
-            j2 = j2 >= mask_surface_w ? 0 : j2 + 1;
-        }
-        m_lo = uint16x8::set2(mask2[0], mask2[1]);
-        m_hi = uint16x8::set2(mask2[2], mask2[3]);
-        alphaBlendCore32(src1_buffer, src2_buffer, dst_buffer, m_lo, m_hi, zero);
-        rect_w -= 4; src1_buffer += 4; src2_buffer += 4; dst_buffer += 4;
-    }
-    while (rect_w > 0) {
-        Uint32 mask2 = 0;
+#ifdef USE_SIMD_X86_AVX2
+    ivec256 zero = ivec256::zero();
+    uint8x32 amask =
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+    uint8x32::set(0, 0, 0, 0xFF);
+#else
+    uint8x32::set(0xFF, 0, 0, 0);
+#endif
+    ivec128 zerol = zero.lo();
+    uint8x16 amaskl = amask.lo();
+#else
+    ivec128 zerol = ivec128::zero();
+    uint8x16 amaskl =
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+        uint8x16::set(0, 0, 0, 0xFF);
+#else
+        uint8x16::set(0xFF, 0, 0, 0);
+#endif
+#endif
+    Uint32 *mask2 = new Uint32[rect_w];
+    for (int i = 0; i < rect_w; ++i) {
+        Uint32 mask2i = 0;
         Uint32 mask = *(mask_buffer + j2) & 0xFF;
         if (mask_value > mask) {
-            mask2 = mask_value - mask;
-            if (mask2 & overflow_mask) mask2 = 0xFF;
+            mask2i = mask_value - mask;
+            if (mask2i & overflow_mask) mask2i = 0xFF;
         }
+        uint8x16 vec = uint8x16((Uint8)mask2i);
+        store_u_32(mask2 + i, vec);
         j2 = j2 >= mask_surface_w ? 0 : j2 + 1;
-        alphaBlendPixelCore32(src1_buffer, src2_buffer, dst_buffer, mask2, zero);
-        --rect_w; ++src1_buffer; ++src2_buffer; ++dst_buffer;
     }
+    Uint32* mask2p = mask2;
+#ifdef USE_SIMD_X86_AVX2
+    while (rect_w >= 8) {
+        uint8x32 maskv = load256_a(mask2p);
+        uint16x16 m_lo = widen_lo(maskv, zero);
+        uint16x16 m_hi = widen_hi(maskv, zero);
+        alphaBlend8Core32(src1_buffer, src2_buffer, dst_buffer, m_lo, m_hi, zero, amask);
+        rect_w -= 8; src1_buffer += 8; src2_buffer += 8; dst_buffer += 8; mask2p += 8;
+    }
+#endif
+    while (rect_w >= 4) {
+        uint8x16 maskv = load_a(mask2p);
+        uint16x8 m_lo = widen_lo(maskv, zerol);
+        uint16x8 m_hi = widen_hi(maskv, zerol);
+        alphaBlendCore32(src1_buffer, src2_buffer, dst_buffer, m_lo, m_hi, zerol, amaskl);
+        rect_w -= 4; src1_buffer += 4; src2_buffer += 4; dst_buffer += 4; mask2p +=4;
+    }
+    while (rect_w > 0) {
+        alphaBlendPixelCore32(src1_buffer, src2_buffer, dst_buffer, *((Uint8*)mask2p), zerol);
+        --rect_w; ++src1_buffer; ++src2_buffer; ++dst_buffer; ++mask2p;
+    }
+    delete[] mask2;
 #else
     for (int j = 0; j < rect_w; j++) {
         Uint32 mask2 = 0;
@@ -330,14 +367,40 @@ inline static void alphaBlend32(Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32
 inline static void alphaBlendConst32(Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *dst_buffer, Uint32 mask2, int remain) {
 #ifdef USE_SIMD
     using namespace simd;
-    ivec128 zero = ivec128::zero();
-    uint16x8 m(mask2);
+#ifdef USE_SIMD_X86_AVX2
+    ivec256 zero = ivec256::zero();
+    uint16x16 m(mask2);
+    uint8x32 amask =
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+        uint8x32::set(0, 0, 0, 0xFF);
+#else
+        uint8x32::set(0xFF, 0, 0, 0);
+#endif
+    ivec128 zerol = zero.lo();
+    uint16x8 ml = m.lo();
+    uint8x16 amaskl = amask.lo();
+#else
+    ivec128 zerol = ivec128::zero();
+    uint16x8 ml(mask2);
+    uint8x16 amaskl =
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+        uint8x16::set(0, 0, 0, 0xFF);
+#else
+        uint8x16::set(0xFF, 0, 0, 0);
+#endif
+#endif
+#ifdef USE_SIMD_X86_AVX2
+    while (remain >= 8) {
+        alphaBlend8Core32(src1_buffer, src2_buffer, dst_buffer, m, m, zero, amask);
+        remain -= 8; src1_buffer += 8; src2_buffer += 8; dst_buffer += 8;
+    }
+#endif
     while (remain >= 4) {
-        alphaBlendCore32(src1_buffer, src2_buffer, dst_buffer, m, m, zero);
+        alphaBlendCore32(src1_buffer, src2_buffer, dst_buffer, ml, ml, zerol, amaskl);
         remain -= 4; src1_buffer += 4; src2_buffer += 4; dst_buffer += 4;
     }
     while (remain > 0) {
-        alphaBlendPixelCore32(src1_buffer, src2_buffer, dst_buffer, mask2, zero);
+        alphaBlendPixelCore32(src1_buffer, src2_buffer, dst_buffer, mask2, zerol);
         --remain; ++src1_buffer; ++src2_buffer; ++dst_buffer;
     }
 #else

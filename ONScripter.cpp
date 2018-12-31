@@ -3,7 +3,7 @@
  *  ONScripter.cpp - Execution block parser of ONScripter
  *
  *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
- *            (C) 2014-2016 jh10001 <jh10001@live.cn>
+ *            (C) 2014-2019 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -77,6 +77,11 @@ void ONScripter::calcRenderRect() {
 
 void ONScripter::setCaption(const char *title, const char *iconstr) {
     SDL_SetWindowTitle(window, title);
+}
+
+void ONScripter::setScreenDirty(bool screen_dirty)
+{
+    screen_dirty_flag = screen_dirty;
 }
 
 void ONScripter::setDebugLevel(int debug) {
@@ -168,7 +173,9 @@ void ONScripter::initSDL()
         exit(-1);
     }
     SDL_GetWindowSize(window, &device_width, &device_height);
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    Uint32 render_flag = SDL_RENDERER_ACCELERATED;
+    if (vsync) render_flag |= SDL_RENDERER_PRESENTVSYNC;
+    renderer = SDL_CreateRenderer(window, -1, render_flag);
 
     SDL_RenderSetLogicalSize(renderer, screen_width, screen_height);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -254,6 +261,7 @@ ONScripter::ONScripter()
     smpeg_info = NULL;
     current_button_state.down_flag = false;
     compatibilityMode = false;
+    vsync = true;
 
     int i;
     for (i=0 ; i<MAX_SPRITE2_NUM ; i++)
@@ -329,6 +337,10 @@ void ONScripter::setWindowMode()
 void ONScripter::setCompatibilityMode()
 {
     compatibilityMode = true;
+}
+
+void ONScripter::setVsyncOff() {
+    vsync = false;
 }
 
 void ONScripter::setFontCache()
@@ -717,6 +729,7 @@ void ONScripter::flushDirect( SDL_Rect &rect, int refresh_mode )
     SDL_UpdateTexture(texture, &rect, (unsigned char*)accumulation_surface->pixels+accumulation_surface->pitch*rect.y+rect.x*sizeof(ONSBuf), accumulation_surface->pitch);
     SDL_UnlockSurface(accumulation_surface);
 
+    screen_dirty_flag = false;
     #ifdef ANDROID      
         if (compatibilityMode) {
             SDL_RenderClear(renderer);

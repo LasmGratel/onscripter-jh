@@ -50,11 +50,7 @@ namespace simd {
 #if USE_SIMD_X86_SSE2
     return _mm_load_si128(reinterpret_cast<const __m128i*>(m));  //MOVDQU xmm1, m128
 #elif USE_SIMD_ARM_NEON
-    uint8x16_t d;
-    __asm (
-      "vld1q.8 {%q0}, [%1 :16]" : "=w"(d) : "r"(m)
-    );
-    return d;
+    return vld1q_u8(reinterpret_cast<const uint8_t*>(m));
 #endif
   }
 
@@ -91,11 +87,39 @@ namespace simd {
   }
 
   //Store
+  inline void store_a(void* m, uint8x16 a) {
+#ifdef USE_SIMD_X86_SSE2
+    _mm_store_si128(reinterpret_cast<__m128i*>(m), a);
+#elif USE_SIMD_ARM_NEON
+    vst1q_u8(reinterpret_cast<uint8_t*>(m), a);
+#endif
+  }
+
   inline void store_u(void* m, uint8x16 a) {
 #ifdef USE_SIMD_X86_SSE2
     _mm_storeu_si128(reinterpret_cast<__m128i*>(m), a);
 #elif USE_SIMD_ARM_NEON
     vst1q_u8(reinterpret_cast<uint8_t*>(m), a);
+#endif
+  }
+
+  inline void store_u_32(void* m, uint8x16 a) {
+#ifdef USE_SIMD_X86_SSE2
+#if !defined(__clang_major__) || __clang_major__ >= 8
+    _mm_storeu_si32(reinterpret_cast<__m128i*>(m), a);
+#else
+    // _mm_storeu_si32 is unavailable in Clang 7;
+    _mm_store_ss(reinterpret_cast<float*>(m), _mm_castsi128_ps(a));
+#endif
+#elif USE_SIMD_ARM_NEON
+    vst1q_lane_u32(reinterpret_cast<uint32_t*>(m), a, 1);
+#endif
+  }
+
+  //Shuffle
+  inline uint8x16 shuffle(uint8x16 a, uint8x16 mask) {
+#ifdef USE_SIMD_X86_SSSE3
+    return _mm_shuffle_epi8(a, mask);
 #endif
   }
 

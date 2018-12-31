@@ -3,7 +3,7 @@
  *  ScriptParser.cpp - Define block parser of ONScripter
  *
  *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
- *            (C) 2014-2016 jh10001 <jh10001@live.cn>
+ *            (C) 2014-2019 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -39,7 +39,7 @@ void deleteLayerInfo() {
 #endif
 
 #define VERSION_STR1 "ONScripter"
-#define VERSION_STR2 "Copyright (C) 2001-2016 Studio O.G.A. All Rights Reserved.\n          (C) 2014-2016 jh10001"
+#define VERSION_STR2 "Copyright (C) 2001-2019 Studio O.G.A. All Rights Reserved.\n          (C) 2014-2019 jh10001"
 
 #define DEFAULT_SAVE_MENU_NAME coding2utf16->DEFAULT_SAVE_MENU_NAME
 #define DEFAULT_LOAD_MENU_NAME coding2utf16->DEFAULT_LOAD_MENU_NAME

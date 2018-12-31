@@ -2,8 +2,8 @@
  * 
  *  ONScripter_command.cpp - Command executer of ONScripter
  *
- *  Copyright (c) 2001-2017 Ogapee. All rights reserved.
- *            (C) 2014-2017 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2018 Ogapee. All rights reserved.
+ *            (C) 2014-2019 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -23,6 +23,12 @@
  */
 
 #include "ONScripter.h"
+#if defined(LINUX) || defined(MACOSX) || defined(IOS)
+#include <sys/types.h>
+#include <sys/stat.h>
+#elif defined(WIN32)
+#include <direct.h>
+#endif
 #include "version.h"
 #include "Utils.h"
 
@@ -252,7 +258,6 @@ int ONScripter::textoffCommand()
 {
     if (windowchip_sprite_no >= 0)
         sprite_info[windowchip_sprite_no].visible = false;
-    refreshSurface(backup_surface, NULL, REFRESH_NORMAL_MODE);
 
     leaveTextDisplayMode(true);
 
@@ -323,7 +328,7 @@ int ONScripter::talCommand()
     }
 
     EffectLink *el = parseEffect(true);
-    if (setEffect(el, true, true)) return RET_CONTINUE;
+    if (setEffect(el)) return RET_CONTINUE;
     while (doEffect(el));
 
     return RET_CONTINUE;
@@ -967,12 +972,9 @@ int ONScripter::savescreenshotCommand()
     resizeSurface( screenshot_surface, surface );
 
     const char *buf = script_h.readStr();
-    FILE *fp = fopen(buf, "wb");
-    if (fp){
-        SDL_RWops *rwops = SDL_RWFromFP(fp, SDL_TRUE);
-        if (SDL_SaveBMP_RW(surface, rwops, 1) != 0)
-            utils::printError("Save screenshot failed: %s", SDL_GetError());
-    }
+    SDL_RWops *rwops = SDL_RWFromFile(buf, "wb");
+    if (rwops == nullptr || SDL_SaveBMP_RW(text_info.image_surface, rwops, 1) != 0)
+        utils::printError("Save screenshot failed: %s\n", SDL_GetError());
     SDL_FreeSurface(surface);
 
     return RET_CONTINUE;
@@ -1126,7 +1128,7 @@ int ONScripter::quakeCommand()
     dirty_rect.fill( screen_width, screen_height );
     SDL_BlitSurface( accumulation_surface, NULL, effect_dst_surface, NULL );
 
-    if (setEffect(&tmp_effect, true, true)) return RET_CONTINUE;
+    if (setEffect(&tmp_effect)) return RET_CONTINUE;
     while (doEffect(&tmp_effect));
 
     return RET_CONTINUE;
@@ -1213,7 +1215,7 @@ int ONScripter::printCommand()
     leaveTextDisplayMode();
 
     EffectLink *el = parseEffect(true);
-    if (setEffect(el, true, true)) return RET_CONTINUE;
+    if (setEffect(el)) return RET_CONTINUE;
     while (doEffect(el));
 
     return RET_CONTINUE;
@@ -1835,7 +1837,6 @@ int ONScripter::loadgameCommand()
     mp3fadeout_duration = 0; //don't use fadeout during a load
     if ( !loadSaveFile( no ) ){
         dirty_rect.fill( screen_width, screen_height );
-        refreshSurface(backup_surface, &dirty_rect.bounding_box, REFRESH_NORMAL_MODE);
         flush( refreshMode() );
 
         saveon_flag = true;
@@ -1900,7 +1901,7 @@ int ONScripter::ldCommand()
     }
 
     EffectLink *el = parseEffect(true);
-    if (setEffect(el, true, true)) return RET_CONTINUE;
+    if (setEffect(el)) return RET_CONTINUE;
     while (doEffect(el));
 
     return RET_CONTINUE;
@@ -1918,6 +1919,7 @@ static void smpeg_filter_callback( SDL_Overlay * dst, SDL_Overlay * src, SDL_Rec
     if (!ai) return;
 
     ai->convertFromYUV(src);
+    ons->updateEffectDst();
 }
 
 static void smpeg_filter_destroy( struct SMPEG_Filter * filter )
@@ -2087,7 +2089,7 @@ int ONScripter::humanorderCommand()
             dirty_rect.add( tachi_info[i].pos );
 
     EffectLink *el = parseEffect(true);
-    if (setEffect(el, true, true)) return RET_CONTINUE;
+    if (setEffect(el)) return RET_CONTINUE;
     while (doEffect(el));
 
     return RET_CONTINUE;
@@ -2305,9 +2307,13 @@ int ONScripter::getscreenshotCommand()
     screenshot_h = h;
 
     if (screenshot_surface == NULL) screenshot_surface = AnimationInfo::alloc32bitSurface(render_view_rect.w, render_view_rect.h, texture_format);
-    SDL_LockSurface(screenshot_surface);
-    SDL_RenderReadPixels(renderer, &render_view_rect, screenshot_surface->format->format, screenshot_surface->pixels, screenshot_surface->pitch);
-    SDL_UnlockSurface(screenshot_surface);
+    if (screen_dirty_flag) {
+        SDL_LockSurface(screenshot_surface);
+        SDL_RenderReadPixels(renderer, &render_view_rect, screenshot_surface->format->format, screenshot_surface->pixels, screenshot_surface->pitch);
+        SDL_UnlockSurface(screenshot_surface);
+    } else {
+        SDL_BlitSurface(accumulation_surface, nullptr, screenshot_surface, nullptr);
+    }
 
     return RET_CONTINUE;
 }
@@ -2667,7 +2673,7 @@ int ONScripter::flushoutCommand()
 
     dirty_rect.fill(screen_width, screen_height);
 
-    if (setEffect(&tmp_effect, false, false)) return RET_CONTINUE;
+    if (setEffect(&tmp_effect)) return RET_CONTINUE;
 
     setStr(&bg_info.file_name, "white");
     createBackground();
@@ -2699,6 +2705,21 @@ int ONScripter::exec_dllCommand()
         c++;
     }
     dll_name[c] = '\0';
+
+    if (strcmp(dll_name, "fileutil.dll") == 0){
+        if (strncmp(buf+c, "/mkdir", 6) == 0){
+            c += 7;
+            char *dir = new char[strlen(archive_path) + strlen(buf+c) + 1];
+            sprintf(dir, "%s%s", archive_path, buf+c);
+#if defined(LINUX) || defined(MACOSX) || defined(IOS)
+            mkdir(dir, 0755);
+#elif defined(WIN32)
+            _mkdir(dir);
+#endif
+            delete[] dir;
+        }
+        return RET_CONTINUE;
+    }
 
     FILE *fp;
     if ( ( fp = fopen( dll_file, "r" ) ) == NULL ){
@@ -3201,7 +3222,7 @@ int ONScripter::clCommand()
     }
 
     EffectLink *el = parseEffect(true);
-    if (setEffect(el, true, true)) return RET_CONTINUE;
+    if (setEffect(el)) return RET_CONTINUE;
     while (doEffect(el));
 
     return RET_CONTINUE;
@@ -3645,6 +3666,7 @@ int ONScripter::bltCommand()
         }
         src_rect.x -= blt_texture_src_rect.x;
         src_rect.y -= blt_texture_src_rect.y;
+        screen_dirty_flag = true;
         SDL_RenderCopy(renderer, blt_texture, &src_rect, &dst_rect);
         SDL_RenderPresent(renderer);
         dirty_rect.clear();
@@ -3696,7 +3718,7 @@ int ONScripter::bgCommand()
     dirty_rect.fill( screen_width, screen_height );
 
     EffectLink *el = parseEffect(true);
-    if (setEffect(el, true, true)) return RET_CONTINUE;
+    if (setEffect(el)) return RET_CONTINUE;
     while (doEffect(el));
 
     return RET_CONTINUE;

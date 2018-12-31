@@ -2,8 +2,8 @@
  * 
  *  onscripter_main.cpp -- main function of ONScripter
  *
- *  Copyright (c) 2001-2017 Ogapee. All rights reserved.
- *            (C) 2014-2017 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2018 Ogapee. All rights reserved.
+ *            (C) 2014-2019 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -40,50 +40,12 @@ Coding2UTF16 *coding2utf16 = NULL;
 #import "MoviePlayer.h"
 #endif
 
-#ifdef WINRT
-#include "ScriptSelector.h"
+#ifdef ANDROID
+#include <unistd.h>
 #endif
 
-#if defined(PSP)
-#include <pspkernel.h>
-#include <psputility.h>
-#include <psppower.h>
-#include <ctype.h>
-
-PSP_HEAP_SIZE_KB(-1);
-
-int psp_power_resume_number = 0;
-
-int exit_callback(int arg1, int arg2, void *common)
-{
-    ons.endCommand();
-    sceKernelExitGame();
-    return 0;
-}
-
-int power_callback(int unknown, int pwrflags, void *common)
-{
-    if (pwrflags & PSP_POWER_CB_RESUMING) psp_power_resume_number++;
-    return 0;
-}
-
-int CallbackThread(SceSize args, void *argp)
-{
-    int cbid;
-    cbid = sceKernelCreateCallback("Exit Callback", exit_callback, NULL);
-    sceKernelRegisterExitCallback(cbid);
-    cbid = sceKernelCreateCallback("Power Callback", power_callback, NULL);
-    scePowerRegisterCallback(0, cbid);
-    sceKernelSleepThreadCB();
-    return 0;
-}
-
-int SetupCallbacks(void)
-{
-    int thid = sceKernelCreateThread("update_thread", CallbackThread, 0x11, 0xFA0, 0, 0);
-    if (thid >= 0) sceKernelStartThread(thid, 0, 0);
-    return thid;
-}
+#ifdef WINRT
+#include "ScriptSelector.h"
 #endif
 
 void optionHelp()
@@ -114,8 +76,8 @@ void optionHelp()
 void optionVersion()
 {
     printf("Written by Ogapee <ogapee@aqua.dti2.ne.jp>\n\n");
-    printf("Copyright (c) 2001-2016 Ogapee.\n\
-                              (C) 2014-2016 jh10001<jh10001@live.cn>\n");
+    printf("Copyright (c) 2001-2018 Ogapee.\n\
+                              (C) 2014-2018 jh10001<jh10001@live.cn>\n");
     printf("This is free software; see the source for copying conditions.\n");
     exit(0);
 }
@@ -129,6 +91,7 @@ static JavaVM *jniVM = NULL;
 static jobject JavaONScripter = NULL;
 static jmethodID JavaPlayVideo = NULL;
 static jmethodID JavaGetFD = NULL;
+static jmethodID JavaMkdir = NULL;
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 {
@@ -154,6 +117,8 @@ JNIEXPORT jint JNICALL JAVA_EXPORT_NAME(ONScripter_nativeInitJavaCallbacks) (JNI
     jclass JavaONScripterClass = jniEnv->GetObjectClass(JavaONScripter);
     JavaPlayVideo = jniEnv->GetMethodID(JavaONScripterClass, "playVideo", "([C)V");
     JavaGetFD = jniEnv->GetMethodID(JavaONScripterClass, "getFD", "([CI)I");
+    JavaMkdir = jniEnv->GetMethodID(JavaONScripterClass, "mkdir", "([C)I");
+    return 0;
 }
 
 JNIEXPORT jint JNICALL 
@@ -215,6 +180,29 @@ FILE *fopen_ons(const char *path, const char *mode)
     delete[] jc;
 
     return fdopen(fd, mode);
+}
+
+#undef mkdir
+int mkdir_ons(const char *pathname, mode_t mode)
+{
+    JNIEnv * jniEnv = NULL;
+    jniVM->AttachCurrentThread(&jniEnv, NULL);
+
+    if (!jniEnv){
+        __android_log_print(ANDROID_LOG_ERROR, "ONS", "ONScripter::mkdir: Java VM AttachCurrentThread() failed");
+        return -1;
+    }
+
+    jchar *jc = new jchar[strlen(pathname)];
+    for (int i=0 ; i<strlen(pathname) ; i++)
+        jc[i] = pathname[i];
+    jcharArray jca = jniEnv->NewCharArray(strlen(pathname));
+    jniEnv->SetCharArrayRegion(jca, 0, strlen(pathname), jc);
+    int ret = jniEnv->CallIntMethod( JavaONScripter, JavaMkdir, jca );
+    jniEnv->DeleteLocalRef(jca);
+    delete[] jc;
+
+    return ret;
 }
 }
 #endif
@@ -301,6 +289,9 @@ void parseOption(int argc, char *argv[]) {
             else if (!strcmp(argv[0]+1, "-fontcache")){
                 ons.setFontCache();
             }
+			else if (!strcmp(argv[0]+1, "-no-vsync")){
+			    ons.setVsyncOff();
+			}
 #if defined(ANDROID)
             else if ( !strcmp(argv[0]+1, "-compatible") ){
                 ons.setCompatibilityMode();
@@ -337,20 +328,7 @@ int main(int argc, char *argv[])
         ons.setArchivePath(ss.selectedPath.c_str());
     }
     ons.disableRescale();
-#elif defined(WINCE)
-    char currentDir[256];
-    strcpy(currentDir, argv[0]);
-    char* cptr = currentDir;
-    int i, len = strlen(currentDir);
-    for (i = len - 1; i > 0; i--) {
-        if (cptr[i] == '\\' || cptr[i] == '/')
-            break;
-    }
-    cptr[i] = '\0';
-    ons.setArchivePath(currentDir);
-    ons.disableRescale();
-    ons.enableButtonShortCut();
-#elif defined(ANDROID) 
+#elif defined(ANDROID)
     ons.enableButtonShortCut();
 #endif
 

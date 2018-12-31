@@ -2,8 +2,8 @@
  *
  *  BaseReader.h - Base class of archive reader
  *
- *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
- *            (C) 2014-2016 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2018 Ogapee. All rights reserved.
+ *            (C) 2014-2018 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -29,6 +29,8 @@
 #ifdef ANDROID
 extern "C" FILE *fopen_ons(const char *str, const char *mode);
 #define fopen fopen_ons
+extern "C" int mkdir_ons(const char *pathname, mode_t mode);
+#define mkdir mkdir_ons
 #endif
 
 #ifndef SEEK_END

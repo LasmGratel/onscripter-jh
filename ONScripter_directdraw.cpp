@@ -56,6 +56,7 @@ void DirectDraw::draw(int no, int dx, int dy, int w, int h, int sx, int sy, int 
     SDL_SetTextureBlendMode(texture_info[no], add ? SDL_BLENDMODE_ADD : SDL_BLENDMODE_BLEND);
     SDL_SetTextureAlphaMod(texture_info[no], alpha);
     SDL_Rect src_rect = {sx, sy, w, h}, dst_rect = {dx, dy, w, h};
+    ons.setScreenDirty(true);
     SDL_RenderCopy(ons.renderer, texture_info[no], &src_rect, &dst_rect);
 }
 
@@ -67,6 +68,7 @@ void DirectDraw::draw2(int no, int dcx, int dcy, int sx, int sy, int w, int h, f
     SDL_SetTextureAlphaMod(texture_info[no], alpha);
     int dx = dcx-w/2*xs, dy = dcy-h/2*ys;
     SDL_Rect src_rect = {sx, sy, w, h}, dst_rect = {dx, dy, (int)(w*xs), (int)(h*ys)};
+    ons.setScreenDirty(true);
     SDL_RenderCopyEx(ons.renderer, texture_info[no], &src_rect, &dst_rect, rot, NULL, SDL_FLIP_NONE);
 }
 

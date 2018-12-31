@@ -2,8 +2,8 @@
  * 
  *  ONScripter.h - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
- *            (C) 2014-2016 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2018 Ogapee. All rights reserved.
+ *            (C) 2014-2019 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -89,6 +89,7 @@ public:
     void setFullscreenMode();
     void setWindowMode();
     void setCompatibilityMode();
+    void setVsyncOff();
     void setFontCache();
     void setDebugLevel(int debug);
     void enableButtonShortCut();
@@ -315,6 +316,7 @@ public:
     void NSDSetSpriteCommand(int spnum, int texnum, const char *tag);
 
     void stopSMPEG();
+    void updateEffectDst();
     
 private:
     // ----------------------------------------
@@ -348,7 +350,9 @@ private:
     bool edit_flag;
     char *key_exe_file;
     bool compatibilityMode;
-    bool cacheFont = false;
+    bool vsync;
+    bool cacheFont;
+    bool screen_dirty_flag;
 
     // variables relevant to button
     ButtonState current_button_state, last_mouse_state;
@@ -480,8 +484,10 @@ private:
     int  effect_timer_resolution;
     int  effect_start_time;
     int  effect_start_time_old;
-    
-    bool setEffect( EffectLink *effect, bool generate_effect_dst, bool update_backup_surface );
+    volatile bool update_effect_dst;
+
+    void generateEffectDst(int effect_no);
+    bool setEffect( EffectLink *effect );
     bool doEffect( EffectLink *effect, bool clear_dirty_region=true );
     void drawEffect( SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Surface *surface );
     void generateMosaic( SDL_Surface *src_surface, int level );
@@ -592,6 +598,7 @@ private:
     SDL_Texture *texture;
 
     void setCaption(const char *title, const char *iconstr = NULL);
+    void setScreenDirty(bool screen_dirty);
     // format = SDL_PIXELFORMAT_ABGR8888 for OpenGL ES 1.x, OpenGL ES 2.x (Android, iOS)
     // format = SDL_PIXELFORMAT_ARGB8888 for OpenGL, Direct3D (Windows, Linux, MacOSX) or for any 32bit surface without SDL_Renderer
     // format = SDL_PIXELFORMAT_RGB565 for any 16bit surface without SDL_Renderer (Android, Zaurus)

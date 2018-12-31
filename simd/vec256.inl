@@ -1,6 +1,6 @@
 /* -*- C++ -*-
 *
-*  vec128.inl
+*  vec256.inl
 *
 *  Copyright (C) 2018 jh10001 <jh10001@live.cn>
 *
@@ -22,3 +22,31 @@
 #ifndef __SIMD_H__
 #error "This file must be included through simd.h"
 #endif
+
+namespace simd {
+  //Load
+  inline ivec256 load256_a(const void *m) {
+#if USE_SIMD_X86_AVX2
+    return _mm256_load_si256(reinterpret_cast<const __m256i*>(m));
+#endif
+  }
+
+  inline ivec256 load256_u(const void *m) {
+#if USE_SIMD_X86_AVX2
+    return _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(m));
+#endif
+  }
+
+  //Store
+  inline void store256_a(void* m, __m256i a) {
+#ifdef USE_SIMD_X86_AVX2
+    _mm256_store_si256(reinterpret_cast<__m256i*>(m), a);
+#endif
+  }
+
+  inline void store256_u(void* m, __m256i a) {
+#ifdef USE_SIMD_X86_AVX2
+    _mm256_storeu_si256(reinterpret_cast<__m256i*>(m), a);
+#endif
+  }
+}

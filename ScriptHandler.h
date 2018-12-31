@@ -2,8 +2,8 @@
  * 
  *  ScriptHandler.h - Script manipulation class
  *
- *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
- *            (C) 2016 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2018 Ogapee. All rights reserved.
+ *            (C) 2016-2018 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -160,7 +160,6 @@ public:
     void addIntVariable(char **buf);
     void declareDim();
 
-    void enableTextgosub(bool val);
     void setClickstr( const char *list );
     int  checkClickstr(const char *buf, bool recursive_flag=false);
 
@@ -343,7 +342,6 @@ private:
     bool text_flag; // true if the current token is text
     int  end_status;
     bool linepage_flag;
-    bool textgosub_flag;
     char *clickstr_list;
     bool english_mode;
 

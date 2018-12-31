@@ -2,8 +2,8 @@
  *
  *  ONScripter_rmenu.cpp - Right click menu handler of ONScripter
  *
- *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
- *            (C) 2014-2016 jh10001 <jh10001@live.cn>
+ *  Copyright (c) 2001-2018 Ogapee. All rights reserved.
+ *            (C) 2014-2019 jh10001 <jh10001@live.cn>
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -79,6 +79,7 @@ static int osprintf(char *str, const char *format, ...)
         }
     }
     va_end( list );
+    return strlen(str);
 }
 #define sprintf osprintf
 #endif
@@ -364,7 +365,6 @@ bool ONScripter::executeSystemLoad()
                 return false;
 
             leaveSystemCall( false );
-            refreshSurface(backup_surface, NULL, REFRESH_NORMAL_MODE);
             saveon_flag = true;
             internal_saveon_flag = true;
             text_on_flag = false;

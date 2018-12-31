@@ -2,7 +2,7 @@
 *
 *  simd.h
 *
-*  Copyright (C) 2015 jh10001 <jh10001@live.cn>
+*  Copyright (C) 2015-2018 jh10001 <jh10001@live.cn>
 *
 *  This program is free software; you can redistribute it and/or modify
 *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,16 @@
 */
 #pragma once
 #define __SIMD_H__
+
+#ifdef USE_SIMD_X86_AVX2
+#include <immintrin.h>
+#define USE_SIMD_X86_SSSE3 1
+#endif
+
+#ifdef USE_SIMD_X86_SSSE3
+#include <tmmintrin.h>
+#define USE_SIMD_X86_SSE3 1
+#endif
 
 #ifdef USE_SIMD_X86_SSE3
 #include <pmmintrin.h>
@@ -75,6 +85,14 @@ namespace simd {
 #include "int32x4.inl"
 #include "vec128.h"
 #include "vec128.inl"
+#ifdef USE_SIMD_X86_AVX2
+#include "int8x32.h"
+#include "int8x32.inl"
+#include "int16x16.h"
+#include "int16x16.inl"
+#include "vec256.h"
+#include "vec256.inl"
+#endif
 #endif
 
 #undef inline
